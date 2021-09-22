@@ -1,6 +1,14 @@
+* repackaging core
+* another article on namespacing packages https://pawamoy.github.io/posts/plugins-as-python-native-namespace-packages/
+* Trying to recreate the following `__int__.py` functionality when their's multiple packages that use the same namespace.
+
+```python
+import os, sys; sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from kamodo.kamodo import *
+from kamodo.util import *
+```
 
 ### 2021-09-22 14:15:02.796860: clock-in
-
 
 ### 2021-09-21 12:48:14.222004: clock-out
 

@@ -1,3 +1,5 @@
+### 2021-09-22 16:40:33.893753: clock-out
+
 * repackaging core
 * another article on namespacing packages https://pawamoy.github.io/posts/plugins-as-python-native-namespace-packages/
 * Trying to recreate the following `__int__.py` functionality when their's multiple packages that use the same namespace.

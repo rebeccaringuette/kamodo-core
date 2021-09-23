@@ -1,3 +1,11 @@
+* pushing version
+* added manifest, trying `1.0.2`
+
+```sh
+python -m build
+twine upload --repository testpypi dist/*1.0.2*
+pip install -i https://test.pypi.org/simple/ kamodo-core==1.0.2
+```
 
 ### 2021-09-23 10:14:40.240258: clock-in
 

@@ -1,1 +1,1 @@
-recursive-include kamodo *.yaml *.py *.js *.css *.ico *.png *__init__.py
+recursive-include kamodo_core *.yaml *.py *.js *.css *.ico *.png *__init__.py

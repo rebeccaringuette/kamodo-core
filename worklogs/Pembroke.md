@@ -1,3 +1,4 @@
+* cleaning up docs
 * versioning
 * repackaging
 

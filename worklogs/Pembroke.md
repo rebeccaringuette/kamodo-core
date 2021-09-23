@@ -1,3 +1,4 @@
+* pypi may not have namespace support
 
 ### 2021-09-22 22:58:14.378042: clock-in: T-14m 
 

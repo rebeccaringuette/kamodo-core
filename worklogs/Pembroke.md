@@ -1,4 +1,18 @@
-* pypi may not have namespace support
+### 2021-09-22 23:32:46.363155: clock-out
+
+* still missing files in uploaded distribution. need to review https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+* uploading
+
+```sh
+pip install --upgrade build #install builder
+python -m build # from base of repo
+pip install --upgrade twine # install twine
+twine upload --repository testpypi dist/*1.0.1* # upload to test 
+pip install -i https://test.pypi.org/simple/ kamodo-core==1.0.1 --no-deps # install without dependencies which may be missing from test.pypi
+```
+
+* pypi may not have namespace support https://discuss.python.org/t/namespace-support-in-pypi/1609/4
+* how does aws do this?
 
 ### 2021-09-22 22:58:14.378042: clock-in: T-14m 
 

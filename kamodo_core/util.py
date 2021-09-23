@@ -42,7 +42,6 @@ from sympy import nsimplify
 from sympy import Function
 
 import urllib.request, json
-import requests
 
 import base64
 import types

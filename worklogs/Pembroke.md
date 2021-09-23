@@ -1,3 +1,4 @@
+* fixing deps
 * setting up module again
 * pushing version
 * testing pypi install

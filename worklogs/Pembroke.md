@@ -1,3 +1,6 @@
+
+### 2021-09-23 10:14:40.240258: clock-in
+
 ### 2021-09-22 23:32:46.363155: clock-out
 
 * still missing files in uploaded distribution. need to review https://setuptools.pypa.io/en/latest/userguide/package_discovery.html

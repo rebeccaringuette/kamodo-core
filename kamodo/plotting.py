@@ -5,11 +5,11 @@ No Copyright is claimed in the United States under Title 17, U.S. Code.  All Oth
 """
 import plotly.graph_objs as go
 import numpy as np
-from util import arg_to_latex, beautify_latex, cast_0_dim, get_defaults
+from .util import arg_to_latex, beautify_latex, cast_0_dim, get_defaults
 from plotly import figure_factory as ff
 import pandas as pd
 from collections import defaultdict
-from util import get_bbox
+from .util import get_bbox
 
 def scatter_plot(result, titles, verbose = False, **kwargs):
     """Generates a 3d scatter plot

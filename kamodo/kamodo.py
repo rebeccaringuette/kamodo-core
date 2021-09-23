@@ -48,11 +48,11 @@ from .util import is_function, get_arg_units
 import plotly.graph_objs as go
 from plotly import figure_factory as ff
 
-from plotting import plot_dict, get_arg_shapes, symbolic_shape
-from plotting import get_ranges
-from util import existing_plot_types
-from util import get_dimensions
-from util import reserved_names
+from .plotting import plot_dict, get_arg_shapes, symbolic_shape
+from .plotting import get_ranges
+from .util import existing_plot_types
+from .util import get_dimensions
+from .util import reserved_names
 
 from sympy import Wild
 from types import GeneratorType

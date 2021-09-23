@@ -1,4 +1,6 @@
-* pushing version
+### 2021-09-23 10:53:57.038218: clock-out
+
+* pushing version `1.0.3` - seems like git repo has to match version!
 * added manifest, trying `1.0.2`
 
 ```sh

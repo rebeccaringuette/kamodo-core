@@ -1,3 +1,4 @@
+* actually add kamodo_core change
 * updating paths to kamodo_core
 * fixing deps
 * setting up module again

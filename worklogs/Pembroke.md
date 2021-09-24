@@ -1,3 +1,4 @@
+* updating paths to kamodo_core
 * fixing deps
 * setting up module again
 * pushing version

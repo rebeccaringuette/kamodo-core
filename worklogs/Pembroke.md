@@ -1,3 +1,4 @@
+* removing newline from package find
 * actually add kamodo_core change
 * updating paths to kamodo_core
 * fixing deps

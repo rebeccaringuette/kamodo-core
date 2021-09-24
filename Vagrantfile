@@ -58,7 +58,7 @@ BEGIN {
 
   # Install kamodo-core
   # Replace sleep with spinlock on ~/jupyter.out fd at some point.
-  DEBIAN_KAMODO_CORE = <<-SHELL
+  DEBIAN_KAMODO = <<-SHELL
     sudo -u vagrant bash -c "\
       source /opt/conda/etc/profile.d/conda.sh \
         && conda init \
@@ -84,6 +84,6 @@ BEGIN {
     #{DEBIAN_DOCKER}
     #{DEBIAN_MINICONDA}
 
-    #{DEBIAN_KAMODO_CORE}
+    #{DEBIAN_KAMODO}
   SHELL
 }

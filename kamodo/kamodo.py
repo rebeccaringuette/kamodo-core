@@ -32,27 +32,27 @@ from sympy.physics.units import Dimension
 from sympy import Expr
 
 import functools
-from .util import kamodofy
-from .util import sort_symbols
-from .util import simulate
-from .util import unit_subs
-from .util import get_defaults, valid_args, eval_func
-# from .util import to_arrays, cast_0_dim
-from .util import beautify_latex, arg_to_latex
-from .util import concat_solution
-from .util import convert_unit_to
-from .util import unify, get_abbrev, get_expr_unit
-from .util import is_function, get_arg_units
+from util import kamodofy
+from util import sort_symbols
+from util import simulate
+from util import unit_subs
+from util import get_defaults, valid_args, eval_func
+# from util import to_arrays, cast_0_dim
+from util import beautify_latex, arg_to_latex
+from util import concat_solution
+from util import convert_unit_to
+from util import unify, get_abbrev, get_expr_unit
+from util import is_function, get_arg_units
 
 
 import plotly.graph_objs as go
 from plotly import figure_factory as ff
 
-from .plotting import plot_dict, get_arg_shapes, symbolic_shape
-from .plotting import get_ranges
-from .util import existing_plot_types
-from .util import get_dimensions
-from .util import reserved_names
+from plotting import plot_dict, get_arg_shapes, symbolic_shape
+from plotting import get_ranges
+from util import existing_plot_types
+from util import get_dimensions
+from util import reserved_names
 
 from sympy import Wild
 from types import GeneratorType
@@ -62,8 +62,8 @@ import re
 
 import urllib.request, json
 import requests
-from .util import serialize, deserialize
-from .util import sign_defaults
+from util import serialize, deserialize
+from util import sign_defaults
 import forge
 from sympy.abc import _clash
 import sympy

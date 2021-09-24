@@ -1,3 +1,4 @@
+* pushing 1.0.11
 * pushing 1.0.10
 * removing newline from package find
 * actually add kamodo_core change

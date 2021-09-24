@@ -1,3 +1,4 @@
+* paper update
 * added Vagrantfile from Ross
 
 ### 2021-09-24 10:37:03.262012: clock-in

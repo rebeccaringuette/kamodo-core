@@ -14,13 +14,13 @@ authors:
   - name: Rebecca Ringuette
     affiliation: 2
 affiliations:
- - name: Predictive Science, Inc.
+ - name: Asher Pembroke, DBA
    index: 1
  - name: Community Coordinated Modeling Center, NASA GSFC
    index: 2
  - name: University of Michigan
    index: 3
-date: Mar 5, 2021
+date: Sept 28, 2021
 bibliography: paper.bib
 ---
 

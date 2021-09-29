@@ -120,7 +120,8 @@ def main(cfg):
                         fig.update_layout(**fig_layout)
                     out_filename = '{}_{}'.format(plot_out_prefix, varname)
                     plot_result = plot(fig, filename = out_filename, **plot_conf)
-                    if plot_result is not None:
+                    if plot_conf['output_type'] == 'div':
+                    # if plot_result is not None:
                         write_plot_div(plot_result, out_filename)
                 except:
                     print('could not plot {} with params:'.format(varname))

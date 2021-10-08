@@ -1,3 +1,5 @@
+### 2021-10-08 15:37:37.144349: clock-out
+
 * added partial function decorator
 * `Kamodo.plot` tightly coupled to Kamodo object, making it difficult to functionalize. `Kamodo.figure` and `Kamodo.evalute` would need to be factored out.
 * attempting to add `partial` keyword to `kamodo.plot`, which passes to `kamodo.figure`

@@ -31,7 +31,10 @@ from sympy.physics.units import Quantity
 from sympy.physics.units import Dimension
 from sympy import Expr
 
+# +
 import functools
+import types
+
 from util import kamodofy
 from util import sort_symbols
 from util import simulate
@@ -43,6 +46,8 @@ from util import concat_solution
 from util import convert_unit_to
 from util import unify, get_abbrev, get_expr_unit
 from util import is_function, get_arg_units
+from util import partial
+# -
 
 
 import plotly.graph_objs as go
@@ -1025,7 +1030,14 @@ class Kamodo(UserDict):
         #     fig['chart_type'] = chart_type
         # return fig
 
-    def plot(self, *variables, **figures):
+    def plot(self, *variables, plot_partial={}, **figures):
+        if len(plot_partial) > 0:
+            kpartial = from_kamodo(self) # copy kamodo object
+            for k, v in plot_partial.items():
+                regname = k
+                kpartial[regname] = partial(kpartial[k], **v)
+            return kpartial.plot(*variables, **figures)
+        
         for k in variables:
             figures[k] = {}
         if len(figures) == 1:
@@ -1151,12 +1163,28 @@ def compose(**kamodos):
 
     return kamodo
 
+def copy_func(f):
+    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)
+                https://stackoverflow.com/a/13503277 (unutbu)
+    """
+    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                           argdefs=f.__defaults__,
+                           closure=f.__closure__)
+    g = functools.update_wrapper(g, f)
+    g.__kwdefaults__ = f.__kwdefaults__
+    if hasattr(f, 'meta'):
+        g.meta = f.meta
+    if hasattr(f, '_repr_latex_'):
+        g._repr_latex_ = f._repr_latex_
+    return g
+
+
 def from_kamodo(kobj, **funcs):
     """copies a kamodo object, inserting additional functions"""
     knew = Kamodo()
     for name, signature in kobj.signatures.items():
         symbol = signature['symbol']
-        knew[symbol] = kobj[symbol]
+        knew[symbol] = copy_func(kobj[symbol])
     for symbol, func in funcs.items():
         knew[symbol] = func
     return knew
@@ -1179,6 +1207,7 @@ def get_figures(func, iterator, verbose=False):
         plots.append(full_fig)
     return plots
 
+# +
 def animate(func_, iterator=None, verbose=False):
     defaults = get_defaults(func_)
     if len(defaults) > 1:
@@ -1193,7 +1222,7 @@ def animate(func_, iterator=None, verbose=False):
 
     figures = get_figures(func_, iterator, verbose)
 
-#     print(len(figures), ' figures')
+    print(len(figures), ' figures')
 
     axes_ranges = get_ranges(figures)
 
@@ -1277,5 +1306,31 @@ def animate(func_, iterator=None, verbose=False):
 
     fig = go.Figure(fig_dict)
     return fig
+# -
+
+k = Kamodo()
+
+k['f(x,phi)'] = 'x**2-x+phi'
+
+k.f.meta
+
+k.detail()
+
+k.plot(f=dict(x=np.linspace(-1,1,100)),
+       plot_partial=dict(f=dict(phi=1)))
+
+k.f
+
+g = partial(k.f, phi=1, verbose=True)
+
+k.f.meta
+
+g.meta
+
+g
+
+k.f._repr_latex_()
+
+k.f._repr_latex_()
 
 

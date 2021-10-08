@@ -1,8 +1,13 @@
+* added partial function decorator
+* `Kamodo.plot` tightly coupled to Kamodo object, making it difficult to functionalize. `Kamodo.figure` and `Kamodo.evalute` would need to be factored out.
+* attempting to add `partial` keyword to `kamodo.plot`, which passes to `kamodo.figure`
+* `kamodo.from_kamodo` does not actually copy!
 
 ### 2021-10-08 12:36:27.275094: clock-in
 
 * check for div output_type
 * remoded ccmc dockerfiles
+
 ### 2021-09-24 14:12:46.469270: clock-out
 
 * passing tests - need to authorize codecov

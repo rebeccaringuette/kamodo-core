@@ -1,3 +1,6 @@
+
+### 2021-10-09 18:23:45.904202: clock-in
+
 ### 2021-10-08 15:37:37.144349: clock-out
 
 * added partial function decorator

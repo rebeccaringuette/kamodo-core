@@ -1,3 +1,11 @@
+* grpc exploration
+* grpc tutorial
+* looking for numpy grpc interfaces:
+* simple example of image passing https://github.com/zabir-nabil/simple-gRPC/tree/master/grpc
+* https://github.com/telamonian/numpy-protobuf
+* https://pypi.org/project/numproto/#history https://github.com/josteinbf/numproto
+* https://www.tensorflow.org/tfx/serving/serving_advanced
+* https://stackoverflow.com/questions/62171037/grpc-python-sending-image-meta-data
 
 ### 2021-10-09 18:23:45.904202: clock-in
 

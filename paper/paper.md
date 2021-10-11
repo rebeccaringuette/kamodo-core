@@ -108,7 +108,9 @@ Kamodo can auto-generate plots using function inspection:
 kcnofs.plot('B_up')
 ```
 
-The result of the above command is shown in \autoref{fig:cnofs}. Kamodo analysizes the structure of inputs and outputs of `B_up` and selects an appropriate plot type from the Kamodo plotting module.
+![Auto-generated plot of CNOFs Vefi instrument.\label{fig:cnofs}](https://raw.githubusercontent.com/pysat/pysatKamodo/c3b73c0ec137f91ad8305b76fc7e5bbb36e5ee86/docs/cnofs_B_up.svg)
+
+The result of the above command is shown in \autoref{fig:cnofs}: Kamodo analysizes the structure of inputs and outputs of `B_up` and selects an appropriate plot type from the Kamodo plotting module.
 
 
 # Related Projects
@@ -130,9 +132,6 @@ Kamodo container services may be built on other containerized offerings.
 Containerization allows dependency conflicts to be avoided through isolated install environments.
 Kamodo extends the capabilities of space weather resource containers by allowing them to be composed together via the KamodoClient, which acts as a proxy for the containerized resource running the KamodoAPI.
 
-# Figures
-
-![Auto-generated plot of CNOFs Vefi instrument.\label{fig:cnofs}](https://github.com/pysat/pysatKamodo/raw/master/docs/cnofs_B_up.png)
 
 # Acknowledgements
 

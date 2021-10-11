@@ -1,9 +1,17 @@
+* added usage and cnofs figure
+
+Consider requiring kaleido and plotly >= 4.9 https://github.com/plotly/Kaleido/issues/41#issuecomment-694443199
+
+```python
+pio.write_image(fig, "cnofs_B_up.svg", engine="kaleido")
+```
 
 ### 2021-10-11 11:21:53.722974: clock-in
 
 * changing affiliation
 * adding github paper workflow
 * remoded ccmc dockerfiles
+
 ### 2021-09-24 14:12:46.469270: clock-out
 
 * passing tests - need to authorize codecov

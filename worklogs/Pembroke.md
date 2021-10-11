@@ -1,8 +1,19 @@
+
+### 2021-10-11 17:52:22.242469: clock-in: T-9m 
+
 ### 2021-10-11 17:42:29.428134: clock-out
 
 * test svg
 * moved to figures section
 * affiliations
+* add citation for function 
+```python
+kcnofs.B_up.meta['citation']
+```
+above command returns:
+
+de La Beaujardière, O., et al. (2004), C/NOFS: A mission to forecast scintillations, J. Atmos. Sol. Terr. Phys., 66, 1573–1591, doi:10.1016/j.jastp.2004.07.030.\nPfaff, R., et al. (2010), Observations of DC electric fields in the low‐latitude ionosphere and their variations with local time, longitude, and plasma density during extreme solar minimum, J. Geophys. Res., 115, A12324, doi:10.1029/2010JA016023.
+
 
 ### 2021-10-11 16:43:53.143067: clock-in
 

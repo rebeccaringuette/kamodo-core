@@ -1,3 +1,4 @@
+* png instead
 * added usage and cnofs figure
 
 Consider requiring kaleido and plotly >= 4.9 https://github.com/plotly/Kaleido/issues/41#issuecomment-694443199

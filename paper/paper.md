@@ -99,7 +99,7 @@ Kamodo can auto-generate plots using function inspection:
 kcnofs.plot('B_up')
 ```
 
-![Auto-generated plot of CNOFs Vefi instrument.\label{fig:cnofs}](https://github.com/pysat/pysatKamodo/blob/master/docs/cnofs_B_up.svg)
+![Auto-generated plot of CNOFs Vefi instrument.\label{fig:cnofs}](https://github.com/pysat/pysatKamodo/blob/master/docs/cnofs_B_up.png)
 
 
 To generate \autoref{fig:cnofs}, Kamodo analysizes the structure of inputs and outputs of `B_up` and selects an appropriate plot type from the Kamodo plotting module.

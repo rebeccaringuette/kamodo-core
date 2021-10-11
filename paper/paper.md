@@ -13,6 +13,13 @@ authors:
     affiliation: 2
   - name: Rebecca Ringuette
     affiliation: 2
+  - name: Oliver Gerland
+    affiliation: 4
+  - name: Dhruv Patel
+    affiliation: 4
+  - name: Michael Contreras
+    affiliation: 4
+
 affiliations:
  - name: Asher Pembroke, DBA
    index: 1
@@ -20,6 +27,8 @@ affiliations:
    index: 2
  - name: University of Michigan
    index: 3
+ - name: Ensemble Government Services
+   index: 4
 date: Sept 28, 2021
 bibliography: paper.bib
 ---

@@ -1,3 +1,4 @@
+* moved to figures section
 * affiliations
 
 ### 2021-10-11 16:43:53.143067: clock-in

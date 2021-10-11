@@ -112,6 +112,16 @@ kcnofs.plot('B_up')
 
 The result of the above command is shown in \autoref{fig:cnofs}: Kamodo analysizes the structure of inputs and outputs of `B_up` and selects an appropriate plot type from the Kamodo plotting module.
 
+Citation information for the above plot may be generated from the `meta` property of the registered function:
+
+```python
+kcnofs.B_up.meta['citation']
+```
+
+which returns the following reference:
+
+> de La Beaujardière, O., et al. (2004), C/NOFS: A mission to forecast scintillations, J. Atmos. Sol. Terr. Phys., 66, 1573–1591, doi:10.1016/j.jastp.2004.07.030.\nPfaff, R., et al. (2010), Observations of DC electric fields in the low‐latitude ionosphere and their variations with local time, longitude, and plasma density during extreme solar minimum, J. Geophys. Res., 115, A12324, doi:10.1029/2010JA016023.
+
 
 # Related Projects
 

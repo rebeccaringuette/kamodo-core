@@ -1,3 +1,5 @@
+### 2021-10-13 14:43:01.333666: clock-out
+
 * incremental versioning
 
 1. setup.cfg keeps looking for numpy when calling kamodo.version in `__init__`

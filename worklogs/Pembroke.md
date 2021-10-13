@@ -1,3 +1,9 @@
+* incremental versioning
+
+1. setup.cfg keeps looking for numpy when calling kamodo.version in `__init__`
+1. put the version in a `versioning` subfolder
+1. added issue for incremental devs https://github.com/twisted/incremental/issues/76
+
 * clean up, adding jupytext to dockerfile
 
 ### 2021-10-13 11:48:03.288293: clock-in

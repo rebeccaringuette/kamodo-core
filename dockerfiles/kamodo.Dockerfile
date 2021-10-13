@@ -1,7 +1,7 @@
 # docker build -t asherp/kamodo -f API.Dockerfile .
 
 FROM continuumio/miniconda3:latest
-LABEL maintainer "Asher Pembroke <apembroke@predsci.com>"
+LABEL maintainer "Asher Pembroke <apembroke@gmail.com>"
 
 RUN conda install python=3.7
 
@@ -21,6 +21,9 @@ RUN pip install sympy==1.5.1
 # Keep plotly at lower api
 RUN pip install plotly==4.7.1
 
+# kaleido for generating static plots
+RUN pip install kaleido
+
 # Install latest kamodo
 ADD . /kamodo
 
@@ -28,6 +31,7 @@ ADD . /kamodo
 RUN pip install -e kamodo
 
 RUN conda install jupyter
+RUN pip install jupytext
 
 WORKDIR kamodo
 

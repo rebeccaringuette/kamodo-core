@@ -1334,13 +1334,5 @@ def partial(_func=None, **partial_kwargs):
         return decorator_partial(_func)
 
 
-@partial
-def f(x,y=[3,4,5,6,7]):
-    return x
-f
-
-f(3)
-
-help(f)
 
 

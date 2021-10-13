@@ -1306,31 +1306,3 @@ def animate(func_, iterator=None, verbose=False):
 
     fig = go.Figure(fig_dict)
     return fig
-# -
-
-k = Kamodo()
-
-k['f(x,phi)'] = 'x**2-x+phi'
-
-k.f.meta
-
-k.detail()
-
-k.plot(f=dict(x=np.linspace(-1,1,100)),
-       plot_partial=dict(f=dict(phi=1)))
-
-k.f
-
-g = partial(k.f, phi=1, verbose=True)
-
-k.f.meta
-
-g.meta
-
-g
-
-k.f._repr_latex_()
-
-k.f._repr_latex_()
-
-

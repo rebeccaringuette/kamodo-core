@@ -1,3 +1,4 @@
+* clean up, adding jupytext to dockerfile
 
 ### 2021-10-13 11:48:03.288293: clock-in
 

@@ -123,13 +123,8 @@ Citation information for the above plot may be generated from the `meta` propert
 kcnofs.B_up.meta['citation']
 ```
 
-which returns the following reference, corresponding to [@cnofs]:
+which returns references for the C/NOFS platform [@cnofs] and VEFI instrument [@vefi].
 
-<!-- #region -->
-```sh
-de La Beaujardière, O., et al. (2004), C/NOFS: A mission to forecast scintillations, J. Atmos. Sol. Terr. Phys., 66, 1573–1591, doi:10.1016/j.jastp.2004.07.030.\nPfaff, R., et al. (2010), Observations of DC electric fields in the low‐latitude ionosphere and their variations with local time, longitude, and plasma density during extreme solar minimum, J. Geophys. Res., 115, A12324, doi:10.1029/2010JA016023.
-```
-<!-- #endregion -->
 
 # Related Projects
 

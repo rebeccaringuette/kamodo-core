@@ -427,7 +427,7 @@ def gridify(_func=None, order='A', squeeze=True, **defaults):
         return decorator_gridify(_func)
 
 
-def pointlike(_func=None, signature=None, otypes=[np.float], squeeze=None):
+def pointlike(_func=None, signature=None, otypes=[float], squeeze=None):
     """Transforms a single-argument function to one that accepts m points of dimension n"""
 
     def decorator_pointlike(func):
@@ -1219,6 +1219,33 @@ def construct_signature(*args, **kwargs):
         signature.append(forge.arg(k, default=v))
     return signature
 
+def array_to_latex(arr, max_chars=3):
+    """a latex-friendly render for arrays"""
+    try:
+        iter(arr)
+    except:
+        return arr
+    
+    if hasattr(arr, 'shape'):
+        if len(arr.shape) > 1:
+            return '[{},..]'.format(''.join(array_to_latex(arr[0], max_chars)))
+        if len(arr) > max_chars:
+            return '[{},..]'.format(','.join(arr[:max_chars].astype(str)))
+        return '[{}]'.format(','.join(arr.astype(str)))
+
+    if len(arr) > max_chars:
+        return '[{},..]'.format(','.join([str(_) for _ in arr[:max_chars]]))
+    else:
+        return arr
+
+
+def latex_repr_values(values_dict):
+    sigs = []
+    for k, v in values_dict.items():
+        sigs.append('{} = {}'.format(k, getattr(v, '_repr_latex_', array_to_latex(v,2))))
+    return ','.join(sigs)
+
+
 def partial(_func=None, **partial_kwargs):
     """A partial function decorator
 
@@ -1230,10 +1257,21 @@ def partial(_func=None, **partial_kwargs):
         orig_args = get_args(f)
         orig_defaults = get_defaults(f)
         orig_defaults.update(partial_kwargs)
+        orig_latex_func = getattr(f,
+                                  '_repr_latex_',
+                                  lambda: '\\lambda ({})'.format(','.join(orig_args)))
+        orig_meta = getattr(f, 'meta', {}).copy()
+        
+        orig_meta['equation'] = orig_meta.get('equation', orig_latex_func()).strip("$")
+        if len(orig_defaults) > 0:
+            orig_meta['equation'] += ', ' + latex_repr_values(orig_defaults)
+        new_latex_func = lambda : '${}$'.format(orig_meta['equation'])
         if verbose:
             print('partial kwargs', partial_kwargs)
             print('original args:', orig_args)
             print('new defaults', orig_defaults)
+            print('original latex function', orig_latex_func)
+            print('new latex function', new_latex_func)
 
         # collect only the arguments not assigned by partial
         sig_defaults = {}
@@ -1263,6 +1301,7 @@ def partial(_func=None, **partial_kwargs):
 
         wrapped.__name__ = f.__name__
         orig_docs = f.__doc__
+        
         for k, v in sig_defaults.items():
             sig_args.append('{}={}'.format(k, v))
         doc_args = ', '.join(sig_args)
@@ -1282,7 +1321,8 @@ def partial(_func=None, **partial_kwargs):
             orig_args = ', '.join(orig_args),
             partial_keys=', '.join(partial_kwargs.keys()),
         )
-        
+        wrapped._repr_latex_ = new_latex_func
+        wrapped.meta = orig_meta
         if orig_docs is not None:
             wrapped.__doc__ += "\n" + f.__doc__
 
@@ -1292,3 +1332,7 @@ def partial(_func=None, **partial_kwargs):
         return decorator_partial
     else:
         return decorator_partial(_func)
+
+
+
+

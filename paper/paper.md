@@ -41,23 +41,23 @@ Kamodo performs function composition and employs a unit conversion system that m
 Kamodo includes a LaTeX interface, automated plots, and a browser-based dashboard interface suitable for interactive data exploration.
 Kamodo's json API provides context-dependent queries and allows compositions of models and data hosted in separate docker containers.
 Kamodo is built primarily on sympy [@10.7717/peerj-cs.103] and plotly [@plotly].
-While Kamodo was designed to solve the cross-displinary challenges of the space weather community, it is general enough to be applied in other fields of study.
+While Kamodo was designed to solve the cross-disciplinary challenges of the space weather community, it is general enough to be applied in other fields of study.
+
 
 # Statement of need
 
 Space weather models and data employ a wide variety of specialized formats, data structures, and interfaces tailored for the needs of domain experts.
-However, this specialization is also an impediment to cross-displinary research.
+However, this specialization is also an impediment to cross-disciplinary research.
 For example, data-model comparisons often require knowledge of multiple data structures and observational data formats.
 Even when mature APIs are available, proficiency in programing languages such as python is necessary before progress may be made.
 This further complicates the transition from research to operations in space weather forecasting and mitigation, where many disparate data sources and models must be presented together in a clear and actionable manner.
 Such complexity represents a high barrier to entry when introducing the field of space weather to newcomers at space weather workshops, where much of the student's time is spent installing prerequisite software.
-Several attempts have been made to unify all existing space weather resources around common standards, but have met with limited success.
+Several attempts have been made to unify all existing space weather resources around common standards, but have met with limited success. 
 
-
-Kamodo all but eliminates the barrier to entry for space weather resources by exposing all scientifically relavent parameters in a functional manner.
-Kamodo is and ideal tool in the scientist's workflow, because many problems in space weather analysis, such as field line tracing, coordinate transformation, and interpolation, may be posed in terms of function compositions.
+Kamodo all but eliminates the barrier to entry for space weather resources by exposing all scientifically relevant parameters in a functional manner.
+Kamodo is an ideal tool in the scientist's workflow, because many problems in space weather analysis, such as field line tracing, coordinate transformation, and interpolation, may be posed in terms of function compositions.
 Kamodo builds on existing standards and APIs and does not require programing expertise on the part of end user.
-Kamodo is expressive enough to meet the needs of most scientists, educators, and space weather forecasters, and Kamodo containers enable a rapidly growing ecosystem of interoperable space weather resources.
+Kamodo is expressive enough to meet the needs of most scientists, educators, and space weather forecasters, and Kamodo containers enable a rapidly growing ecosystem of interoperable space weather resources. 
 
 # Usage
 
@@ -74,6 +74,7 @@ kcnofs = Pysat_Kamodo('2009, 1, 1', # Pysat_Kamodo allows string dates
 ```
 
 When run in a jupyter notebook, the above kamodo object renders as a set of functions ready for interpolation: 
+
 
 \begin{equation}\operatorname{B_{north}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
 \begin{equation}\operatorname{B_{up}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
@@ -124,13 +125,11 @@ which returns the following reference:
 de La Beaujardière, O., et al. (2004), C/NOFS: A mission to forecast scintillations, J. Atmos. Sol. Terr. Phys., 66, 1573–1591, doi:10.1016/j.jastp.2004.07.030.\nPfaff, R., et al. (2010), Observations of DC electric fields in the low‐latitude ionosphere and their variations with local time, longitude, and plasma density during extreme solar minimum, J. Geophys. Res., 115, A12324, doi:10.1029/2010JA016023.
 ```
 
-
-
 # Related Projects
 
-Kamodo is designed for compability with python-in-heliosphysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018], [@pysat200].
+Kamodo is designed for compatibility with python-in-heliosphysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018], [@pysat200].
 This is accomplished through Kamodo subclasses, which are responsible for registering each scientifically relevant variable with an interpolating function.
-Metadata describing the function's units and other supporting documentation (citation, latex formating, etc), may be provisioned by way of the `@kamodofy` decorator.
+Metadata describing the function's units and other supporting documentation (citation, latex formatting, etc), may be provisioned by way of the `@kamodofy` decorator.
 
 Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many of the unit conversion capabilities of `Astropy` [@astropy] with two key differences: first, Kamodo uses an explicit unit conversion system, where units are declared during function registration and appropriate conversion factors are automatically inserted on the right-hand-side of final expressions, which permits back-of-the-envelope validation.
 Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation (Numpy, Pandas, etc).
@@ -148,6 +147,8 @@ Kamodo extends the capabilities of space weather resource containers by allowing
 
 # Acknowledgements
 
+Initial development of Kamodo was spearheaded by the Community Coordinated Modeling Center through NSF. Continued support for Kamodo is provided by Ensemble Government Services, LTD through a NASA SBIR grant. 
+The authors would like to thank Nicholas Gross, Katherine Garcia-Sage, and Richard Mullinex. 
 
 
 # References

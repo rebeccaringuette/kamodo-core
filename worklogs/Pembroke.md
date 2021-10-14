@@ -1,3 +1,4 @@
+
 ### 2021-10-11 17:55:37.837042: clock-out
 
 * adding reference for cnofs
@@ -35,6 +36,45 @@ pio.write_image(fig, "cnofs_B_up.svg", engine="kaleido")
 
 * changing affiliation
 * adding github paper workflow
+
+### 2021-10-13 14:43:01.333666: clock-out
+
+* incremental versioning
+
+1. setup.cfg keeps looking for numpy when calling kamodo.version in `__init__`
+1. put the version in a `versioning` subfolder
+1. added issue for incremental devs https://github.com/twisted/incremental/issues/76
+
+* clean up, adding jupytext to dockerfile
+
+### 2021-10-13 11:48:03.288293: clock-in
+
+* pypi publish test
+
+### 2021-10-09 19:16:09.790921: clock-out
+
+* grpc exploration
+* grpc tutorial
+* looking for numpy grpc interfaces:
+* simple example of image passing https://github.com/zabir-nabil/simple-gRPC/tree/master/grpc
+* https://github.com/telamonian/numpy-protobuf
+* https://pypi.org/project/numproto/#history https://github.com/josteinbf/numproto
+* https://www.tensorflow.org/tfx/serving/serving_advanced
+* https://stackoverflow.com/questions/62171037/grpc-python-sending-image-meta-data
+
+### 2021-10-09 18:23:45.904202: clock-in
+
+### 2021-10-08 15:37:37.144349: clock-out
+
+* added partial function decorator
+* `Kamodo.plot` tightly coupled to Kamodo object, making it difficult to functionalize. `Kamodo.figure` and `Kamodo.evalute` would need to be factored out.
+* attempting to add `partial` keyword to `kamodo.plot`, which passes to `kamodo.figure`
+* `kamodo.from_kamodo` does not actually copy!
+
+### 2021-10-08 12:36:27.275094: clock-in
+
+* check for div output_type
+>>>>>>> master
 * remoded ccmc dockerfiles
 
 ### 2021-09-24 14:12:46.469270: clock-out

@@ -138,10 +138,8 @@ Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many o
 Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation (Numpy, Pandas, etc).
 Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy], Pint [@pint], etc.
 
-Kamodo can mimic some of the capabilities of raw data APIs such as HAPI.
-As with other PyHC projects, the goal is not to replace existing APIs, but rather to extend their capabilities.
-For example, Kamodo's API support purely functional data access, where `GET` requests can specify positions or times for which interpolated values should be returned.
-In addition, Kamodo `POST` requests may be used to register new functions on the server which are compositions of previously defined variables and with custom units.
+Kamodo can utilize some of the capabilities of raw data APIs such as HAPI, and a HAPI kamodo subclass is maintained in the ccmc readers repository [@nasaKamodo]. However, Kamodo also provides an API for purely functional data access, which allows users to specify positions or times for which interpolated values should be returned.
+To that end, a prototype for functional REST API is available [@ensembleKamodo] and a GRPC api is under development.
 
 Kamodo container services may be built on other containerized offerings.
 Containerization allows dependency conflicts to be avoided through isolated install environments.

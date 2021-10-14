@@ -71,6 +71,7 @@ kcnofs = Pysat_Kamodo('2009, 1, 1', # Pysat_Kamodo allows string dates
          name='vefi', # pysat keyword
          tag='dc_b',# pysat keyword
          )
+kcnofs['B'] = '(B_north**2+B_up**2+B_west**2)**.5' # a derived variable
 ```
 
 When run in a jupyter notebook, the above kamodo object renders as a set of functions ready for interpolation: 
@@ -89,19 +90,22 @@ When run in a jupyter notebook, the above kamodo object renders as a set of func
 \begin{equation}\operatorname{dB_{zon}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
 \begin{equation}\operatorname{dB_{mer}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
 \begin{equation}\operatorname{dB_{par}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
+\begin{equation}B{\left(t \right)}[nT^{1.0}] = \sqrt{\operatorname{B_{north}}^{2}{\left(t \right)} + \operatorname{B_{up}}^{2}{\left(t \right)} + \operatorname{B_{west}}^{2}{\left(t \right)}}\end{equation}
 
 Units are clearly visible on the left hand side, while the right hand side of these expressions represent interpolating functions ready for evaluation:
 
 ```python
-kcnofs.B_up(pd.DatetimeIndex(['2009-01-01 00:00:03','2009-01-01 00:00:05']))
+kcnofs.B(pd.DatetimeIndex(['2009-01-01 00:00:03','2009-01-01 00:00:05']))
 ```
+<!-- #region -->
 ```sh
-2009-01-01 00:00:03   -3936.454102
-2009-01-01 00:00:05   -3905.926514
-Name: B_up, dtype: float32
+2009-01-01 00:00:03    19023.052734
+2009-01-01 00:00:05    19012.949219
+dtype: float32
 ```
+<!-- #endregion -->
 
-Here, the function returns a pandas series object, though kamodo does not require functions to utilize a specific data type. 
+Here, the function `B(t)` returns the result of a variable derived from preregisterd variables as a pandas series object. However, kamodo itself does not require functions to utilize a specific data type, provided that the datatype supports algebraic operations.
 
 Kamodo can auto-generate plots using function inspection:
 
@@ -111,7 +115,7 @@ kcnofs.plot('B_up')
 
 ![Auto-generated plot of CNOFs Vefi instrument.\label{fig:cnofs}](https://github.com/pysat/pysatKamodo/raw/master/docs/cnofs_B_up.png)
 
-The result of the above command is shown in \autoref{fig:cnofs}: Kamodo analysizes the structure of inputs and outputs of `B_up` and selects an appropriate plot type from the Kamodo plotting module.
+The result of the above command is shown in \autoref{fig:cnofs}. To accomplish this, Kamodo analyzes the structure of inputs and outputs of `B_up` and selects an appropriate plot type from the Kamodo plotting module.
 
 Citation information for the above plot may be generated from the `meta` property of the registered function:
 
@@ -119,17 +123,21 @@ Citation information for the above plot may be generated from the `meta` propert
 kcnofs.B_up.meta['citation']
 ```
 
-which returns the following reference:
+which returns the following reference, corresponding to [@cnofs]:
 
+<!-- #region -->
 ```sh
 de La Beaujardière, O., et al. (2004), C/NOFS: A mission to forecast scintillations, J. Atmos. Sol. Terr. Phys., 66, 1573–1591, doi:10.1016/j.jastp.2004.07.030.\nPfaff, R., et al. (2010), Observations of DC electric fields in the low‐latitude ionosphere and their variations with local time, longitude, and plasma density during extreme solar minimum, J. Geophys. Res., 115, A12324, doi:10.1029/2010JA016023.
 ```
+<!-- #endregion -->
 
 # Related Projects
 
 Kamodo is designed for compatibility with python-in-heliosphysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018], [@pysat200].
 This is accomplished through Kamodo subclasses, which are responsible for registering each scientifically relevant variable with an interpolating function.
 Metadata describing the function's units and other supporting documentation (citation, latex formatting, etc), may be provisioned by way of the `@kamodofy` decorator.
+
+The PysatKamodo [@pysatKamodo] interface is made available in a separate git repository. Readers for various space weather models and data sources are under development by the Community Coordinated Modling Center and are hosted in their official NASA repository.
 
 Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many of the unit conversion capabilities of `Astropy` [@astropy] with two key differences: first, Kamodo uses an explicit unit conversion system, where units are declared during function registration and appropriate conversion factors are automatically inserted on the right-hand-side of final expressions, which permits back-of-the-envelope validation.
 Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation (Numpy, Pandas, etc).
@@ -147,7 +155,8 @@ Kamodo extends the capabilities of space weather resource containers by allowing
 
 # Acknowledgements
 
-Initial development of Kamodo was spearheaded by the Community Coordinated Modeling Center through NSF. Continued support for Kamodo is provided by Ensemble Government Services, LTD through a NASA SBIR grant. 
+Initial development of Kamodo was spearheaded by the Community Coordinated Modeling Center through NSF. Continued support for Kamodo is provided by Ensemble Government Services, LTD. via NASA Small Business Innovation Research (SBIR) Phase I/II, grant No 80NSSC20C0290, 80NSSC21C0585, resp.
+
 The authors would like to thank Nicholas Gross, Katherine Garcia-Sage, and Richard Mullinex. 
 
 

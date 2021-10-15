@@ -1,4 +1,4 @@
-FROM ensemble/kamodo
+FROM ensemble/kamodo-py36
 
 # RUN python -m pip install --upgrade pip
 RUN python -m pip install flake8 pytest
@@ -10,10 +10,9 @@ RUN pip install notebook
 COPY . /kamodo
 WORKDIR /
 
-RUN pip install -e kamodo
 
 SHELL  ["sh", "-c", "chmod +x /kamodo/test_kamodo.sh"]
 
-WORKDIR /
+WORKDIR /kamodo
 
 CMD test_kamodo.sh

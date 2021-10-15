@@ -1,3 +1,5 @@
+* py36 test environment
+* working python 3.6 building bug - installing in editable mode does not work
 
 ### 2021-10-15 11:21:29.506353: clock-in: T-10m 
 

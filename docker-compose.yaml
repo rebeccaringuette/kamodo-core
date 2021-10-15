@@ -1,13 +1,13 @@
 version: "3.7"
 
 services:
-  kamodo:
-    image: ensemble/kamodo
+  kamodo-py36:
+    image: ensemble/kamodo-py36
     ports:
       - "8888:8888"
     build: 
       context: .
-      dockerfile: dockerfiles/kamodo.Dockerfile
+      dockerfile: dockerfiles/kamodo-py36.Dockerfile
     command:
       - jupyter
       - notebook
@@ -16,13 +16,28 @@ services:
       - --no-browser
       - --ip=0.0.0.0
       - --allow-root
-  kamodo-dev:
-    image: ensemble/kamodo
+  kamodo-py37:
+    image: ensemble/kamodo-py37
+    ports:
+      - "8888:8888"
+    build: 
+      context: .
+      dockerfile: dockerfiles/kamodo-py37.Dockerfile
+    command:
+      - jupyter
+      - notebook
+      - /kamodo
+      - --port=8888
+      - --no-browser
+      - --ip=0.0.0.0
+      - --allow-root
+  kamodo-dev-py37:
+    image: ensemble/kamodo-py37
     ports:
       - "8889:8888"
     build: 
       context: .
-      dockerfile: dockerfiles/kamodo.Dockerfile
+      dockerfile: dockerfiles/kamodo-py37.Dockerfile
     command:
       - jupyter
       - notebook
@@ -36,19 +51,26 @@ services:
         source: ${PWD}
         target: /kamodo
     working_dir: /kamodo
-  kamodo-test:
-    image: ensemble/kamodo-test
+  kamodo-test-py36:
+    image: ensemble/kamodo-test-py36
     build: 
       context: .
-      dockerfile: dockerfiles/kamodo-test.Dockerfile
-    # volumes:
-    #   - type: bind
-    #     source: ${PWD}
-    #     target: /kamodo
+      dockerfile: dockerfiles/kamodo-test-py36.Dockerfile
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /kamodo
     working_dir: /kamodo
-    # command:
-    #   - ./test_kamodo.sh
-
-
-
+    command: ["sh", "-c", "chmod +x /kamodo/test_kamodo.sh && /kamodo/test_kamodo.sh"]
+  kamodo-test-py37:
+    image: ensemble/kamodo-test-py37
+    build: 
+      context: .
+      dockerfile: dockerfiles/kamodo-test-py37.Dockerfile
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /kamodo
+    working_dir: /kamodo
+    command: ["sh", "-c", "chmod +x /kamodo/test_kamodo.sh && /kamodo/test_kamodo.sh"]
 

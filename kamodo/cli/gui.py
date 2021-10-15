@@ -11,7 +11,6 @@ from dash.dependencies import Input, Output, ClientsideFunction, State
 import numpy as np
 from os import path
 import os
-import numpy as np
 from sympy.core.function import UndefinedFunction 
 import pandas as pd
 import sys 

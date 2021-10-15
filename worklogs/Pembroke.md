@@ -1,3 +1,7 @@
+* removing py36 build
+* could not determine root cause of this py36 error:
+    `TypeError: int() argument must be a string, a bytes-like object or a number, not '_NoValueType'` 
+    may have something to do with numpy global state https://github.com/Almenon/AREPL-vscode/issues/404
 * py36 test environment
 * working python 3.6 building bug - installing in editable mode does not work
 

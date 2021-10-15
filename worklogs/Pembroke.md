@@ -1,3 +1,5 @@
+* remove test pypi publish
+
 ### 2021-10-15 13:47:48.023255: clock-out
 
 * removing py36 build

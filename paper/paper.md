@@ -148,7 +148,9 @@ Kamodo extends the capabilities of space weather resource containers by allowing
 
 # Acknowledgements
 
-Initial development of Kamodo was spearheaded by the Community Coordinated Modeling Center through NSF. Continued support for Kamodo is provided by Ensemble Government Services, LTD. via NASA Small Business Innovation Research (SBIR) Phase I/II, grant No 80NSSC20C0290, 80NSSC21C0585, resp.
+Development of Kamodo was initiated by the Community Coordinated Modeling Center, with funding provided by Catholic University of America under the NSF Division of Atmospheric and Geospace Sciences, Grant No 1503389.
+Continued support for Kamodo is provided by Ensemble Government Services, LTD. via NASA Small Business Innovation Research (SBIR) Phase I/II, grant No 80NSSC20C0290, 80NSSC21C0585, resp.
+Additional support is provided by NASA’s Heliophysics Data and Model Consortium.
 
 The authors would like to thank Nicholas Gross, Katherine Garcia-Sage, and Richard Mullinex. 
 

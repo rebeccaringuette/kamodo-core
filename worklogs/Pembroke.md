@@ -1,3 +1,6 @@
+
+### 2021-10-21 10:17:26.721944: clock-in
+
 ### 2021-10-18 12:25:10.516747: clock-out
 
 * fixed Acknowledgements

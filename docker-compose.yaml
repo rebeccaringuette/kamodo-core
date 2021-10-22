@@ -6,7 +6,7 @@ services:
     ports:
       - "8888:8888"
     build: 
-      context: .
+      context: /tmp/kamodo-core
       dockerfile: dockerfiles/kamodo-py36.Dockerfile
     command:
       - jupyter
@@ -21,7 +21,7 @@ services:
     ports:
       - "8888:8888"
     build: 
-      context: .
+      context: /tmp/kamodo-core
       dockerfile: dockerfiles/kamodo-py37.Dockerfile
     command:
       - jupyter

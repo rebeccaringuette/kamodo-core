@@ -1,3 +1,11 @@
+* capnp dependencies
+* compiling capnp
+
+```sh
+conda install -c conda-forge gcc cmake make cxx-compiler
+apt-get install capnproto
+pip install pycapnp
+```
 
 ### 2021-10-22 14:23:26.262875: clock-in
 

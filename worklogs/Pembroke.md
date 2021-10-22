@@ -1,3 +1,31 @@
+### 2021-10-22 16:38:11.668352: clock-out
+
+*  `pip install pycapnp --install-option '--force-bundled-libcapnp'` will rebuild `capnp` if the system `capnp < 0.8.0`
+
+```sh
+pip install pycapnp --install-option '--force-bundled-libcapnp'
+```
+
+* Installing capnp from git
+```sh
+conda install autoconf automake libtool sed
+cd /
+git clone https://github.com/sandstorm-io/capnproto.git
+cd capnproto
+```
+
+```sh
+pip install pkgconfig cython # for setup.py
+python setup.py
+```
+
+
+```sh
+pip install \
+    --install-option "--libcapnp-url" \
+    --install-option "https://github.com/capnproto/capnproto/archive/master.tar.gz" \
+    --install-option "--force-bundled-libcapnp" .`
+```
 * apt-get update
 * build like this: 
 

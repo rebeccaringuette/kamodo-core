@@ -1,3 +1,11 @@
+* apt-get update
+* build like this: 
+
+```sh
+git archive --format=tar --prefix=kamodo-core/ HEAD | (cd /tmp && tar xf -)
+docker-compose build
+```
+
 * capnp dependencies
 * compiling capnp
 

@@ -26,7 +26,8 @@ RUN pip install kaleido
 
 # capnp install
 RUN conda install -c conda-forge gcc cmake make cxx-compiler
-RUN apt-get install capnproto
+RUN apt-get update
+RUN apt-get install -y capnproto
 RUN pip install pycapnp
 
 # Install latest kamodo

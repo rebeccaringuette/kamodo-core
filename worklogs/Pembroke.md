@@ -1,3 +1,6 @@
+
+### 2021-10-22 11:06:00.397465: clock-in
+
 ### 2021-10-21 11:15:13.264137: clock-out
 
 * consider capn proto https://capnproto.org/

@@ -1,3 +1,6 @@
+
+### 2021-10-23 15:47:12.356723: clock-in
+
 ### 2021-10-22 16:38:11.668352: clock-out
 
 *  `pip install pycapnp --install-option '--force-bundled-libcapnp'` will rebuild `capnp` if the system `capnp < 0.8.0`

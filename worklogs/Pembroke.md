@@ -1,3 +1,26 @@
+### 2021-10-23 17:51:45.917811: clock-out
+
+* trying clang instead `conda install -c conda-forge clang`
+reinstall cxx compiler `conda install -c conda-forge cxx-compiler`
+* Still getting compiler error:
+```sh
+/opt/conda/bin/../lib/gcc/aarch64-conda-linux-gnu/9.4.0/../../../../aarch64-conda-linux-gnu/bin/ld: /opt/conda/lib/libstdc++.so: undefined reference to `__cxa_thread_atexit_impl@GLIBC_2.18'
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:2117: capnpc-c++] Error 1
+make: *** Waiting for unfinished jobs....
+libtool: link: ( cd ".libs" && rm -f "libcapnp-json.la" && ln -s "../libcapnp-json.la" "libcapnp-json.la" )
+(base) root@eef962dcd3f5:/capnproto/c++# 
+```
+
+* installing pacman on ubuntu https://ostechnix.com/use-archlinuxs-pacman-package-manager-unix-like-oss/
+```sh
+wget -O /usr/local/bin/pacapt https://github.com/icy/pacapt/raw/ng/pacapt
+chmod 755 /usr/local/bin/pacapt
+ln -sv /usr/local/bin/pacapt /usr/local/bin/pacman || true
+```
+* Docker buildx for cross-platform?
+* Installing capnproto from git and cmake.. also uses autoconf, automake, libtool
+* Trying to install capnproto from tarball fails in conda (using autoconf instead of cmake), related to sed and conda's libtool `/usr/bin/sed: not found` https://github.com/idaholab/moose/issues/16232
 
 ### 2021-10-23 16:19:01.537808: clock-in
 

@@ -1,3 +1,4 @@
+* installed capnproto 0.9.1
 
 ### 2021-10-26 16:13:56.698019: clock-in
 

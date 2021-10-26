@@ -1,3 +1,8 @@
+
+### 2021-10-26 16:13:56.698019: clock-in
+
+* on docker-compose `2.4`, can use `platform: linux/amd64` for emulation
+
 ### 2021-10-23 17:51:45.917811: clock-out
 
 * trying clang instead `conda install -c conda-forge clang`

@@ -12,13 +12,13 @@ authors:
   - name: Lutz Rastaetter
     affiliation: 2
   - name: Rebecca Ringuette
-    affiliation: 2
+    affiliation: 4, 2
   - name: Oliver Gerland
-    affiliation: 4
+    affiliation: 5
   - name: Dhruv Patel
-    affiliation: 4
+    affiliation: 5
   - name: Michael Contreras
-    affiliation: 4
+    affiliation: 5
 
 affiliations:
  - name: Asher Pembroke, DBA
@@ -27,8 +27,10 @@ affiliations:
    index: 2
  - name: University of Michigan
    index: 3
- - name: Ensemble Government Services
+ - name: ADNET Systems Inc.
    index: 4
+ - name: Ensemble Government Services
+   index: 5
 date: Sept 28, 2021
 bibliography: paper.bib
 ---
@@ -61,7 +63,7 @@ Kamodo is expressive enough to meet the needs of most scientists, educators, and
 
 # Usage
 
-The main entrypoint is a subclass of Kamodo that preregisters interpolators for an underlying dataset:
+The main entrypoint is a subclass of Kamodo that preregisters interpolators for an underlying dataset:  (I think this part would be stronger if it were independent of Pysat, but then reference the Pysat interface later as an example of Kamodo's interoperability with other python packages.)
 
 ```python
 from pysat_kamodo.nasa import Pysat_Kamodo
@@ -130,7 +132,7 @@ which returns references for the C/NOFS platform [@cnofs] and VEFI instrument [@
 
 Kamodo is designed for compatibility with python-in-heliosphysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018], [@pysat200].
 This is accomplished through Kamodo subclasses, which are responsible for registering each scientifically relevant variable with an interpolating function.
-Metadata describing the function's units and other supporting documentation (citation, latex formatting, etc), may be provisioned by way of the `@kamodofy` decorator.
+Metadata describing the function's units and other supporting documentation (citation, latex formatting, etc) may be provisioned by way of the `@kamodofy` decorator.
 
 The PysatKamodo [@pysatKamodo] interface is made available in a separate git repository. Readers for various space weather models and data sources are under development by the Community Coordinated Modling Center and are hosted in their official NASA repository.
 
@@ -139,7 +141,7 @@ Second, units are treated as function metadata, so the types returned by functio
 Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy], Pint [@pint], etc.
 
 Kamodo can utilize some of the capabilities of raw data APIs such as HAPI, and a HAPI kamodo subclass is maintained in the ccmc readers repository [@nasaKamodo]. However, Kamodo also provides an API for purely functional data access, which allows users to specify positions or times for which interpolated values should be returned.
-To that end, a prototype for functional REST API is available [@ensembleKamodo] and a GRPC api is under development.
+To that end, a prototype for functional REST API is available [@ensembleKamodo] and a GRPC api for direct access from other programming languages is under development.
 
 Kamodo container services may be built on other containerized offerings.
 Containerization allows dependency conflicts to be avoided through isolated install environments.
@@ -152,7 +154,7 @@ Development of Kamodo was initiated by the Community Coordinated Modeling Center
 Continued support for Kamodo is provided by Ensemble Government Services, LTD. via NASA Small Business Innovation Research (SBIR) Phase I/II, grant No 80NSSC20C0290, 80NSSC21C0585, resp.
 Additional support is provided by NASA’s Heliophysics Data and Model Consortium.
 
-The authors would like to thank Nicholas Gross, Katherine Garcia-Sage, and Richard Mullinex. 
+The authors would like to thank Nicholas Gross, Katherine Garcia-Sage, and Richard Mullinex (for what?). 
 
 
 # References

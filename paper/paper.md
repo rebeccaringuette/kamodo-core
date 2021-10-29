@@ -108,9 +108,9 @@ Kamodo's plotting routines can automatically visualize this function at multiple
 k.plot('W')
 ```
 
-The result of the above command is shown in \autoref{fig:weierstrass}. This exemplifies Kamodo's ability to work with arbitrarily highly resolved datasets through function inspection.
+The result of the above command is shown in \autoref{fig:weierstrass}. This exemplifies Kamodo's ability to work with highly resolved datasets through function inspection.
 
-![Auto-generated plot of Weirstrass function.\label{fig:weierstrass}](https://github.com/pysat/pysatKamodo/raw/master/docs/cnofs_B_up.png)
+![Auto-generated plot of Weirstrass function.\label{fig:weierstrass}](https://raw.githubusercontent.com/EnsembleGovServices/kamodo-core/master/docs/notebooks/weirstrass.png)
 
  
 ## Kamodo Subclasses

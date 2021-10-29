@@ -1,3 +1,4 @@
+* linking to correct weirstrass image
 * adding Weierstrass notebook and example image
 * added weierstrass example
 

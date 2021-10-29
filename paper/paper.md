@@ -63,7 +63,59 @@ Kamodo is expressive enough to meet the needs of most scientists, educators, and
 
 # Usage
 
-The main entrypoint is a subclass of Kamodo that preregisters interpolators for an underlying dataset:  (I think this part would be stronger if it were independent of Pysat, but then reference the Pysat interface later as an example of Kamodo's interoperability with other python packages.)
+## Kamodo Base Class
+
+Kamodo's base class manages the registration of functionalized resources. As an example, here is how one might register the non-differentiable Weierstrass function [@weierstrass1872uber].
+
+```python
+from kamodo import Kamodo, kamodofy
+import numpy as np
+
+@kamodofy(
+    equation=r"\sum_{n=0}^{500} (1/2)^n cos(3^n \pi x)",
+    citation='Weierstrass, K. (1872). Uber continuirliche functionen eines reellen arguments, die fur keinen worth des letzteren einen bestimmten differentailqutienten besitzen, Akademievortrag. Math. Werke, 71-74.'
+    )
+def weierstrass(x = np.linspace(-2, 2, 1000)):
+    '''
+    Weierstrass function (continuous and non-differentiable)
+
+    https://en.wikipedia.org/wiki/Weierstrass_function
+    '''
+    nmax = 500
+    n = np.arange(nmax)
+
+    xx, nn = np.meshgrid(x, n)
+    ww = (.5)**nn * np.cos(3**nn*np.pi*xx)
+    return ww.sum(axis=0)
+
+k = Kamodo(W=weierstrass)
+```
+When run in a jupyter notebook, the latex representation of the above function is shown: 
+
+\begin{equation}W{\left(x \right)} = \sum_{n=0}^{500} (1/2)^n cos(3^n \pi x)\end{equation}
+
+This function can be queried at any point within its domain:
+
+```python
+k.W(0.25)
+
+# array([0.47140452])
+```
+
+Kamodo's plotting routines can automatically visualize this function at multiple zoom levels:
+
+```python
+k.plot('W')
+```
+
+The result of the above command is shown in \autoref{fig:weierstrass}. This exemplifies Kamodo's ability to work with arbitrarily highly resolved datasets through function inspection.
+
+![Auto-generated plot of Weirstrass function.\label{fig:weierstrass}](https://github.com/pysat/pysatKamodo/raw/master/docs/cnofs_B_up.png)
+
+ 
+## Kamodo Subclasses
+
+The Kamodo base class may be subclassed when third-packages are required. For example, the `pysatKamodo` subclass preregisters interpolating functions for Pysat[@pysat200] Instruments: 
 
 ```python
 from pysat_kamodo.nasa import Pysat_Kamodo
@@ -76,8 +128,7 @@ kcnofs = Pysat_Kamodo('2009, 1, 1', # Pysat_Kamodo allows string dates
 kcnofs['B'] = '(B_north**2+B_up**2+B_west**2)**.5' # a derived variable
 ```
 
-When run in a jupyter notebook, the above kamodo object renders as a set of functions ready for interpolation: 
-
+Here is how the `kcnofs` instance appears in a jupyter notebook: 
 
 \begin{equation}\operatorname{B_{north}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
 \begin{equation}\operatorname{B_{up}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
@@ -94,7 +145,7 @@ When run in a jupyter notebook, the above kamodo object renders as a set of func
 \begin{equation}\operatorname{dB_{par}}{\left(t \right)}[nT] = \lambda{\left(t \right)}\end{equation}
 \begin{equation}B{\left(t \right)}[nT^{1.0}] = \sqrt{\operatorname{B_{north}}^{2}{\left(t \right)} + \operatorname{B_{up}}^{2}{\left(t \right)} + \operatorname{B_{west}}^{2}{\left(t \right)}}\end{equation}
 
-Units are clearly visible on the left hand side, while the right hand side of these expressions represent interpolating functions ready for evaluation:
+Units are explicitly shown on the left hand side, while the right hand side of these expressions represent interpolating functions ready for evaluation:
 
 ```python
 kcnofs.B(pd.DatetimeIndex(['2009-01-01 00:00:03','2009-01-01 00:00:05']))
@@ -154,7 +205,7 @@ Development of Kamodo was initiated by the Community Coordinated Modeling Center
 Continued support for Kamodo is provided by Ensemble Government Services, LTD. via NASA Small Business Innovation Research (SBIR) Phase I/II, grant No 80NSSC20C0290, 80NSSC21C0585, resp.
 Additional support is provided by NASA’s Heliophysics Data and Model Consortium.
 
-The authors would like to thank Nicholas Gross, Katherine Garcia-Sage, and Richard Mullinex (for what?). 
+The authors are thankful for the advice and support of Nicholas Gross, Katherine Garcia-Sage for, and Richard Mullinex. 
 
 
 # References

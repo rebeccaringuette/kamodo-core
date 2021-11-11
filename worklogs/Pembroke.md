@@ -1,3 +1,31 @@
+### 2021-11-11 11:02:14.860822: clock-out
+
+* benefits of capnproto relative to grpc
+    1. small size of generated bindings
+    1. fast startup
+* looking for alternative installation https://github.com/mirage/capnp-rpc
+
+<details> <summary> container capnproto build failures </summary>
+
+```sh
+#16 682.5 make[2]: Leaving directory '/capnproto-c++-0.9.1'
+#16 682.5 make[1]: *** [Makefile:3861: check-am] Error 2
+#16 682.6 make[1]: Leaving directory '/capnproto-c++-0.9.1'
+#16 682.6 make: *** [Makefile:3864: check] Error 2
+------
+kamodo-py37.Dockerfile:36
+--------------------
+  34 |     WORKDIR capnproto-c++-0.9.1
+  35 |     RUN  ./configure 
+  36 | >>> RUN  make -j6 check
+  37 |     RUN  make install
+  38 |     
+--------------------
+error: failed to solve: process "/bin/sh -c make -j6 check" did not complete successfully: exit code: 2
+ERROR: Service 'kamodo-py37' failed to build : Build failed
+```
+
+</details>
 
 ### 2021-11-11 10:01:57.328257: clock-in: T-5m 
 

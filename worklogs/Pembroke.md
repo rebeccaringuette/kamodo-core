@@ -1,3 +1,5 @@
+* compilation failures
+* commelec symbolic microgrid framework using capnproto! https://github.com/niekbouman/commelec-api
 
 ### 2021-11-11 11:27:36.382178: clock-in
 

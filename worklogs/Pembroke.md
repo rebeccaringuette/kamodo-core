@@ -1,3 +1,6 @@
+
+### 2021-11-17 11:41:00.936867: clock-in
+
 ### 2021-11-16 20:18:31.975195: clock-out
 
 * pycapnp in docker https://github.com/capnproto/pycapnp/issues/273

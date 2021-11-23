@@ -1,3 +1,5 @@
+### 2021-11-23 12:02:33.567173: clock-out
+
 * schema language, calculator tests
 * to create a new file id: `capnp id`
 * can test rpc with socket pair:

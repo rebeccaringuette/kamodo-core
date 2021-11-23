@@ -1,3 +1,20 @@
+* schema language, calculator tests
+* to create a new file id: `capnp id`
+* can test rpc with socket pair:
+
+```python
+
+class ServerImpl():
+    ...
+
+read, write = socket.socketpair()
+
+_ = capnp.TwoPartyServer(write, bootstrap=ServerImpl())
+client = capnp.TwoPartyClient(read)
+```
+
+* capnproto schema language https://capnproto.org/language.html
+
 
 ### 2021-11-23 10:13:22.550833: clock-in
 

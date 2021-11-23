@@ -113,6 +113,75 @@ addressbook_capnp.Person.from_bytes_packed(alice.to_bytes_packed())
 #
 # Specification here https://capnproto.org/rpc.html
 #
-# The key idea is minimizing the number of trips to/from the server by chaining dependent calls. This works really well with kamodo's functional style, where the user is encouraged to use function composition in their pipelines!
+# The key idea is minimizing the number of trips to/from the server by chaining dependent calls. This fits really well with kamodo's functional style, where the user is encouraged to use function composition in their pipelines! We want to be able to leverage these capabilities in our `KamodoRPC` class.
 
+# ### Calculator test
+#
+# The calculator spec is located in `calculator.capnp` and is copied from the pycapnp repo.
+#
+# Run the calculator server in a separate window before executing these cells.
+#
+# `python calculator_server.py 127.0.0.1:6000`
 
+calculator_capnp = capnp.load('calculator.capnp')
+client = capnp.TwoPartyClient('127.0.0.1:6000')
+
+# ### bootstrapping
+# There could be many interfaces defined within a given service. The client's `bootstrap` method will get the interface marked for bootstrapping by server.
+#
+# First bootstrap the Calculator interface
+
+calculator = client.bootstrap().cast_as(calculator_capnp.Calculator)
+
+calculator2 = client.bootstrap().cast_as(calculator_capnp.Calculator)
+
+# The server defines which interface to bootstrap: `TwoPartyServer(address, bootstrap=CalculatorImpl()`.
+
+# ### methods
+# Ways to call an RPC method
+
+# +
+request = calculator.evaluate_request()
+request.expression.literal = 123
+eval_promise = request.send()
+
+# result = eval_promise.wait().value.read().wait() # blocking?
+read_result = eval_promise.then(lambda ret: ret.value.read()).wait() # chained
+read_result.value
+# -
+
+result.value
+
+# You may also interogate available rpc methods:
+
+calculator.schema.method_names
+
+calculator.schema.methods
+
+# ### test rpc
+# * can test rpc with socket pair:
+#
+# ```python
+#
+# class ServerImpl():
+#     ...
+#
+# read, write = socket.socketpair()
+#
+# _ = capnp.TwoPartyServer(write, bootstrap=ServerImpl())
+# client = capnp.TwoPartyClient(read)
+# ```
+#
+
+# ### Type Ids
+#
+# To generate file ids, make sure you have capnp command line tool installed:
+# ```sh
+# conda install -c conda-forge capnp
+# capnp id # generates unique file id
+# capnp compile -ocapnp calculator.capnp # returns a schema filled in with ids for all new types
+# ```
+#
+# The unique type identifiers aid in backward compatibility and schema flexibility.
+#
+# capnproto schema language reference https://capnproto.org/language.html

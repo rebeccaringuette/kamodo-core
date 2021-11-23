@@ -1,3 +1,6 @@
+
+### 2021-11-23 15:31:35.528952: clock-in
+
 ### 2021-11-23 12:02:33.567173: clock-out
 
 * schema language, calculator tests

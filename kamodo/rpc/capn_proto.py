@@ -208,14 +208,18 @@ def param_to_array(param):
     """convert from parameter to numpy array
     assume input is numpy binary
     """
-    return np.frombuffer(param.data).reshape(param.shape)
+    if len(param.data) > 0:
+        return np.frombuffer(param.data).reshape(param.shape)
+    else:
+        return np.array([])
 
 def array_to_param(arr):
     """convert an array to an rpc parameter"""
     param = kamodo_capnp.Kamodo.Variable.new_message()
-    param.data = arr.tobytes()
-    param.shape = arr.shape
-    param.dtype = class_name(arr)
+    if len(arr) > 0:
+        param.data = arr.tobytes()
+        param.shape = arr.shape
+        param.dtype = class_name(arr)
     return param
 
 class Poly(kamodo_capnp.Kamodo.Function.Server):
@@ -223,14 +227,14 @@ class Poly(kamodo_capnp.Kamodo.Function.Server):
         pass
         
     def call(self, params, **kwargs):
+        if len(params) == 0:
+            return kamodo_capnp.Kamodo.Variable.new_message()
         print('serverside function called with {} params'.format(len(params)))
         param_arrays = [param_to_array(_) for _ in params]
         x = sum(param_arrays)
-        
         result = x**2 - x - 1
         result_ = array_to_param(result)
         return result_
-
 
 
 # -
@@ -289,20 +293,85 @@ a
 
 serverside_function([a, a, a])
 
+Poly
+
 # +
 from kamodo import Kamodo
+import capnp
+import kamodo_capnp
 
-class KamodoRPC(Kamodo):
-    def __init__(self, rpc_api):
-        self.rpc_api = rpc_api
-        super(Kamodo, self).__init__()
-        
+class KamodoRPCImpl(kamodo_capnp.Kamodo.Server):
+    """Interface class for capnp"""
+    def __init__(self):
+        pass
+    
+    def getFields(self, **kwargs):
+        """
+        Need to return a list of fields
+          struct Field {
+            symbol @0 :Text;
+            func @1 :Function;
+          }
+        """
+
+        f = kamodo_capnp.Kamodo.Field.new_message(symbol='f', func=Poly())
+        return [f]
 
 
 # -
 
+read, write = socket.socketpair()
+
+write = capnp.TwoPartyServer(write, bootstrap=KamodoRPCImpl())
+
+client = capnp.TwoPartyClient(read)
+kap = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+
+fields = kap.getFields().wait().fields
+
+param_to_array(fields[0].func.call([
+    array_to_param(a)]).wait().result)
+
+
+class KamodoRPC(Kamodo):
+    def __init__(self, read_url=None, write_url=None, **kwargs):
+        
+        if read_url is not None:
+            self.client = capnp.TwoPartyClient(read_url)
+        if write_url is not None:
+            self.server = capnp.TwoPartyServer(write_url,
+                                               bootstrap=kamodo_capnp.Kamodo())
+        super(Kamodo, self).__init__(**kwargs)
+
+
 # h(x,y) = f_server1(x) + g_server1(y)
 
-KamodoRPC('http://www.kamodo.com/resource.capnp')
+from sympy import lambdify
+from sympy.abc import a,b,c
+
+
+# +
+def myadd(*args):
+    print("hey {}, I'll make you a promise".format(args))
+    return sum(args)
+
+def mySymbol(symbol):
+    print("hey {}, I'll hold onto you".format(symbol))
+    return symbol
+
+expr = a+b+c
+
+def remote_expr(expr):
+    """mock execution on remote server"""
+    func = lambdify(args = expr.args,
+                    expr = srepr(a+b+c).replace(
+                        'Add(', 'myadd(').replace(
+                        'Symbol(', 'mySymbol('),
+                   modules = dict(myadd=myadd,
+                                  mySymbol=mySymbol))
+    return func
+
+remote_expr(a+b+c)(3,4,5+2)
+# -
 
 

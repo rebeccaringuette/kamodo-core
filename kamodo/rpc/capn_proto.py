@@ -150,7 +150,7 @@ read_result = eval_promise.then(lambda ret: ret.value.read()).wait() # chained
 read_result.value
 # -
 
-result.value
+read_result
 
 # You may also interogate available rpc methods:
 
@@ -185,3 +185,90 @@ calculator.schema.methods
 # The unique type identifiers aid in backward compatibility and schema flexibility.
 #
 # capnproto schema language reference https://capnproto.org/language.html
+
+# ## KamodoRPC
+
+# +
+import capnp
+# capnp.remove_import_hook()
+# kamodo_capnp = capnp.load('kamodo.capnp')
+
+import kamodo_capnp
+# -
+
+import numpy as np
+
+
+# +
+def class_name(obj):
+    """get fully qualified class name of object"""
+    return ".".join([obj.__class__.__module__, obj.__class__.__name__])
+
+def param_to_array(param):
+    """convert from parameter to numpy array
+    assume input is numpy binary
+    """
+    return np.frombuffer(param.data).reshape(param.shape)
+
+def array_to_param(arr):
+    param = kamodo_capnp.Kamodo.Variable.new_message()
+    param.data = arr.tobytes()
+    param.shape = arr.shape
+    param.dtype = class_name(arr)
+    return param
+
+
+# -
+
+class poly(kamodo_capnp.Kamodo.Function.Server):
+    def call(self, fields, **kwargs):
+        print('poly called')
+        x = param_to_array(fields[0])
+        result = x**2 - x - 1
+        result_ = array_to_param(result)
+        return result_
+
+
+
+# Set up the server-side poly function.
+
+# +
+import socket
+read, write = socket.socketpair()
+
+server = capnp.TwoPartyServer(write, bootstrap=poly)
+
+# +
+client = capnp.TwoPartyClient(read)
+
+polynomial = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
+# -
+
+a = np.linspace(-5,5,12).reshape(3,4)
+
+b = array_to_param(a)
+
+result_promise = polynomial.call([b])
+
+result_promise.wait()
+
+param_to_array(result.wait())
+
+# +
+remote = cap.foo(i=5)
+response = remote.wait()
+
+assert response.x == "125"
+# -
+
+kap = kamodo_capnp
+
+
+class Server(kamodo_capnp.Kamodo.Server):
+    def foo(self, i, j, **kwargs):
+        return str(i * 5 + self.val)
+
+
+kamodo_capnp.Variable
+
+

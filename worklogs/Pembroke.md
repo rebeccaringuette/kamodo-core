@@ -1,3 +1,6 @@
+
+### 2021-11-24 09:05:44.835160: clock-in
+
 ### 2021-11-23 18:16:15.164729: clock-out
 
 * prototyping kamodo RPC

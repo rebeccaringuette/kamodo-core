@@ -1,3 +1,6 @@
+
+### 2021-11-24 13:28:26.876278: clock-in
+
 ### 2021-11-24 10:32:36.099034: clock-out: T-30m 
 
 * got rpc working for server side function

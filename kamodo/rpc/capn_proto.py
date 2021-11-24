@@ -211,64 +211,98 @@ def param_to_array(param):
     return np.frombuffer(param.data).reshape(param.shape)
 
 def array_to_param(arr):
+    """convert an array to an rpc parameter"""
     param = kamodo_capnp.Kamodo.Variable.new_message()
     param.data = arr.tobytes()
     param.shape = arr.shape
     param.dtype = class_name(arr)
     return param
 
-
-# -
-
-class poly(kamodo_capnp.Kamodo.Function.Server):
-    def call(self, fields, **kwargs):
-        print('poly called')
-        x = param_to_array(fields[0])
+class Poly(kamodo_capnp.Kamodo.Function.Server):
+    def __init__(self):
+        pass
+        
+    def call(self, params, **kwargs):
+        print('serverside function called with {} params'.format(len(params)))
+        param_arrays = [param_to_array(_) for _ in params]
+        x = sum(param_arrays)
+        
         result = x**2 - x - 1
         result_ = array_to_param(result)
         return result_
 
 
 
-# Set up the server-side poly function.
+# -
 
-# +
+# Set up a client/server socket for testing.
+
 import socket
 read, write = socket.socketpair()
 
-server = capnp.TwoPartyServer(write, bootstrap=poly)
+# instantiate a server with a Poly object
 
-# +
+server = capnp.TwoPartyServer(write, bootstrap=Poly())
+
+# instantiate a client with bootstrapping
+#
+# > capabilities are intrinsically dynamic, and they hold no run time type information, so we need to pick what interface to interpret them as.
+
 client = capnp.TwoPartyClient(read)
-
+# polynomial implementation lives on the server
 polynomial = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
-# -
 
 a = np.linspace(-5,5,12).reshape(3,4)
 
+a
+
 b = array_to_param(a)
 
-result_promise = polynomial.call([b])
-
-result_promise.wait()
-
-param_to_array(result.wait())
+b.to_dict()
 
 # +
-remote = cap.foo(i=5)
-response = remote.wait()
+poly_promise = polynomial.call([b,b,b])
 
-assert response.x == "125"
+# evaluate ...
+
+response = poly_promise.wait()
 # -
 
-kap = kamodo_capnp
+param_to_array(response.result) # (sum(b))**2 - sum(b) - 1
 
 
-class Server(kamodo_capnp.Kamodo.Server):
-    def foo(self, i, j, **kwargs):
-        return str(i * 5 + self.val)
+class FunctionRPC:
+    def __init__(self):
+        self.func = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
+    
+    def __call__(self, params):
+        params_ = [array_to_param(_) for _ in params]
+        func_promise = self.func.call(params_)
+        # evaluate
+        response = func_promise.wait().result
+        return param_to_array(response)
 
 
-kamodo_capnp.Variable
+serverside_function = FunctionRPC()
+
+a
+
+serverside_function([a, a, a])
+
+# +
+from kamodo import Kamodo
+
+class KamodoRPC(Kamodo):
+    def __init__(self, rpc_api):
+        self.rpc_api = rpc_api
+        super(Kamodo, self).__init__()
+        
+
+
+# -
+
+# h(x,y) = f_server1(x) + g_server1(y)
+
+KamodoRPC('http://www.kamodo.com/resource.capnp')
 
 

@@ -1,3 +1,4 @@
+* str format
 * integrating comments from rringuette
 
 ### 2021-10-29 12:29:28.465940: clock-out

@@ -1,3 +1,7 @@
+* swapping algebraic operators
+* expression manipulation https://docs.sympy.org/latest/tutorial/manipulation.html
+* asteval https://newville.github.io/asteval/basics.html
+* lambdify tutorial https://www.sympy.org/scipy-2017-codegen-tutorial/notebooks/22-lambdify.html
 
 ### 2021-11-29 15:13:40.362713: clock-in
 

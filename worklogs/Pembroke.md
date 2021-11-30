@@ -1,3 +1,5 @@
+### 2021-11-29 18:17:38.486818: clock-out
+
 * swapping algebraic operators
 * expression manipulation https://docs.sympy.org/latest/tutorial/manipulation.html
 * asteval https://newville.github.io/asteval/basics.html

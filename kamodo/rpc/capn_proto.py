@@ -351,81 +351,16 @@ from sympy.abc import a,b,c
 
 import numpy as np
 
-# +
-# np.multiply?
-
-# +
-import math
-
-def myadd(*args):
-    print("hey {}, I'll make you a promise".format(args))
-    return np.sum(args)
-
-def mymult(*args):
-    return np.multiply(*args)
-
-def mySymbol(symbol):
-    print("hey {}, I'll hold onto you".format(symbol))
-    return symbol
-
-expr = a+b+c
-
-def remote_expr(expr):
-    """mock execution on remote server"""
-    func = lambdify(args = expr.args,
-                    expr = expr.replace(
-                        'Add(', 'myadd(').replace(
-                        'Symbol(', 'mySymbol(').replace(
-                        'Mul(', 'mymult('),
-                   modules = dict(myadd=myadd,
-                                  mySymbol=mySymbol,
-                                  mymult=mymult,))
-    return func
-
-remote_expr(a+b*c)(3,4,5+2)
-# -
-expr = a+b*c
-
-expr.args
-
-expr.args_cnc()
-
-expr.as_coefficients_dict()
-
-# +
-# lambdify?
-# -
-
-import sympy
-sympy.symbols('z:3')
-
-expr
-
-expr.diff(c)
-
-a, b, c, x, y = sympy.symbols('a b c x y')
-
-expr = a*(x+y)**2 + b*(x+y) + c
-expr
-
 expr.diff(x,y)
+
+# String Sanitizing
 
 from asteval import Interpreter
 
 aeval = Interpreter()
 
-x = 3
-
 aeval('x=3')
 aeval('1+x')
-
-myadd
-
-aeval.symtable['sum'] = myadd
-
-myadd(3,4)
-
-
 
 aeval.symtable['sum']
 
@@ -433,37 +368,48 @@ from sympy import sympify
 
 from kamodo import parse_expr
 
-expr = parse_expr('a+(b+d)*c+g(x)')
-
-terms = expr.args
-
-parse_expr('add_rpc(3,5)')
-
-expr
-
 from sympy import Add
-
-isinstance(type(expr), Add)
-
-from sympy import Wild, Add, Mul
-
-# +
-# Wild?
-# -
-
-a, b = Wild('a'), Wild('b')
-
-expr
 
 from sympy import Function
 
+import numpy as np
+
+# +
+# np.product?
+# -
+
+a = np.linspace(-1,1,12).reshape((3,4))
+a
+
+from operator import mul, add, pow
+
+from functools import reduce
+
+reduce(add, [a,a,a])
+
+pow(2,3)
+
 # +
 from sympy import Add, Mul, Pow
+from functools import reduce
+from operator import mul, add, pow
 
 AddRPC = Function('AddRPC')
-MultRPC = Function('MultRPC')
+MulRPC = Function('MulRPC')
 PowRPC = Function('PowRPC')
 
+def add_impl(*args):
+    print('computing {}'.format('+'.join((str(_) for _ in args))))
+    return reduce(add, args)
+
+def mul_impl(*args):
+    print('computing {}'.format('*'.join((str(_) for _ in args))))
+    return reduce(mul, args)
+
+def pow_impl(base, exp):
+    print('computing {}^{}'.format(base, exp))
+    return pow(base,exp)
+    
 
 def pre(expr):
     if len(expr.args) > 0:
@@ -471,14 +417,61 @@ def pre(expr):
         if expr.func == Add:
             return AddRPC(*gather)
         if expr.func == Mul:
-            return MultRPC(*gather)
+            return MulRPC(*gather)
         if expr.func == Pow:
             return PowRPC(*gather)
     return expr
 
 expr = sympify('30*a*b + c**2+sin(c)')
-pre(expr)
+expr_RPC = pre(expr)
+expr_RPC
 # -
+
+add_impl(3,4,5)
+
+mul_impl(3,4,5)
+
+pow_impl(3,4)
+
+func_impl = dict(AddRPC=add_impl,
+                 MulRPC=mul_impl,
+                 PowRPC=pow_impl)
+
+from kamodo import Kamodo
+
+# +
+from util import sign_defaults
+
+class KamodoClient(Kamodo):
+    def __init__(self, server, **kwargs):
+        self._server = server
+        super(KamodoClient, self).__init__(**kwargs)
+        
+    def vectorize_function(self, symbol, rhs_expr, composition):
+        """lambdify the input expression using server-side promises"""
+        print('vectorizing {} = {}'.format(symbol, rhs_expr))
+        print('composition keys {}'.format(list(composition.keys())))
+        rpc_expr = pre(rhs_expr)
+        func = lambdify(symbol.args, rpc_expr, modules=[func_impl, 'numpy', composition])
+        signature = sign_defaults(symbol, rhs_expr, composition)
+        return signature(func)
+    
+kamodo = KamodoClient('localhost:8050')
+kamodo['f[cm]'] = 'x**2-x-1'
+kamodo['g'] = 'f**2'
+kamodo['h[km]'] = 'f'
+kamodo
+# -
+
+kamodo.f(3)
+
+assert kamodo.f(3) == 3**2 - 3 - 1
+
+kamodo.g(3)
+
+kamodo.h(3)
+
+kamodo
 
 from kamodo import reserved_names
 

@@ -1,3 +1,6 @@
+
+### 2021-11-30 16:02:01.580713: clock-in
+
 ### 2021-11-29 18:17:38.486818: clock-out
 
 * swapping algebraic operators
@@ -327,7 +330,6 @@ pio.write_image(fig, "cnofs_B_up.svg", engine="kaleido")
 ### 2021-10-08 12:36:27.275094: clock-in
 
 * check for div output_type
->>>>>>> master
 * remoded ccmc dockerfiles
 
 ### 2021-09-24 14:12:46.469270: clock-out

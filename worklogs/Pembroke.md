@@ -1,3 +1,6 @@
+
+### 2021-12-01 14:03:27.575056: clock-in
+
 ### 2021-12-01 10:01:22.631720: clock-out
 
 * implementing serverside algebra

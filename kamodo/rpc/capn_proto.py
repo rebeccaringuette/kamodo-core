@@ -186,20 +186,15 @@ calculator.schema.methods
 #
 # capnproto schema language reference https://capnproto.org/language.html
 
-# ## KamodoRPC
+# ## RPC Parameters
+# These variables can be created by the server/client and wrap numpy arrays.
 
 # +
 import capnp
 # capnp.remove_import_hook()
 kamodo_capnp = capnp.load('kamodo.capnp')
-
-# import kamodo_capnp
-# -
-
 import numpy as np
 
-
-# +
 def class_name(obj):
     """get fully qualified class name of object"""
     return ".".join([obj.__class__.__module__, obj.__class__.__name__])
@@ -222,6 +217,32 @@ def array_to_param(arr):
         param.dtype = class_name(arr)
     return param
 
+
+# -
+
+a = np.linspace(-5,5,12).reshape(3,4)
+
+a
+
+b = array_to_param(a)
+
+b.to_dict()
+
+# ## RPC Functions
+#
+# These functions execute on the server.
+
+# +
+import capnp
+# capnp.remove_import_hook()
+kamodo_capnp = capnp.load('kamodo.capnp')
+
+# import kamodo_capnp
+# -
+
+import numpy as np
+
+
 class Poly(kamodo_capnp.Kamodo.Function.Server):
     def __init__(self):
         pass
@@ -236,8 +257,6 @@ class Poly(kamodo_capnp.Kamodo.Function.Server):
         result_ = array_to_param(result)
         return result_
 
-
-# -
 
 # Set up a client/server socket for testing.
 
@@ -255,14 +274,6 @@ server = capnp.TwoPartyServer(write, bootstrap=Poly())
 client = capnp.TwoPartyClient(read)
 # polynomial implementation lives on the server
 polynomial = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
-
-a = np.linspace(-5,5,12).reshape(3,4)
-
-a
-
-b = array_to_param(a)
-
-b.to_dict()
 
 # +
 poly_promise = polynomial.call([b,b,b])
@@ -293,7 +304,173 @@ a
 
 serverside_function([a, a, a])
 
-Poly
+# ## String Sanitizing
+
+from asteval import Interpreter
+
+aeval = Interpreter()
+
+aeval('x=3')
+aeval('1+x')
+
+aeval.symtable['sum']
+
+# ## RPC expressions
+#
+# Wrap sympy expressions with placeholder alegebraic calls (to be executed on server)
+
+# +
+from sympy import Function, sympify
+from sympy import Add, Mul, Pow
+from functools import reduce
+from operator import mul, add, pow
+
+AddRPC = Function('AddRPC')
+MulRPC = Function('MulRPC')
+PowRPC = Function('PowRPC')
+
+
+def rpc_expr(expr):
+    if len(expr.args) > 0:
+        gather = [rpc_expr(arg) for arg in expr.args]
+        if expr.func == Add:
+            return AddRPC(*gather)
+        if expr.func == Mul:
+            return MulRPC(*gather)
+        if expr.func == Pow:
+            return PowRPC(*gather)
+    return expr
+
+
+expr_ = sympify('30*a*b + c**2+sin(c)')
+rpc_expr(expr_)
+
+
+def add_impl(*args):
+    print('computing {}'.format('+'.join((str(_) for _ in args))))
+    return reduce(add, args)
+
+def mul_impl(*args):
+    print('computing {}'.format('*'.join((str(_) for _ in args))))
+    return reduce(mul, args)
+
+def pow_impl(base, exp):
+    print('computing {}^{}'.format(base, exp))
+    return pow(base,exp)
+    
+
+
+# -
+
+add_impl(3,4,5)
+
+mul_impl(3,4,5)
+
+pow_impl(3,4)
+
+func_impl = dict(AddRPC=add_impl,
+                 MulRPC=mul_impl,
+                 PowRPC=pow_impl)
+
+from kamodo import Kamodo
+from sympy import lambdify
+from kamodo.util import sign_defaults
+
+
+# +
+class KamodoClient(Kamodo):
+    def __init__(self, server, **kwargs):
+        self._server = server
+        super(KamodoClient, self).__init__(**kwargs)
+        
+    def vectorize_function(self, symbol, rhs_expr, composition):
+        """lambdify the input expression using server-side promises"""
+        print('vectorizing {} = {}'.format(symbol, rhs_expr))
+        print('composition keys {}'.format(list(composition.keys())))
+        func = lambdify(symbol.args,
+                        rpc_expr(rhs_expr),
+                        modules=[func_impl, 'numpy', composition])
+        signature = sign_defaults(symbol, rhs_expr, composition)
+        return signature(func)
+    
+kamodo = KamodoClient('localhost:8050')
+kamodo['f[cm]'] = 'x**2-x-1'
+kamodo['g'] = 'f**2'
+kamodo['h[km]'] = 'f'
+kamodo
+# -
+
+kamodo.f(3)
+
+assert kamodo.f(3) == 3**2 - 3 - 1
+
+kamodo
+
+# ## Serverside Algebra
+
+import socket
+read, write = socket.socketpair()
+
+# +
+from operator import mul, add, pow
+from functools import reduce
+
+# def add_impl(*args):
+#     print('computing {}'.format('+'.join((str(_) for _ in args))))
+#     return reduce(add, args)
+
+# def mul_impl(*args):
+#     print('computing {}'.format('*'.join((str(_) for _ in args))))
+#     return reduce(mul, args)
+
+# def pow_impl(base, exp):
+#     print('computing {}^{}'.format(base, exp))
+#     return pow(base,exp)
+
+class ServerSideAdd(kamodo_capnp.Kamodo.Function.Server):
+    def __init__(self):
+        pass
+        
+    def call(self, params, **kwargs):
+        if len(params) == 0:
+            return kamodo_capnp.Kamodo.Variable.new_message()
+        print('serverside Add called with {} params'.format(len(params)))
+        param_arrays = [param_to_array(_) for _ in params]
+        result = reduce(add, param_arrays)
+        result_ = array_to_param(result)
+        return result_
+
+
+# -
+
+server = capnp.TwoPartyServer(write, bootstrap=ServerSideAdd())
+
+client = capnp.TwoPartyClient(read)
+
+
+class ClientSideFunction:
+    def __init__(self, client):
+        self.func = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
+    
+    def __call__(self, *params):
+        params_ = [array_to_param(_) for _ in params]
+        func_promise = self.func.call(params_)
+        # evaluate
+        response = func_promise.wait().result
+        return param_to_array(response)
+
+
+f = ClientSideFunction(client)
+
+import numpy as np
+
+a = np.linspace(-1,1,15)
+
+f(a,a,a,a)
+
+# ## Kamodo Fields
+#
+# Define fields available for remote call
 
 # +
 from kamodo import Kamodo
@@ -343,135 +520,6 @@ class KamodoRPC(Kamodo):
                                                bootstrap=kamodo_capnp.Kamodo())
         super(Kamodo, self).__init__(**kwargs)
 
-
-# h(x,y) = f_server1(x) + g_server1(y)
-
-from sympy import lambdify, srepr
-from sympy.abc import a,b,c
-
-import numpy as np
-
-expr.diff(x,y)
-
-# String Sanitizing
-
-from asteval import Interpreter
-
-aeval = Interpreter()
-
-aeval('x=3')
-aeval('1+x')
-
-aeval.symtable['sum']
-
-from sympy import sympify
-
-from kamodo import parse_expr
-
-from sympy import Add
-
-from sympy import Function
-
-import numpy as np
-
-# +
-# np.product?
-# -
-
-a = np.linspace(-1,1,12).reshape((3,4))
-a
-
-from operator import mul, add, pow
-
-from functools import reduce
-
-reduce(add, [a,a,a])
-
-pow(2,3)
-
-# +
-from sympy import Add, Mul, Pow
-from functools import reduce
-from operator import mul, add, pow
-
-AddRPC = Function('AddRPC')
-MulRPC = Function('MulRPC')
-PowRPC = Function('PowRPC')
-
-def add_impl(*args):
-    print('computing {}'.format('+'.join((str(_) for _ in args))))
-    return reduce(add, args)
-
-def mul_impl(*args):
-    print('computing {}'.format('*'.join((str(_) for _ in args))))
-    return reduce(mul, args)
-
-def pow_impl(base, exp):
-    print('computing {}^{}'.format(base, exp))
-    return pow(base,exp)
-    
-
-def pre(expr):
-    if len(expr.args) > 0:
-        gather = [pre(arg) for arg in expr.args]
-        if expr.func == Add:
-            return AddRPC(*gather)
-        if expr.func == Mul:
-            return MulRPC(*gather)
-        if expr.func == Pow:
-            return PowRPC(*gather)
-    return expr
-
-expr = sympify('30*a*b + c**2+sin(c)')
-expr_RPC = pre(expr)
-expr_RPC
-# -
-
-add_impl(3,4,5)
-
-mul_impl(3,4,5)
-
-pow_impl(3,4)
-
-func_impl = dict(AddRPC=add_impl,
-                 MulRPC=mul_impl,
-                 PowRPC=pow_impl)
-
-from kamodo import Kamodo
-
-# +
-from util import sign_defaults
-
-class KamodoClient(Kamodo):
-    def __init__(self, server, **kwargs):
-        self._server = server
-        super(KamodoClient, self).__init__(**kwargs)
-        
-    def vectorize_function(self, symbol, rhs_expr, composition):
-        """lambdify the input expression using server-side promises"""
-        print('vectorizing {} = {}'.format(symbol, rhs_expr))
-        print('composition keys {}'.format(list(composition.keys())))
-        rpc_expr = pre(rhs_expr)
-        func = lambdify(symbol.args, rpc_expr, modules=[func_impl, 'numpy', composition])
-        signature = sign_defaults(symbol, rhs_expr, composition)
-        return signature(func)
-    
-kamodo = KamodoClient('localhost:8050')
-kamodo['f[cm]'] = 'x**2-x-1'
-kamodo['g'] = 'f**2'
-kamodo['h[km]'] = 'f'
-kamodo
-# -
-
-kamodo.f(3)
-
-assert kamodo.f(3) == 3**2 - 3 - 1
-
-kamodo.g(3)
-
-kamodo.h(3)
-
-kamodo
 
 from kamodo import reserved_names
 

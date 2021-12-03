@@ -1,3 +1,6 @@
+
+### 2021-12-03 11:02:08.087856: clock-in
+
 ### 2021-12-02 14:31:41.769702: clock-out
 
 * KamodoClient and KamodoServer prototype

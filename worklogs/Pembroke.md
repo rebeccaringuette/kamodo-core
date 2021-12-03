@@ -1,3 +1,5 @@
+### 2021-12-03 14:06:24.019346: clock-out
+
 * not sure how to implement generic functions
 
 A generic function can be defined like this

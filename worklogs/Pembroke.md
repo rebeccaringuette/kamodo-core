@@ -1,3 +1,74 @@
+* not sure how to implement generic functions
+
+A generic function can be defined like this
+
+```capnp
+interface Function {
+call @0 (params :List(Value)) -> (result: Value);
+}
+```
+
+Then we just need a way of defining a generic Value.
+
+Option 1. We could use a union within a struct so the caller can determine which type the value has
+
+```capnp
+struct Value{
+  dtype :union {
+    float64 @0 :Float64;
+    float32 @1 :Float32;
+    int8 @2 :Int8; # integer
+    uint8 @3 :UInt8; # unsigned integer
+    array @4 :Array;
+  }
+}
+
+struct Array{
+    data @0 :Data;
+    shape @1 :List(UInt32);
+}
+```
+This allows the caller to get at the type:
+
+```python
+myvalue.dtype.which() # -> float64
+```
+
+Then we would support at least all the built-in types:
+
+```
+Void: Void
+Boolean: Bool
+Integers: Int8, Int16, Int32, Int64
+Unsigned integers: UInt8, UInt16, UInt32, UInt64
+Floating-point: Float32, Float64
+Blobs: Text, Data
+```
+
+option 2. Could this be done with `AnyPointer`?
+
+```capnp
+struct Value{
+    value @0 :AnyPointer;
+    dtype :Text; # Kamodo_capnp.Kamodo.Array or capnp.types.Bool
+}
+```
+Since the caller still needs to determine which type to cast, we can grab it from `Value.dtype`, but this assumes the caller is implemented in python. 
+
+option 3. The following defines GenericVariable which maps a key to any Value type, but this still needs to be defined in the spec. 
+
+```capnp
+struct GenericVariable(Key, Value){
+    symbol @0 :Key;
+    value @1 :Value;
+}
+
+struct MyArray {
+  array @0 :GenericVariable(Text, Array); # Array also in spec
+}
+```
+
+
 
 ### 2021-12-03 11:02:08.087856: clock-in
 

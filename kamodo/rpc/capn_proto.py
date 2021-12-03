@@ -247,7 +247,7 @@ class Poly(kamodo_capnp.Kamodo.Function.Server):
     def __init__(self):
         pass
         
-    def call(self, params, **kwargs):
+    def call(self, params, flag=True, **kwargs):
         if len(params) == 0:
             return kamodo_capnp.Kamodo.Variable.new_message()
         print('serverside function called with {} params'.format(len(params)))
@@ -290,9 +290,9 @@ class FunctionRPC:
     def __init__(self):
         self.func = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
     
-    def __call__(self, params):
+    def __call__(self, params, flag=True):
         params_ = [array_to_param(_) for _ in params]
-        func_promise = self.func.call(params_)
+        func_promise = self.func.call(params_, flag=flag)
         # evaluate
         response = func_promise.wait().result
         return param_to_array(response)
@@ -302,7 +302,7 @@ serverside_function = FunctionRPC()
 
 a
 
-serverside_function([a, a, a])
+serverside_function([a, a, a], flag=False)
 
 # ## Function groups
 
@@ -325,18 +325,13 @@ kamodo_capnp.Kamodo.Field.new_message(
             defaults=[dict(symbol='x', value=b)],
         ).to_dict()
 
-kamodo_capnp.Kamodo.Field.new_message(
-            symbol='P_n',
-            func=Poly(),
-            defaults=[dict(param='x', value=b)],
-        ).to_dict()
-
 field = kamodo_capnp.Kamodo.Field.new_message(
             symbol='P_n',
+            units='Pa',
+            equation='P_n(x)=x^2-x-1',
             func=Poly(),
-            defaults=[dict(symbol='x', value=b)],
-        )   
-
+            defaults=[dict(symbol='x', value=b, units='cm')],
+        )
 field.to_dict()
 
 field.defaults[0].symbol
@@ -345,15 +340,8 @@ field.defaults[0].value.to_dict()
 
 import forge
 
-defaults = {}
-for _ in field.defaults:
-    defaults[_.symbol] = param_to_array(_.value)
-
-defaults
-
 # +
 from kamodo.util import construct_signature
-
 
 import socket
 read, write = socket.socketpair()
@@ -366,12 +354,12 @@ class KamodoServer(kamodo_capnp.Kamodo.Server):
     def __init__(self):
         field = kamodo_capnp.Kamodo.Field.new_message(
             symbol='P_n',
+            units='nPa',
             func=Poly(),
-            defaults=[dict(symbol='x', value=b)],
+            defaults=[dict(symbol='x', value=b, units='cm')],
         )        
         self.fields = [field]
-        
-        
+
     def getFields(self, **kwargs):
         return self.fields
     
@@ -390,10 +378,12 @@ class KamodoClient(Kamodo):
     def register_rpc(self, field):
         print(field.to_dict())
         defaults = {}
+        arg_units = {}
         for _ in field.defaults:
             defaults[_.symbol] = param_to_array(_.value)
+            arg_units[_.symbol] = _.units
             
-        @kamodofy
+        @kamodofy(units=field.units, arg_units=arg_units)
         @forge.sign(*construct_signature(**defaults))
         def remote_func(**kwargs):
             # params must be List(Variable) for now
@@ -409,7 +399,37 @@ kclient = KamodoClient(client)
 kclient
 # -
 
-kclient.P_n(np.linspace(-5,5,33))
+x = np.linspace(-5,5,33)
+kclient.P_n(x)
+
+# default forwarding works when input units are unchanged
+kclient['p(x[m])[Pa]'] = 'P_n'
+
+kclient['P_2[nPa]'] = lambda x=b: x**2-x-1
+
+kclient
+
+kclient.detail()
+
+try:
+    kclient.plot('p')
+except TypeError as m:
+    print(m)
+
+kclient['p_2(x[m])[nPa]'] = 'P_n'
+
+kclient.P_n
+
+kclient.to_latex()
+
+# default forwarding breaks when input units change
+kclient['p_2(x[m])[nPa]'] = 'P_n' # P_n(x[cm])[nPa]
+try:
+    kclient.plot('p_2')
+except TypeError as m:
+    print(m)
+
+kclient.plot(p=dict(x=x))
 
 # ## String Sanitizing
 

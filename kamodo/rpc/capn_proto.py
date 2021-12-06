@@ -332,21 +332,10 @@ arg_units.to_dict()
 
 meta_ = kamodo_capnp.Kamodo.Meta(
     units= 'nPa',
-    argUnits = dict(entries=[dict(key='a', value='b')]),
+    argUnits = dict(entries=[dict(key='x', value='cm')]),
     citation = '',
-    equation ='P_n(x)=x^2-x-1',
+    equation ='x^2-x-1',
     hiddenArgs = [])
-
-# +
-#     func @0 :Function;
-#     defaults @1 :Map(Text, Variable);
-#     meta @2 :Meta;
-#     data @3 :Variable;
-# -
-
-type(meta_)
-
-b.to_dict()
 
 field = kamodo_capnp.Kamodo.Field.new_message(
             func=Poly(),
@@ -371,17 +360,23 @@ b = array_to_param(a)
 class KamodoServer(kamodo_capnp.Kamodo.Server):
     def __init__(self):
         field = kamodo_capnp.Kamodo.Field.new_message(
-            symbol='P_n',
-            meta=dict(units='nPa'),
-            func=Poly(),
-            defaults=[dict(symbol='x', value=b, units='cm')],
-        )        
-        self.fields = [field]
+                    func=Poly(),
+                    defaults=dict(entries=[dict(key='x', value=b)]),
+                    meta=meta_,
+                    data=b,
+                )  
+        self.fields = dict(entries=[dict(key='P_n', value=field)])
 
     def getFields(self, **kwargs):
         return self.fields
     
 server = capnp.TwoPartyServer(write, bootstrap=KamodoServer())
+
+def rpc_map_to_dict(rpc_map, callback = None):
+    if callback is None:
+        return {_.key: _.value for _ in rpc_map.entries}
+    else:
+        return {_.key: callback(_.value) for _ in rpc_map.entries}
     
 class KamodoClient(Kamodo):
     def __init__(self, client, **kwargs):
@@ -390,18 +385,27 @@ class KamodoClient(Kamodo):
         
         super(KamodoClient, self).__init__(**kwargs)
         
-        for field in self._rpc_fields:
-            self.register_rpc(field)
+        for entry in self._rpc_fields.entries:
+            self.register_rpc(entry)
             
-    def register_rpc(self, field):
+    def register_rpc(self, entry):
+        symbol = entry.key
+        field = entry.value
+        
+        meta = field.meta
+        arg_units = rpc_map_to_dict(meta.argUnits)
+        
+        defaults = rpc_map_to_dict(field.defaults, param_to_array)
+        
+        print(arg_units)
         print(field.to_dict())
-        defaults = {}
-        arg_units = {}
-        for _ in field.defaults:
-            defaults[_.symbol] = param_to_array(_.value)
-            arg_units[_.symbol] = _.units
-            
-        @kamodofy(units=field.units, arg_units=arg_units)
+        print(defaults)
+        
+        @kamodofy(units=meta.units,
+                  arg_units=arg_units,
+                  citation=meta.citation,
+                  equation=meta.equation,
+                  hidden_args=meta.hiddenArgs)
         @forge.sign(*construct_signature(**defaults))
         def remote_func(**kwargs):
             # params must be List(Variable) for now
@@ -409,7 +413,7 @@ class KamodoClient(Kamodo):
             response = field.func.call(params=params).wait().result
             return param_to_array(response)
 
-        self[field.symbol] = remote_func
+        self[symbol] = remote_func
         
 client = capnp.TwoPartyClient(read)
         

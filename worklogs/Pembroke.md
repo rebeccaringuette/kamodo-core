@@ -1,3 +1,4 @@
+* registered client/server field
 
 ### 2021-12-06 14:03:44.978922: clock-in
 

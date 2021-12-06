@@ -1,51 +1,42 @@
 @0xbfd16a03c247aaa9;
 
 
-
 interface Kamodo {
+  struct Map(Key, Value) {
+    entries @0 :List(Entry);
+    struct Entry {
+      key @0 :Key;
+      value @1 :Value;
+    }
+  }
+
+  getFields @0 () -> (fields :Map(Text, Field));
 
 
-  getFields @0 () -> (fields :List(Field));
-
-    # units='',
-    # arg_units=None,
-    # data=None,
-    # update=None,
-    # equation=None,
-    # citation=None,
-    # hidden_args=[],
-
+  # everything needed for registration
   struct Field {
+    func @0 :Function;
+    defaults @1 :Map(Text, Variable);
+    meta @2 :Meta;
+    data @3 :Variable;
+  }
+
+  # match kamodo's meta attribute
+  struct Meta {
+    units @0 :Text;
+    argUnits @1 :Map(Text, Text);
+    citation @2 :Text;
+    equation @3 :Text; # latex expression
+    hiddenArgs @4 :List(Text);
+  }
+
+  struct Parameter {
     symbol @0 :Text;
-    func @1 :Function;
-    defaults @2 :List(Parameter);
-    units @3 :Text;
-    data @4 :Variable;
-    equation @5 :Text;
-    citation @6 :Text;
-    hidden @7 :List(Text); # Supposed to be for flags, but Function params are of Variable type
-  }
-
-  struct Parameter{
-    symbol @0 :Text;
-    value @1:Variable;
-    units @2:Text;
-  }
-
-
-  struct Array{
-    data @0 :Data;
-    shape @1 :List(UInt32);
-    dtype @2 :Text;
-  }
-
-  struct GenericVariable(Key, Value){
-    symbol @0 :Key;
-    value @1 :Value;
+    variable @1 :Variable;
   }
 
   # needs to be an interface
-  struct Variable{
+  struct Variable {
     data @0 :Data;
     shape @1 :List(UInt32);
     dtype @2 :Text;

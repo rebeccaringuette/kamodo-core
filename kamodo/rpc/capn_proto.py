@@ -247,11 +247,11 @@ class Poly(kamodo_capnp.Kamodo.Function.Server):
     def __init__(self):
         pass
         
-    def call(self, params, flag=True, **kwargs):
-        if len(params) == 0:
+    def call(self, params, **kwargs):
+        if len(kwargs) == 0:
             return kamodo_capnp.Kamodo.Variable.new_message()
         print('serverside function called with {} params'.format(len(params)))
-        param_arrays = [param_to_array(_) for _ in params]
+        param_arrays = [param_to_array(v) for v in params]
         x = sum(param_arrays)
         result = x**2 - x - 1
         result_ = array_to_param(result)
@@ -275,9 +275,11 @@ client = capnp.TwoPartyClient(read)
 # polynomial implementation lives on the server
 polynomial = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
 
-# +
-poly_promise = polynomial.call([b,b,b])
+b.to_dict()
 
+poly_promise = polynomial.call(params=[b])
+
+# +
 # evaluate ...
 
 response = poly_promise.wait()
@@ -290,9 +292,9 @@ class FunctionRPC:
     def __init__(self):
         self.func = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
     
-    def __call__(self, params, flag=True):
+    def __call__(self, params):
         params_ = [array_to_param(_) for _ in params]
-        func_promise = self.func.call(params_, flag=flag)
+        func_promise = self.func.call(params_)
         # evaluate
         response = func_promise.wait().result
         return param_to_array(response)
@@ -302,7 +304,7 @@ serverside_function = FunctionRPC()
 
 a
 
-serverside_function([a, a, a], flag=False)
+serverside_function(params=[a, a, a])
 
 # ## Function groups
 
@@ -316,31 +318,47 @@ a = np.linspace(-1,1,10)
 b = array_to_param(a)
 b.to_dict()
 
-param = kamodo_capnp.Kamodo.Parameter.new_message(symbol='x', value=b).to_dict()
-param
+arg_units = kamodo_capnp.Kamodo.Map.new_message(entries=[dict(key='a', value='b')])
 
-kamodo_capnp.Kamodo.Field.new_message(
-            symbol='P_n',
-            func=Poly(),
-            defaults=[dict(symbol='x', value=b)],
-        ).to_dict()
+arg_units.to_dict()
+
+# +
+#     units @0 :Text;
+#     argUnits @1 :Map(Text, Text);
+#     citation @2 :Text;
+#     equation @3 :Text; # latex expression
+#     hiddenArgs @4 :List(Text);
+# -
+
+meta_ = kamodo_capnp.Kamodo.Meta(
+    units= 'nPa',
+    argUnits = dict(entries=[dict(key='a', value='b')]),
+    citation = '',
+    equation ='P_n(x)=x^2-x-1',
+    hiddenArgs = [])
+
+# +
+#     func @0 :Function;
+#     defaults @1 :Map(Text, Variable);
+#     meta @2 :Meta;
+#     data @3 :Variable;
+# -
+
+type(meta_)
+
+b.to_dict()
 
 field = kamodo_capnp.Kamodo.Field.new_message(
-            symbol='P_n',
-            units='Pa',
-            equation='P_n(x)=x^2-x-1',
             func=Poly(),
-            defaults=[dict(symbol='x', value=b, units='cm')],
+            defaults=dict(entries=[dict(key='x', value=b)]),
+            meta=meta_,
+            data=b,
         )
 field.to_dict()
 
-field.defaults[0].symbol
-
-field.defaults[0].value.to_dict()
-
+# +
 import forge
 
-# +
 from kamodo.util import construct_signature
 
 import socket
@@ -354,7 +372,7 @@ class KamodoServer(kamodo_capnp.Kamodo.Server):
     def __init__(self):
         field = kamodo_capnp.Kamodo.Field.new_message(
             symbol='P_n',
-            units='nPa',
+            meta=dict(units='nPa'),
             func=Poly(),
             defaults=[dict(symbol='x', value=b, units='cm')],
         )        
@@ -417,6 +435,65 @@ except TypeError as m:
     print(m)
 
 kclient['p_2(x[m])[nPa]'] = 'P_n'
+
+# +
+from kamodo.util import construct_signature
+
+import socket
+read, write = socket.socketpair()
+
+from kamodo import Kamodo, kamodofy
+
+b = array_to_param(a)
+
+class KamodoServer(kamodo_capnp.Kamodo.Server):
+    def __init__(self):
+        field = kamodo_capnp.Kamodo.Field.new_message(
+            symbol='P_n',
+            units='nPa',
+            func=Poly(),
+            defaults=[dict(symbol='x', value=b, units='cm')],
+        )        
+        self.fields = [field]
+
+    def getFields(self, **kwargs):
+        return self.fields
+    
+server = capnp.TwoPartyServer(write, bootstrap=KamodoServer())
+    
+class KamodoClient(Kamodo):
+    def __init__(self, client, **kwargs):
+        self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+        self._rpc_fields = self._client.getFields().wait().fields
+        
+        super(KamodoClient, self).__init__(**kwargs)
+        
+        for field in self._rpc_fields:
+            self.register_rpc(field)
+            
+    def register_rpc(self, field):
+        print(field.to_dict())
+        defaults = {}
+        arg_units = {}
+        for _ in field.defaults:
+            defaults[_.symbol] = param_to_array(_.value)
+            arg_units[_.symbol] = _.units
+            
+        @kamodofy(units=field.units, arg_units=arg_units)
+        @forge.sign(*construct_signature(**defaults))
+        def remote_func(**kwargs):
+            # params must be List(Variable) for now
+            params = [array_to_param(v) for k,v in kwargs.items()]
+            response = field.func.call(params=params).wait().result
+            return param_to_array(response)
+
+        self[field.symbol] = remote_func
+        
+client = capnp.TwoPartyClient(read)
+        
+kclient = KamodoClient(client)
+kclient
+# -
 
 kclient.P_n
 

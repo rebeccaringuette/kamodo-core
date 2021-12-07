@@ -397,9 +397,9 @@ class KamodoClient(Kamodo):
         
         defaults = rpc_map_to_dict(field.defaults, param_to_array)
         
-        print(arg_units)
-        print(field.to_dict())
-        print(defaults)
+#         print(arg_units)
+#         print(field.to_dict())
+#         print(defaults)
         
         @kamodofy(units=meta.units,
                   arg_units=arg_units,
@@ -439,6 +439,7 @@ except TypeError as m:
     print(m)
 
 kclient['p_2(x[m])[nPa]'] = 'P_n'
+kclient
 
 # +
 from kamodo.util import construct_signature
@@ -453,17 +454,23 @@ b = array_to_param(a)
 class KamodoServer(kamodo_capnp.Kamodo.Server):
     def __init__(self):
         field = kamodo_capnp.Kamodo.Field.new_message(
-            symbol='P_n',
-            units='nPa',
-            func=Poly(),
-            defaults=[dict(symbol='x', value=b, units='cm')],
-        )        
-        self.fields = [field]
+                    func=Poly(),
+                    defaults=dict(entries=[dict(key='x', value=b)]),
+                    meta=meta_,
+                    data=b,
+                )  
+        self.fields = dict(entries=[dict(key='P_n', value=field)])
 
     def getFields(self, **kwargs):
         return self.fields
     
 server = capnp.TwoPartyServer(write, bootstrap=KamodoServer())
+    
+def rpc_map_to_dict(rpc_map, callback = None):
+    if callback is None:
+        return {_.key: _.value for _ in rpc_map.entries}
+    else:
+        return {_.key: callback(_.value) for _ in rpc_map.entries}
     
 class KamodoClient(Kamodo):
     def __init__(self, client, **kwargs):
@@ -472,18 +479,23 @@ class KamodoClient(Kamodo):
         
         super(KamodoClient, self).__init__(**kwargs)
         
-        for field in self._rpc_fields:
-            self.register_rpc(field)
+        for entry in self._rpc_fields.entries:
+            self.register_rpc(entry)
             
-    def register_rpc(self, field):
-        print(field.to_dict())
-        defaults = {}
-        arg_units = {}
-        for _ in field.defaults:
-            defaults[_.symbol] = param_to_array(_.value)
-            arg_units[_.symbol] = _.units
-            
-        @kamodofy(units=field.units, arg_units=arg_units)
+    def register_rpc(self, entry):
+        symbol = entry.key
+        field = entry.value
+        
+        meta = field.meta
+        arg_units = rpc_map_to_dict(meta.argUnits)
+        
+        defaults = rpc_map_to_dict(field.defaults, param_to_array)
+        
+        @kamodofy(units=meta.units,
+                  arg_units=arg_units,
+                  citation=meta.citation,
+                  equation=meta.equation,
+                  hidden_args=meta.hiddenArgs)
         @forge.sign(*construct_signature(**defaults))
         def remote_func(**kwargs):
             # params must be List(Variable) for now
@@ -491,7 +503,7 @@ class KamodoClient(Kamodo):
             response = field.func.call(params=params).wait().result
             return param_to_array(response)
 
-        self[field.symbol] = remote_func
+        self[symbol] = remote_func
         
 client = capnp.TwoPartyClient(read)
         
@@ -510,7 +522,100 @@ try:
 except TypeError as m:
     print(m)
 
-kclient.plot(p=dict(x=x))
+kclient.plot(P_n=dict(x=x))
+
+
+# ## RPC decorator
+
+# +
+class Poly(kamodo_capnp.Kamodo.Function.Server):
+    def __init__(self):
+        pass
+        
+    def call(self, params, **kwargs):
+        if len(kwargs) == 0:
+            return kamodo_capnp.Kamodo.Variable.new_message()
+        print('serverside function called with {} params'.format(len(params)))
+        param_arrays = [param_to_array(v) for v in params]
+        x = sum(param_arrays)
+        result = x**2 - x - 1
+        result_ = array_to_param(result)
+        return result_
+
+from kamodo import get_defaults, get_args, decorate, decorator_wrapper
+
+class RPC():
+    def __init__(self):
+        """A Kamodo object that can expose functions to rpc calls"""
+        self.fields = {}
+        
+    def rpc(self, _func=None, **rpc_kwargs):
+        """Exposes function as an rpc call
+
+        Assumes in/out types are convertable to arrays
+        """
+        verbose = rpc_kwargs.pop('verbose', False)
+
+        def decorator_rpc(f):
+            orig_args = get_args(f)
+            orig_defaults = get_defaults(f)
+            if verbose:
+                print('rpc kwargs', rpc_kwargs)
+                print('original args:', orig_args)
+                print('orig defaults', orig_defaults)
+
+            # collect only the arguments not assigned by rpc
+            sig_defaults = {}
+            sig_args = []
+            for arg in orig_args:
+                if arg in rpc_kwargs:
+                    continue
+                if arg in orig_defaults:
+                    sig_defaults[arg] = orig_defaults[arg]
+                else:
+                    sig_args.append(arg)
+
+            if verbose:
+                print('updated signature:', sig_args, sig_defaults)
+
+            @forge.sign(*construct_signature(*sig_args, **sig_defaults))
+            def wrapped(*args, **kwargs):
+                """simple wrapper"""
+                kwargs.update(rpc_kwargs)
+                if verbose:
+                    print('kwargs to pass:', kwargs)
+                return f(*args, **kwargs)
+
+            wrapped = decorate(wrapped, decorator_wrapper)
+
+            wrapped.__name__ = f.__name__
+            wrapped.__doc__ = """RPC function"""
+
+            if f.__doc__ is not None:
+                wrapped.__doc__ += "\n" + f.__doc__
+
+            self.fields[f.__name__] = wrapped
+
+            return wrapped
+
+        if _func is None:
+            return decorator_rpc
+        else:
+            return decorator_rpc(_func)
+
+
+myrpc = RPC()
+
+@myrpc.rpc(verbose=True)
+def myfunc(a, b='c'):
+    return a
+
+
+# -
+
+myrpc.fields
+
+myfunc(3)
 
 # ## String Sanitizing
 

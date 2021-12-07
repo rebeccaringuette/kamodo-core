@@ -377,7 +377,10 @@ def rpc_map_to_dict(rpc_map, callback = None):
         return {_.key: _.value for _ in rpc_map.entries}
     else:
         return {_.key: callback(_.value) for _ in rpc_map.entries}
-    
+
+def rpc_dict_to_map(d):
+    return dict(entries=[dict(key=k, value=v) for k,v in d.items()])
+
 class KamodoClient(Kamodo):
     def __init__(self, client, **kwargs):
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
@@ -451,6 +454,15 @@ from kamodo import Kamodo, kamodofy
 
 b = array_to_param(a)
 
+def rpc_map_to_dict(rpc_map, callback = None):
+    if callback is None:
+        return {_.key: _.value for _ in rpc_map.entries}
+    else:
+        return {_.key: callback(_.value) for _ in rpc_map.entries}
+
+def rpc_dict_to_map(d):
+    return dict(entries=[dict(key=k, value=v) for k,v in d.items()])
+
 class KamodoServer(kamodo_capnp.Kamodo.Server):
     def __init__(self):
         field = kamodo_capnp.Kamodo.Field.new_message(
@@ -466,12 +478,8 @@ class KamodoServer(kamodo_capnp.Kamodo.Server):
     
 server = capnp.TwoPartyServer(write, bootstrap=KamodoServer())
     
-def rpc_map_to_dict(rpc_map, callback = None):
-    if callback is None:
-        return {_.key: _.value for _ in rpc_map.entries}
-    else:
-        return {_.key: callback(_.value) for _ in rpc_map.entries}
-    
+
+
 class KamodoClient(Kamodo):
     def __init__(self, client, **kwargs):
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
@@ -522,10 +530,62 @@ try:
 except TypeError as m:
     print(m)
 
+kclient.P_n(np.linspace(-5,5,10))
+
 kclient.plot(P_n=dict(x=x))
 
-
 # ## RPC decorator
+
+# +
+import socket
+
+class KamodoRPC(kamodo_capnp.Kamodo.Server):
+    def __init__(self, **fields):
+        self.fields = fields
+
+    def getFields(self, **kwargs):
+        return rpc_dict_to_map(self.fields)
+
+    def __getitem__(self, key):
+        return self.fields[key]
+    
+    def __setitem__(self, key, field):
+        self.fields[key] = field
+        
+    
+class KamodoServer(Kamodo):
+    def __init__(self, **kwargs):
+        self._server = KamodoRPC()
+        self.fields = dict(entries=[dict(key='P_n', value=field)])
+        super(KamodoServer, self).__init__(**kwargs)
+
+    def getFields(self, **kwargs):
+        return self.fields
+
+field = kamodo_capnp.Kamodo.Field.new_message(
+            func=Poly(),
+            defaults=dict(entries=[dict(key='x', value=b)]),
+            meta=meta_,
+            data=b,
+        )
+
+read, write = socket.socketpair()
+
+server = capnp.TwoPartyServer(write, bootstrap=KamodoRPC(P_n=field, A_n=field))
+
+client = capnp.TwoPartyClient(read)
+        
+kclient = KamodoClient(client)
+kclient
+# -
+
+kclient.A_n(a)
+
+k = KamodoServer(f='x**2-x-1')
+k
+
+kclient.P_n(a)
+
 
 # +
 class Poly(kamodo_capnp.Kamodo.Function.Server):
@@ -544,10 +604,13 @@ class Poly(kamodo_capnp.Kamodo.Function.Server):
 
 from kamodo import get_defaults, get_args, decorate, decorator_wrapper
 
-class RPC():
-    def __init__(self):
-        """A Kamodo object that can expose functions to rpc calls"""
+class KamodoServer(Kamodo):
+    def __init__(self, server, **kwargs):
+        """A Kamodo object that exposes functions to rpc calls"""
+        self._server = server
         self.fields = {}
+        super(KamodoServer, self).__init__(**kwargs)
+
         
     def rpc(self, _func=None, **rpc_kwargs):
         """Exposes function as an rpc call
@@ -604,7 +667,7 @@ class RPC():
             return decorator_rpc(_func)
 
 
-myrpc = RPC()
+myrpc = KamodoServer()
 
 @myrpc.rpc(verbose=True)
 def myfunc(a, b='c'):

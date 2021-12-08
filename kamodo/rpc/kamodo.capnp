@@ -16,9 +16,8 @@ interface Kamodo {
   # everything needed for registration
   struct Field {
     func @0 :Function;
-    defaults @1 :Map(Text, Variable);
-    meta @2 :Meta;
-    data @3 :Variable;
+    meta @1 :Meta;
+    data @2 :Variable;
   }
 
   # match kamodo's meta attribute
@@ -46,8 +45,8 @@ interface Kamodo {
   interface Function {
     # A generic function
     # Should use List(Parameter) instead?
-    call @0 (params :List(Variable)) -> (result: Variable);
-    # Call the function on the given parameters.
+    call @0 (params :Map(Text, Variable)) -> (result: Variable);
+    getDefaults @1 () -> (defaults: Map(Text, Variable));
   }
 
 }

@@ -253,6 +253,7 @@ class Poly(kamodo_capnp.Kamodo.Function.Server):
         print('serverside function called with {} params'.format(len(params)))
         param_arrays = [param_to_array(v) for v in params]
         x = sum(param_arrays)
+        print(x)
         result = x**2 - x - 1
         result_ = array_to_param(result)
         return result_
@@ -344,6 +345,8 @@ field = kamodo_capnp.Kamodo.Field.new_message(
             data=b,
         )
 field.to_dict()
+
+
 
 # +
 import forge
@@ -508,7 +511,7 @@ class KamodoClient(Kamodo):
         def remote_func(**kwargs):
             # params must be List(Variable) for now
             params = [array_to_param(v) for k,v in kwargs.items()]
-            response = field.func.call(params=params).wait().result
+            response = field.func.callMap(params=params).wait().result
             return param_to_array(response)
 
         self[symbol] = remote_func
@@ -536,6 +539,62 @@ kclient.plot(P_n=dict(x=x))
 
 # ## RPC decorator
 
+import capnp
+capnp.remove_import_hook()
+kamodo_capnp = capnp.load('kamodo.capnp')
+
+from kamodo import get_defaults
+import numpy as np
+
+
+def myfunc(x=np.linspace(-5,5,33)):
+    return x
+
+
+# +
+def rpc_map_to_dict(rpc_map, callback = None):
+    if callback is not None:
+        return {_.key: callback(_.value) for _ in rpc_map.entries}
+    else:
+        return {_.key: _.value for _ in rpc_map.entries}
+        
+
+def rpc_dict_to_map(d, callback = None):
+    if callback is not None:
+        entries=[dict(key=k, value=callback(v)) for k,v in d.items()]
+    else:
+        entries=[dict(key=k, value=v) for k, v in d.items()]
+    return dict(entries=entries)
+    
+def class_name(obj):
+    """get fully qualified class name of object"""
+    return ".".join([obj.__class__.__module__, obj.__class__.__name__])
+
+def param_to_array(param):
+    """convert from parameter to numpy array
+    assume input is numpy binary
+    """
+    if len(param.data) > 0:
+        return np.frombuffer(param.data).reshape(param.shape)
+    else:
+        return np.array([])
+
+def array_to_param(arr):
+    """convert an array to an rpc parameter"""
+    param = kamodo_capnp.Kamodo.Variable.new_message()
+    if len(arr) > 0:
+        param.data = arr.tobytes()
+        param.shape = arr.shape
+        param.dtype = class_name(arr)
+    return param
+
+
+# -
+
+array_to_param(np.linspace(-5,5,33)).to_dict()
+
+get_defaults(myfunc)
+
 # +
 import socket
 
@@ -551,32 +610,81 @@ class KamodoRPC(kamodo_capnp.Kamodo.Server):
     
     def __setitem__(self, key, field):
         self.fields[key] = field
-        
+
+class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
+    def __init__(self, func, verbose=False):
+        """Converts a function to RPC callable"""
+        self._func = func
+        self.verbose = verbose
     
+    def getDefaults(self, **kwargs):
+        defaults = get_defaults(self._func)
+        return rpc_dict_to_map(defaults, array_to_param)
+        
+    def call(self, params, **kwargs):
+        if self.verbose:
+            print('serverside function called with {} params'.format(len(params)))
+        param_dict = rpc_map_to_dict(params, param_to_array)
+        if self.verbose:
+            print(param_dict)
+        param_arrays = [param_to_array(v) for v in params]
+        result = self._func(param_arrays)
+        result_param = array_to_param(result)
+        return result_param
+
+
+
+# test FunctionRPC
+read, write = socket.socketpair()
+
+server = capnp.TwoPartyServer(write, bootstrap=FunctionRPC(lambda x=np.linspace(-5,5,30): x**2-x-1, verbose=True))
+client = capnp.TwoPartyClient(read)
+polynomial = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
+defaults = polynomial.getDefaults().wait().defaults
+defaults.to_dict()
+# -
+
+rpc_map_to_dict(defaults, param_to_array)
+
+# FunctionRPC converts a function into an RPC object, so any of KamodoServer's functions will be callable.
+
+# +
+from kamodo import Kamodo
+
 class KamodoServer(Kamodo):
     def __init__(self, **kwargs):
+        """A Kamodo server capable of serving its functions over RPC"""
         self._server = KamodoRPC()
-        self.fields = dict(entries=[dict(key='P_n', value=field)])
         super(KamodoServer, self).__init__(**kwargs)
+        
+    def serve(self, write):
+        return capnp.TwoPartyServer(write, bootstrap = self._server)
 
-    def getFields(self, **kwargs):
-        return self.fields
+meta_ = kamodo_capnp.Kamodo.Meta(
+    units= 'nPa',
+    argUnits = dict(entries=[dict(key='x', value='cm')]),
+    citation = '',
+    equation ='x^2-x-1',
+    hiddenArgs = [])
 
 field = kamodo_capnp.Kamodo.Field.new_message(
-            func=Poly(),
-            defaults=dict(entries=[dict(key='x', value=b)]),
-            meta=meta_,
-            data=b,
+            func=FunctionRPC(lambda x=np.linspace(-5,5,33): x**2-x-1),
+            meta=dict(units='nPa',
+                     argUnits = dict(entries=[dict(key='x', value='cm')]),
+                     ),
         )
+
+kserver = KamodoServer()
+kserver._server['P_n'] = field
 
 read, write = socket.socketpair()
 
-server = capnp.TwoPartyServer(write, bootstrap=KamodoRPC(P_n=field, A_n=field))
+server = kserver.serve(write)
 
-client = capnp.TwoPartyClient(read)
+# client = capnp.TwoPartyClient(read)
         
-kclient = KamodoClient(client)
-kclient
+# kclient = KamodoClient(client)
+# kclient
 # -
 
 kclient.A_n(a)
@@ -667,7 +775,7 @@ class KamodoServer(Kamodo):
             return decorator_rpc(_func)
 
 
-myrpc = KamodoServer()
+myrpc = KamodoServer(server)
 
 @myrpc.rpc(verbose=True)
 def myfunc(a, b='c'):
@@ -675,6 +783,8 @@ def myfunc(a, b='c'):
 
 
 # -
+
+k = Kamodo(rpc={})
 
 myrpc.fields
 
@@ -736,6 +846,14 @@ def pow_impl(base, exp):
 
 
 # -
+
+expr_
+
+k = Kamodo(f='x**2')
+
+k['g'] = 'f**2'
+
+k
 
 add_impl(3,4,5)
 

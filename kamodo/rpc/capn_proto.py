@@ -346,8 +346,6 @@ field = kamodo_capnp.Kamodo.Field.new_message(
         )
 field.to_dict()
 
-
-
 # +
 import forge
 
@@ -618,33 +616,36 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         self.verbose = verbose
     
     def getDefaults(self, **kwargs):
+        if self.verbose:
+            print('retrieving defaults')
         defaults = get_defaults(self._func)
         return rpc_dict_to_map(defaults, array_to_param)
         
     def call(self, params, **kwargs):
+        param_dict = {param.symbol: param_to_array(param.variable) for param in params}
         if self.verbose:
             print('serverside function called with {} params'.format(len(params)))
-        param_dict = rpc_map_to_dict(params, param_to_array)
-        if self.verbose:
-            print(param_dict)
-        param_arrays = [param_to_array(v) for v in params]
-        result = self._func(param_arrays)
+        result = self._func(**param_dict)
         result_param = array_to_param(result)
         return result_param
-
 
 
 # test FunctionRPC
 read, write = socket.socketpair()
 
-server = capnp.TwoPartyServer(write, bootstrap=FunctionRPC(lambda x=np.linspace(-5,5,30): x**2-x-1, verbose=True))
+server = capnp.TwoPartyServer(write,
+                              bootstrap=FunctionRPC(
+                                  lambda x=np.linspace(-5,5,30): x**2-x-1,
+                                  verbose=True))
 client = capnp.TwoPartyClient(read)
 polynomial = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
 defaults = polynomial.getDefaults().wait().defaults
 defaults.to_dict()
+
+result = polynomial.call(params=[dict(symbol='x', variable=array_to_param(np.linspace(-5,5,11)))]).wait().result
 # -
 
-rpc_map_to_dict(defaults, param_to_array)
+param_to_array(result)
 
 # FunctionRPC converts a function into an RPC object, so any of KamodoServer's functions will be callable.
 

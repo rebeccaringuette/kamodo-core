@@ -44,8 +44,7 @@ interface Kamodo {
 
   interface Function {
     # A generic function
-    # Should use List(Parameter) instead?
-    call @0 (params :Map(Text, Variable)) -> (result: Variable);
+    call @0 (params :List(Parameter)) -> (result: Variable);
     getDefaults @1 () -> (defaults: Map(Text, Variable));
   }
 

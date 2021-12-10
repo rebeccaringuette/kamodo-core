@@ -29,9 +29,9 @@ interface Kamodo {
     hiddenArgs @4 :List(Text);
   }
 
-  struct Parameter {
-    symbol @0 :Text;
-    variable @1 :Variable;
+  struct Argument {
+    name @0 :Text;
+    value @1 :Variable;
   }
 
   # needs to be an interface
@@ -43,9 +43,10 @@ interface Kamodo {
   }
 
   interface Function {
-    # A generic function
-    call @0 (params :List(Parameter)) -> (result: Variable);
-    getDefaults @1 () -> (defaults: Map(Text, Variable));
+    # A pythonic function f(*args, **kwargs)
+    call @0 (args :List(Variable), kwargs :List(Argument)) -> (result: Variable);
+    getArgs @1 () -> (args :List(Text));
+    getKwargs @2 () -> (kwargs: List(Argument));
   }
 
 }

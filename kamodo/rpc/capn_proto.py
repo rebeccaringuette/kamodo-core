@@ -478,8 +478,6 @@ class KamodoServer(kamodo_capnp.Kamodo.Server):
         return self.fields
     
 server = capnp.TwoPartyServer(write, bootstrap=KamodoServer())
-    
-
 
 class KamodoClient(Kamodo):
     def __init__(self, client, **kwargs):
@@ -594,6 +592,8 @@ array_to_param(np.linspace(-5,5,33)).to_dict()
 get_defaults(myfunc)
 
 # +
+from kamodo.util import get_args
+
 import socket
 
 class KamodoRPC(kamodo_capnp.Kamodo.Server):
@@ -614,17 +614,37 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         """Converts a function to RPC callable"""
         self._func = func
         self.verbose = verbose
+        self.args = get_args(self._func)
+        self.kwargs = get_defaults(self._func)
     
-    def getDefaults(self, **kwargs):
-        if self.verbose:
-            print('retrieving defaults')
-        defaults = get_defaults(self._func)
-        return rpc_dict_to_map(defaults, array_to_param)
+    def getArgs(self, **rpc_kwargs):
+        return list(self.args)
         
-    def call(self, params, **kwargs):
-        param_dict = {param.symbol: param_to_array(param.variable) for param in params}
+    def getKwargs(self, **rpc_kwargs):
         if self.verbose:
-            print('serverside function called with {} params'.format(len(params)))
+            print('retrieving kwargs')
+        return [dict(name=k, value=array_to_param(v)) for k,v in self.kwargs.items()]
+        
+    def call(self, args, kwargs, **rpc_kwargs):
+        """mimic a pythonic function
+        
+        Should raise TypeError when multiple values for argument"""
+        
+        param_dict = self.kwargs
+        
+        # insert args
+        arg_dict = {}
+        for i, value in enumerate(args):
+            arg_dict.update({self.args[i]: param_to_array(value)})
+        param_dict.update(arg_dict)
+        
+        # insert kwargs
+        for kwarg in kwargs:
+            if kwarg.name in arg_dict:
+                raise TypeError('multiple values for argument {}, len(args)={}'.format(kwarg.name, len(args)))
+            param_dict.update({kwarg.name: param_to_array(kwarg.value)})
+        if self.verbose:
+            print('serverside function called with {} params'.format(len(param_dict)))
         result = self._func(**param_dict)
         result_param = array_to_param(result)
         return result_param
@@ -639,13 +659,15 @@ server = capnp.TwoPartyServer(write,
                                   verbose=True))
 client = capnp.TwoPartyClient(read)
 polynomial = client.bootstrap().cast_as(kamodo_capnp.Kamodo.Function)
-defaults = polynomial.getDefaults().wait().defaults
-defaults.to_dict()
+defaults = polynomial.getKwargs().wait().kwargs
 
-result = polynomial.call(params=[dict(symbol='x', variable=array_to_param(np.linspace(-5,5,11)))]).wait().result
+result = polynomial.call(kwargs=[dict(name='x', value=array_to_param(np.linspace(-5,5,11)))]).wait().result
 # -
 
 param_to_array(result)
+
+for _ in polynomial.getArgs().wait().args:
+    print(_)
 
 # FunctionRPC converts a function into an RPC object, so any of KamodoServer's functions will be callable.
 
@@ -682,13 +704,70 @@ read, write = socket.socketpair()
 
 server = kserver.serve(write)
 
-# client = capnp.TwoPartyClient(read)
+# +
+from kamodo import kamodofy
+import forge
+from kamodo.util import construct_signature
+
+class KamodoClient(Kamodo):
+    def __init__(self, client, **kwargs):
+        self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+        self._rpc_fields = self._client.getFields().wait().fields
         
-# kclient = KamodoClient(client)
-# kclient
+        super(KamodoClient, self).__init__(**kwargs)
+        
+        for entry in self._rpc_fields.entries:
+            self.register_rpc(entry)
+            
+    def register_rpc(self, entry):
+        """resolve the remote signature
+        f(*args, **kwargs) -> f(x,y,z=value)
+        """
+        symbol = entry.key
+        field = entry.value
+        
+        meta = field.meta
+        arg_units = rpc_map_to_dict(meta.argUnits)
+        
+        defaults_ = field.func.getKwargs().wait().kwargs
+        print(defaults_.to_dict())
+        defaults = rpc_map_to_dict(defaults_, param_to_array)
+        
+        @kamodofy(units=meta.units,
+                  arg_units=arg_units,
+                  citation=meta.citation,
+                  equation=meta.equation,
+                  hidden_args=meta.hiddenArgs)
+        @forge.sign(*construct_signature(**defaults))
+        def remote_func(*args, **kwargs):
+            # params must be List(Variable) for now
+            params = [array_to_param(v) for k,v in kwargs.items()]
+            result = field.func.call(args=params).wait().result
+            return param_to_array(result)
+
+        self[symbol] = remote_func
+        
+client = capnp.TwoPartyClient(read)
+        
+kclient = KamodoClient(client)
+kclient
+
+# +
+# construct_signature?
 # -
 
-kclient.A_n(a)
+kclient.P_n([np.linspace(-5,5,11)])
+
+
+@forge.sign(*construct_signature('x','y',z=3))
+def f(*args, **kwargs):
+    print(args)
+    print(kwargs)
+f(3,4)
+
+# +
+# construct_signature?
+# -
 
 k = KamodoServer(f='x**2-x-1')
 k

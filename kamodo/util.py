@@ -1208,7 +1208,7 @@ def construct_signature(*args, **kwargs):
     """construct a signature
     usage:
     
-        @forge.sign(*get_signature('x','y',z=3))
+        @forge.sign(*construct_signature('x','y',z=3))
         def f(*args, **kargs):
             pass
     """

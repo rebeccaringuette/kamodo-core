@@ -1,3 +1,5 @@
+### 2021-12-10 16:59:20.084951: clock-out: T-1h 
+
 * registered pythonic function in KamodoClient
 * new download instructions
 

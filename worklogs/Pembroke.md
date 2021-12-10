@@ -1,3 +1,4 @@
+* new download instructions
 
 ### 2021-12-10 15:20:24.083585: clock-in
 

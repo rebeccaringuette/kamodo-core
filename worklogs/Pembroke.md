@@ -1,3 +1,6 @@
+
+### 2021-12-10 15:20:24.083585: clock-in
+
 ### 2021-12-10 12:34:12.837677: clock-out
 
 * switching to pythonic signatures

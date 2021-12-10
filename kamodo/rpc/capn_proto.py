@@ -204,9 +204,9 @@ def param_to_array(param):
     assume input is numpy binary
     """
     if len(param.data) > 0:
-        return np.frombuffer(param.data).reshape(param.shape)
+        return np.frombuffer(param.data, dtype=param.dtype).reshape(param.shape)
     else:
-        return np.array([])
+        return np.array([], dtype=param.dtype)
 
 def array_to_param(arr):
     """convert an array to an rpc parameter"""
@@ -214,7 +214,7 @@ def array_to_param(arr):
     if len(arr) > 0:
         param.data = arr.tobytes()
         param.shape = arr.shape
-        param.dtype = class_name(arr)
+        param.dtype = str(arr.dtype)
     return param
 
 
@@ -222,9 +222,11 @@ def array_to_param(arr):
 
 a = np.linspace(-5,5,12).reshape(3,4)
 
-a
+b = array_to_param(np.array([3,4,5]))
 
-b = array_to_param(a)
+b.to_dict()
+
+param_to_array(b)
 
 b.to_dict()
 
@@ -571,23 +573,24 @@ def param_to_array(param):
     assume input is numpy binary
     """
     if len(param.data) > 0:
-        return np.frombuffer(param.data).reshape(param.shape)
+        return np.frombuffer(param.data, dtype=param.dtype).reshape(param.shape)
     else:
-        return np.array([])
+        return np.array([], dtype=param.dtype)
 
 def array_to_param(arr):
     """convert an array to an rpc parameter"""
     param = kamodo_capnp.Kamodo.Variable.new_message()
+    arr_ = np.array(arr)
     if len(arr) > 0:
-        param.data = arr.tobytes()
-        param.shape = arr.shape
-        param.dtype = class_name(arr)
+        param.data = arr_.tobytes()
+        param.shape = arr_.shape
+        param.dtype = str(arr_.dtype)
     return param
 
 
 # -
 
-array_to_param(np.linspace(-5,5,33)).to_dict()
+array_to_param([3,4,5,1.]).to_dict()
 
 get_defaults(myfunc)
 
@@ -690,21 +693,25 @@ meta_ = kamodo_capnp.Kamodo.Meta(
     equation ='x^2-x-1',
     hiddenArgs = [])
 
+
+def poly_impl(x = np.linspace(-5,5,33)):
+    print('polynomial called with x={}'.format(x.shape))
+    return x**2 - x - 1
+    
 field = kamodo_capnp.Kamodo.Field.new_message(
-            func=FunctionRPC(lambda x=np.linspace(-5,5,33): x**2-x-1),
+            func=FunctionRPC(poly_impl),
             meta=dict(units='nPa',
                      argUnits = dict(entries=[dict(key='x', value='cm')]),
                      ),
         )
 
-kserver = KamodoServer()
+kserver = KamodoServer(verbose=True)
 kserver._server['P_n'] = field
 
 read, write = socket.socketpair()
 
 server = kserver.serve(write)
 
-# +
 from kamodo import kamodofy
 import forge
 from kamodo.util import construct_signature
@@ -730,19 +737,28 @@ class KamodoClient(Kamodo):
         arg_units = rpc_map_to_dict(meta.argUnits)
         
         defaults_ = field.func.getKwargs().wait().kwargs
-        print(defaults_.to_dict())
-        defaults = rpc_map_to_dict(defaults_, param_to_array)
+        func_defaults = {_.name: param_to_array(_.value) for _ in defaults_}
+        func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
+        func_args = [_ for _ in func_args_ if _ not in func_defaults]
+        
+        if len(meta.equation) > 0:
+            equation = meta.equation
+        else:
+            equation = None
         
         @kamodofy(units=meta.units,
                   arg_units=arg_units,
                   citation=meta.citation,
-                  equation=meta.equation,
+                  equation=equation,
                   hidden_args=meta.hiddenArgs)
-        @forge.sign(*construct_signature(**defaults))
+        @forge.sign(*construct_signature(*func_args, **func_defaults))
         def remote_func(*args, **kwargs):
             # params must be List(Variable) for now
-            params = [array_to_param(v) for k,v in kwargs.items()]
-            result = field.func.call(args=params).wait().result
+#             print(args)
+#             print(kwargs)
+            args_ = [array_to_param(arg) for arg in args]
+            kwargs_ = [dict(name=k, value= array_to_param(v)) for k, v in kwargs.items()]
+            result = field.func.call(args=args_, kwargs=kwargs_).wait().result
             return param_to_array(result)
 
         self[symbol] = remote_func
@@ -751,12 +767,17 @@ client = capnp.TwoPartyClient(read)
         
 kclient = KamodoClient(client)
 kclient
-
-# +
-# construct_signature?
 # -
 
-kclient.P_n([np.linspace(-5,5,11)])
+kclient.P_n([3,4,5])
+
+kclient.plot(P_n=dict(x=np.linspace(-1, 5, 303)))
+
+kclient.P_n(np.linspace(-5,5,11))
+
+param_to_array(array_to_param([3,4,5]))
+
+kclient.P_n(x=[3, 4, 5, 9])
 
 
 @forge.sign(*construct_signature('x','y',z=3))

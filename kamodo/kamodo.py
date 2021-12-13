@@ -72,6 +72,10 @@ import forge
 from sympy.abc import _clash
 import sympy
 
+from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
+from rpc.proto import array_to_param, param_to_array
+from util import construct_signature
+
 _clash['rad'] = Symbol('rad')
 _clash['deg'] = Symbol('deg')
 
@@ -333,46 +337,6 @@ class Kamodo(UserDict):
     def register_symbol(self, symbol):
         self.symbol_registry[str(type(symbol))] = symbol
 
-
-    # def remove_symbol(self, sym_name):
-    #     """remove the sym_name (str) from the object"""
-
-    #     if self.verbose:
-    #         print('remove_symbol: removing {} from symbol_registry'.format(sym_name))
-    #     try:
-    #         symbol = self.symbol_registry.pop(sym_name)
-    #     except KeyError:
-    #         raise KeyError('{} was not in symbol_registry {}'.format(
-    #             sym_name, self.symbol_registry.keys()))
-    #     if self.verbose:
-    #         print('remove_symbol: removing {} from signatures'.format(symbol))
-    #     self.signatures.pop(str(type(symbol)))
-    #     if self.verbose:
-    #         print('remove_symbol: removing {} from unit_registry'.format(symbol))
-    #     remove = []
-    #     for sym in self.unit_registry:
-    #         if is_function(sym): # {rho(x): rho(cm), rho(cm): kg}
-    #             if type(sym) == type(symbol):
-    #                 remove.append(sym)
-    #     for sym in remove:
-    #         self.unit_registry.pop(sym)
-
-    #     if self.verbose:
-    #         print('removing {} from {}'.format(symbol, self.keys()))
-
-    #     if symbol in self.keys():
-    #         try:
-    #             self.pop(symbol)
-    #         except KeyError:
-    #             if self.verbose:
-    #                 print('something wrong with {} in {}'.format(symbol, self.keys()))
-    #             raise KeyError('{} not in {}'.format(symbol, self.keys()))
-
-    #     if type(symbol) in self.keys():
-    #         try:
-    #             self.pop(type(symbol))
-    #         except KeyError:
-    #             raise KeyError('{} not in {}'.format(type(symbol), self.keys()))
 
 
     def parse_key(self, sym_name):
@@ -961,6 +925,97 @@ class Kamodo(UserDict):
 
         return scope['solution']
 
+
+    def to_rpc_meta(self, key):
+        """create rpc metadata"""
+        meta = self[key].meta
+        equation = meta.get('equation', self.to_latex(key, mode='inline')).strip('$')
+        equation = meta.get('equation', latex(self.signatures[key]['rhs']))
+        arg_unit_entries = []
+        for k,v in meta.get('arg_units', {}):
+            arg_unit_entries.append({'key': k, 'value': v})
+            
+        return kamodo_capnp.Kamodo.Meta(
+            units=meta.get('units', ''),
+            argUnits=dict(entries=arg_unit_entries),
+            citation=meta.get('citation', ''),
+            equation=equation,
+            hiddenArgs=meta.get('hidden_args', []),
+        )
+
+
+    def register_rpc_field(self, key):
+        func = self[key]
+        signature = self.signatures[key]
+        field = kamodo_capnp.Kamodo.Field.new_message(
+            func=FunctionRPC(func),
+            meta=self.to_rpc_meta(key),
+        )
+        self._server[key] = field
+
+
+
+
+    def server(self, write):
+        self._server = KamodoRPC()
+        
+        for key in self.signatures:
+            print('serving {}'.format(key))
+            self.register_rpc_field(key)
+        
+        server = capnp.TwoPartyServer(write, bootstrap = self._server)
+        return server
+
+
+    def client(self, client):
+        """register a single client's remote functions
+
+        will need to support connecting to multiple servers
+        """
+
+        self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+        self._rpc_fields = self._client.getFields().wait().fields
+        
+        for entry in self._rpc_fields.entries:
+            self.register_rpc_remote(entry)
+
+    def register_rpc_remote(self, entry):
+        """resolve the remote signature
+        f(*args, **kwargs) -> f(x,y,z=value)
+        """
+        symbol = entry.key
+        field = entry.value
+        
+        meta = field.meta
+        arg_units = rpc_map_to_dict(meta.argUnits)
+        
+        defaults_ = field.func.getKwargs().wait().kwargs
+        func_defaults = {_.name: param_to_array(_.value) for _ in defaults_}
+        func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
+        func_args = [_ for _ in func_args_ if _ not in func_defaults]
+        
+        if len(meta.equation) > 0:
+            equation = meta.equation
+        else:
+            equation = None
+        
+        @kamodofy(units=meta.units,
+                  arg_units=arg_units,
+                  citation=meta.citation,
+                  equation=equation,
+                  hidden_args=meta.hiddenArgs)
+        @forge.sign(*construct_signature(*func_args, **func_defaults))
+        def remote_func(*args, **kwargs):
+            # params must be List(Variable) for now
+            args_ = [array_to_param(arg) for arg in args]
+            kwargs_ = [dict(name=k, value= array_to_param(v)) for k, v in kwargs.items()]
+            result = field.func.call(args=args_, kwargs=kwargs_).wait().result
+            return param_to_array(result)
+
+        self[symbol] = remote_func
+
+
+
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a given variable and keyword arguments"""
         result = self.evaluate(variable, **kwargs)
@@ -1059,6 +1114,7 @@ class Kamodo(UserDict):
                 layouts.append(fig['layout'])
             # Todo: merge the layouts instead of selecting the last one
             return go.Figure(data=traces, layout=layouts[-1])
+
 
 
 class KamodoAPI(Kamodo):

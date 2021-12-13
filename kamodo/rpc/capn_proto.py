@@ -331,8 +331,8 @@ arg_units.to_dict()
 #     citation @2 :Text;
 #     equation @3 :Text; # latex expression
 #     hiddenArgs @4 :List(Text);
-# -
 
+# +
 meta_ = kamodo_capnp.Kamodo.Meta(
     units= 'nPa',
     argUnits = dict(entries=[dict(key='x', value='cm')]),
@@ -594,6 +594,8 @@ array_to_param([3,4,5,1.]).to_dict()
 
 get_defaults(myfunc)
 
+from kamodo import Kamodo
+
 # +
 from kamodo.util import get_args
 
@@ -674,39 +676,75 @@ for _ in polynomial.getArgs().wait().args:
 
 # FunctionRPC converts a function into an RPC object, so any of KamodoServer's functions will be callable.
 
+kserver.verbose=False
+
+kserver['f(x[km])[cm]'] = 'x**2-x-1'
+
+kserver.detail()
+
+kserver.f.meta
+
 # +
-from kamodo import Kamodo
-
-class KamodoServer(Kamodo):
-    def __init__(self, **kwargs):
-        """A Kamodo server capable of serving its functions over RPC"""
-        self._server = KamodoRPC()
-        super(KamodoServer, self).__init__(**kwargs)
-        
-    def serve(self, write):
-        return capnp.TwoPartyServer(write, bootstrap = self._server)
-
-meta_ = kamodo_capnp.Kamodo.Meta(
-    units= 'nPa',
-    argUnits = dict(entries=[dict(key='x', value='cm')]),
-    citation = '',
-    equation ='x^2-x-1',
-    hiddenArgs = [])
+# kamodofy?
+# -
 
 
-def poly_impl(x = np.linspace(-5,5,33)):
-    print('polynomial called with x={}'.format(x.shape))
-    return x**2 - x - 1
+
+# +
+from kamodo import Kamodo, latex
+
+
+# class KamodoServer(Kamodo):
+#     def __init__(self, **kwargs):
+#         """A Kamodo server capable of serving its functions over RPC"""
+#         super(KamodoServer, self).__init__(**kwargs)
+
+
+#     def to_rpc_meta(self, key):
+#         meta = self[key].meta
+#         equation = meta.get('equation', self.to_latex(key, mode='inline')).strip('$')
+#         equation = meta.get('equation', latex(self.signatures[key]['rhs']))
+#         arg_unit_entries = []
+#         for k,v in meta.get('arg_units', {}):
+#             arg_unit_entries.append({'key': k, 'value': v})
+            
+#         return kamodo_capnp.Kamodo.Meta(
+#             units=meta.get('units', ''),
+#             argUnits=dict(entries=arg_unit_entries),
+#             citation=meta.get('citation', ''),
+#             equation=equation,
+#             hiddenArgs=meta.get('hidden_args', []),
+#         )
     
-field = kamodo_capnp.Kamodo.Field.new_message(
-            func=FunctionRPC(poly_impl),
-            meta=dict(units='nPa',
-                     argUnits = dict(entries=[dict(key='x', value='cm')]),
-                     ),
-        )
+#     def register_rpc_field(self, key):
+#         func = self[key]
+#         signature = self.signatures[key]
+#         field = kamodo_capnp.Kamodo.Field.new_message(
+#             func=FunctionRPC(func),
+#             meta=self.to_rpc_meta(key),
+#         )
+#         self._server[key] = field
 
-kserver = KamodoServer(verbose=True)
-kserver._server['P_n'] = field
+#     def serve(self, write):
+#         self._server = KamodoRPC()
+        
+#         for key in self.signatures:
+#             print('serving {}'.format(key))
+#             self.register_rpc_field(key)
+        
+#         server = capnp.TwoPartyServer(write, bootstrap = self._server)
+#         return server
+    
+
+
+
+
+# def poly_impl(x = np.linspace(-5,5,33)):
+#     print('polynomial called with x={}'.format(x.shape))
+#     return x**2 - x - 1
+    
+
+kserver = Kamodo(f='x**2-x-1')
 
 read, write = socket.socketpair()
 
@@ -769,127 +807,39 @@ kclient = KamodoClient(client)
 kclient
 # -
 
-kclient.P_n([3,4,5])
+kserver
 
-kclient.plot(P_n=dict(x=np.linspace(-1, 5, 303)))
+kclient.f([3, 4, 5])
 
-kclient.P_n(np.linspace(-5,5,11))
+kclient.plot(f=dict(x=np.linspace(-1, 5, 303)))
+
+kclient.f(np.linspace(-5,5,11))
 
 param_to_array(array_to_param([3,4,5]))
 
-kclient.P_n(x=[3, 4, 5, 9])
+kclient.f(x=[3, 4, 5, 9])
+
+kserver = KamodoServer(f='x**2-x-1')
+kserver
+
+# # Test
+
+import socket
+read, write = socket.socketpair()
+
+from kamodo import Kamodo
+
+kserver = Kamodo(f='x**2-x-1')
+
+import numpy as np
+
+kserver.plot(f=dict(x=np.linspace(-5,5,55)))
+
+server = kserver.server(write)
+
+from proto import KamodoClient
 
 
-@forge.sign(*construct_signature('x','y',z=3))
-def f(*args, **kwargs):
-    print(args)
-    print(kwargs)
-f(3,4)
-
-# +
-# construct_signature?
-# -
-
-k = KamodoServer(f='x**2-x-1')
-k
-
-kclient.P_n(a)
-
-
-# +
-class Poly(kamodo_capnp.Kamodo.Function.Server):
-    def __init__(self):
-        pass
-        
-    def call(self, params, **kwargs):
-        if len(kwargs) == 0:
-            return kamodo_capnp.Kamodo.Variable.new_message()
-        print('serverside function called with {} params'.format(len(params)))
-        param_arrays = [param_to_array(v) for v in params]
-        x = sum(param_arrays)
-        result = x**2 - x - 1
-        result_ = array_to_param(result)
-        return result_
-
-from kamodo import get_defaults, get_args, decorate, decorator_wrapper
-
-class KamodoServer(Kamodo):
-    def __init__(self, server, **kwargs):
-        """A Kamodo object that exposes functions to rpc calls"""
-        self._server = server
-        self.fields = {}
-        super(KamodoServer, self).__init__(**kwargs)
-
-        
-    def rpc(self, _func=None, **rpc_kwargs):
-        """Exposes function as an rpc call
-
-        Assumes in/out types are convertable to arrays
-        """
-        verbose = rpc_kwargs.pop('verbose', False)
-
-        def decorator_rpc(f):
-            orig_args = get_args(f)
-            orig_defaults = get_defaults(f)
-            if verbose:
-                print('rpc kwargs', rpc_kwargs)
-                print('original args:', orig_args)
-                print('orig defaults', orig_defaults)
-
-            # collect only the arguments not assigned by rpc
-            sig_defaults = {}
-            sig_args = []
-            for arg in orig_args:
-                if arg in rpc_kwargs:
-                    continue
-                if arg in orig_defaults:
-                    sig_defaults[arg] = orig_defaults[arg]
-                else:
-                    sig_args.append(arg)
-
-            if verbose:
-                print('updated signature:', sig_args, sig_defaults)
-
-            @forge.sign(*construct_signature(*sig_args, **sig_defaults))
-            def wrapped(*args, **kwargs):
-                """simple wrapper"""
-                kwargs.update(rpc_kwargs)
-                if verbose:
-                    print('kwargs to pass:', kwargs)
-                return f(*args, **kwargs)
-
-            wrapped = decorate(wrapped, decorator_wrapper)
-
-            wrapped.__name__ = f.__name__
-            wrapped.__doc__ = """RPC function"""
-
-            if f.__doc__ is not None:
-                wrapped.__doc__ += "\n" + f.__doc__
-
-            self.fields[f.__name__] = wrapped
-
-            return wrapped
-
-        if _func is None:
-            return decorator_rpc
-        else:
-            return decorator_rpc(_func)
-
-
-myrpc = KamodoServer(server)
-
-@myrpc.rpc(verbose=True)
-def myfunc(a, b='c'):
-    return a
-
-
-# -
-
-k = Kamodo(rpc={})
-
-myrpc.fields
-
-myfunc(3)
 
 # ## String Sanitizing
 

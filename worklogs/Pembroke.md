@@ -1,3 +1,5 @@
+### 2021-12-13 15:41:38.144357: clock-out
+
 * moving client/server into Kamodo base class
 
 ### 2021-12-13 13:34:56.634756: clock-in

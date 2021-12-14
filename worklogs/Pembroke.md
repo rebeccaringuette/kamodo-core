@@ -1,7 +1,9 @@
-* KamodoClient prototyping
+### 2021-12-14 13:15:05.143739: clock-out
+
+* KamodoClient prototyping - would explicitly define remote algebra
+
 Do we need to preregister server-side functions?
 At least we can register Mul, Add, Pow
-
 
 ### 2021-12-14 10:49:07.811335: clock-in
 

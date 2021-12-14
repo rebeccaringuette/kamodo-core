@@ -954,30 +954,34 @@ class Kamodo(UserDict):
         self._server[key] = field
 
 
-
-
     def server(self, write):
         self._server = KamodoRPC()
         
         for key in self.signatures:
             print('serving {}'.format(key))
             self.register_rpc_field(key)
+
         
-        server = capnp.TwoPartyServer(write, bootstrap = self._server)
+        server = capnp.TwoPartyServer(write, bootstrap=self._server)
         return server
 
 
-    def client(self, client):
+    def client(self, read):
         """register a single client's remote functions
 
         will need to support connecting to multiple servers
         """
 
+        client = capnp.TwoPartyClient(read)
+
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
         self._rpc_fields = self._client.getFields().wait().fields
+        self._rpc_math = self._client.getMath().wait().math
         
         for entry in self._rpc_fields.entries:
             self.register_rpc_remote(entry)
+
+        return client
 
     def register_rpc_remote(self, entry):
         """resolve the remote signature

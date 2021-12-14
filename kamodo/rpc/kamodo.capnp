@@ -12,6 +12,8 @@ interface Kamodo {
 
   getFields @0 () -> (fields :Map(Text, Field));
 
+  getMath @1 () -> (math :Map(Text, Function));
+
 
   # everything needed for registration
   struct Field {

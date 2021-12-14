@@ -1,3 +1,7 @@
+* KamodoClient prototyping
+Do we need to preregister server-side functions?
+At least we can register Mul, Add, Pow
+
 
 ### 2021-12-14 10:49:07.811335: clock-in
 

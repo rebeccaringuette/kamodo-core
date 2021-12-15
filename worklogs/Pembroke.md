@@ -1,3 +1,4 @@
+* fixed case of missing arg_units
 * documentation for rpc
 * to_latex for lambda functions is messed up. kamodofying assigns None to rhs rather than lambda(lhs.args)
 

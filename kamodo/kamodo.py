@@ -931,9 +931,12 @@ class Kamodo(UserDict):
         meta = self[key].meta
         equation = meta.get('equation', self.to_latex(key, mode='inline')).strip('$')
         equation = meta.get('equation', latex(self.signatures[key]['rhs']))
+
         arg_unit_entries = []
-        for k,v in meta.get('arg_units', {}):
-            arg_unit_entries.append({'key': k, 'value': v})
+        arg_units = meta.get('arg_units') # may be None
+        if arg_units is not None:
+            for k,v in arg_units.items():
+                arg_unit_entries.append({'key': k, 'value': v})
             
         return kamodo_capnp.Kamodo.Meta(
             units=meta.get('units', ''),
@@ -958,7 +961,8 @@ class Kamodo(UserDict):
         self._server = KamodoRPC()
         
         for key in self.signatures:
-            print('serving {}'.format(key))
+            if self.verbose:
+                print('serving {}'.format(key))
             self.register_rpc_field(key)
 
         

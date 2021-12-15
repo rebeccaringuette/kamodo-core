@@ -1,3 +1,6 @@
+
+### 2021-12-15 16:10:37.414223: clock-in
+
 ### 2021-12-15 13:17:38.125773: clock-out
 
 * fixed case of missing arg_units

@@ -1,3 +1,5 @@
+### 2021-12-15 13:17:38.125773: clock-out
+
 * fixed case of missing arg_units
 * documentation for rpc
 * to_latex for lambda functions is messed up. kamodofying assigns None to rhs rather than lambda(lhs.args)

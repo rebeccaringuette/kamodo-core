@@ -1,3 +1,6 @@
+
+### 2021-12-15 12:07:30.907034: clock-in
+
 ### 2021-12-14 13:15:05.143739: clock-out
 
 * KamodoClient prototyping - would explicitly define remote algebra

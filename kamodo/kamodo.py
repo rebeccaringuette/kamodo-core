@@ -455,6 +455,10 @@ class Kamodo(UserDict):
         if self.verbose:
             print('unit str {}'.format(unit_str))
 
+        if rhs_expr is None:
+            lambda_ = symbols('lambda', cls=UndefinedFunction)
+            rhs_expr = lambda_(*symbol.args)
+
         self.signatures[str(type(symbol))] = dict(
             symbol=symbol,
             units=unit_str,
@@ -929,21 +933,40 @@ class Kamodo(UserDict):
     def to_rpc_meta(self, key):
         """create rpc metadata"""
         meta = self[key].meta
-        equation = meta.get('equation', self.to_latex(key, mode='inline')).strip('$')
-        equation = meta.get('equation', latex(self.signatures[key]['rhs']))
+
+        units = meta.get('units')
+        if units is None:
+            units = ''
 
         arg_unit_entries = []
         arg_units = meta.get('arg_units') # may be None
         if arg_units is not None:
             for k,v in arg_units.items():
                 arg_unit_entries.append({'key': k, 'value': v})
+
+        citation = meta.get('citation')
+        if citation is None:
+            citation = ''
+
+        equation = meta.get('equation')
+        if equation is None:
+            equation = latex(self.signatures[key]['rhs'])
+
+        if self.verbose:
+            print('equation: {}'.format(equation))
+
+
+        hidden_args = meta.get('hidden_args')
+        if hidden_args is None:
+            hidden_args = []
             
+
         return kamodo_capnp.Kamodo.Meta(
-            units=meta.get('units', ''),
+            units=units,
             argUnits=dict(entries=arg_unit_entries),
-            citation=meta.get('citation', ''),
+            citation=citation,
             equation=equation,
-            hiddenArgs=meta.get('hidden_args', []),
+            hiddenArgs=hidden_args,
         )
 
 

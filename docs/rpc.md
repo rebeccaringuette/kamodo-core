@@ -7,20 +7,18 @@ from kamodo import Kamodo, kamodofy
 import numpy as np
 ```
 
-First we'll initialize a Kamodo object to act as a server.
+First we'll initialize a Kamodo object to act as a server, using one pure function `f` initialized without defaults and one black-box function `g` with defaults.
 
 ```python
 kserver = Kamodo(f='sqrt((x**2-x-1)**2)',
-                 g = kamodofy(lambda x=np.linspace(-1, 2, 75): np.sin(x)),
-                 verbose=True)
+                 g = kamodofy(lambda x=np.linspace(-1, 2, 12): np.sin(x)))
 kserver.to_latex()
 ```
 
 \\begin{equation}f{\\left(x \\right)} = \\sqrt{\\left(x^{2} - x - 1\\right)^{2}}\\end{equation} \\begin{equation}g{\\left(x \\right)} = \\lambda{\\left(x \\right)}\\end{equation}
 
-```python
-kserver.detail()
-```
+
+As a test, we'll evaluate `f` on the server.
 
 ```python
 kserver.f(np.array([3, 4, 5]))
@@ -28,12 +26,19 @@ kserver.f(np.array([3, 4, 5]))
 # >>> array([ 5., 11., 19.])
 ```
 
+Now generate a server-side test plot for both functions.
+
 ```python
-import numpy as np
-kserver.plot('g', f=dict(x=np.linspace(-1,2,33)))
+import plotly.io as pio
+fig = kserver.plot('g', f=dict(x=np.linspace(-1,2,33)))
+
+pio.write_image(fig, 'notebooks/images/rpc-plot.svg')
 ```
 
-We can test the RPC features using a read/write socket pair.
+![rpc_plot1](notebooks/images/rpc-plot.svg)
+
+
+To test the RPC features, we'll create a read/write socket pair.
 
 ```python
 import socket
@@ -43,10 +48,6 @@ read, write = socket.socketpair()
 
 ```python
 server = kserver.server(write)
-```
-
-```python
-kserver.signatures
 ```
 
 Now we'll initialize an empty kamodo object to act as a client.
@@ -59,26 +60,22 @@ client = kclient.client(read)
 kclient.to_latex()
 ```
 
-\\begin{equation}f{\\left(x \\right)} = \\sqrt{\\left(x^{2} - x - 1\\right)^{2}}\\end{equation} \\begin{equation}g{\\left(x \\right)} = <function <lambda> at 0x7feb79c98710>\\end{equation}
+\\begin{equation}f{\\left(x \\right)} = \\sqrt{\\left(x^{2} - x - 1\\right)^{2}}\\end{equation} \\begin{equation}g{\\left(x \\right)} = \\lambda{\\left(x \\right)}\\end{equation}
 
-```python
-kclient.g
-```
 
 The client now has access to the same function hosted on the server. This allows the client to call the server-side function without needing any of its dependencies!
 
-```python
-kclient.g().shape # client function inherits defaults of server-side function
 
-# >>> (75,)
-```
+Client functions will inherit the defaults of their server-side counterparts.
 
 ```python
-kclient.g
-```
+from kamodo import get_defaults
 
-```python
-kserver.g
+get_defaults(kclient.g)
+
+# >>> {'x': array([-1.        , -0.72727273, -0.45454545, -0.18181818,  0.09090909,
+#          0.36363636,  0.63636364,  0.90909091,  1.18181818,  1.45454545,
+#          1.72727273,  2.        ])}
 ```
 
 Arguments are automatically converted to numpy arrays before being passed to the server.
@@ -86,26 +83,18 @@ Arguments are automatically converted to numpy arrays before being passed to the
 ```python
 kclient.f([3, 4, 5])
 
-# >>> array([ 5., 11., 19.])
+# >>> array([ 5., 11., 19.]) # matches above evaluation on server
 ```
 
-We can plot the function over our custom domain.
-
-```python
-kserver.g.meta
-```
+We can verify that the clientside plots reproduce that found on the server.
 
 ```python
-kserver.to_latex('g')
+fig = kclient.plot('g', f=dict(x=np.linspace(-1,2,33)))
+
+pio.write_image(fig, 'notebooks/images/rpc-plot2.svg')
 ```
 
-```python
-kserver.detail()
-```
-
-```python
-kclient.plot('g', f=dict(x=np.linspace(-1, 2, 33)))
-```
+![rpc_plot1](notebooks/images/rpc-plot2.svg)
 
 <!-- #region -->
 # RPC Spec

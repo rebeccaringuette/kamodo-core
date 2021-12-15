@@ -856,6 +856,32 @@ aeval.symtable['sum']
 #
 # Wrap sympy expressions with placeholder alegebraic calls (to be executed on server)
 
+import numpy as np
+
+import sys
+
+sys.path.append('..')
+
+from proto import FunctionRPC
+
+
+def add_impl(*args):
+    print('computing {}'.format('+'.join((str(_) for _ in args))))
+    return np.add(*args)
+
+
+add_ = lambda *params: np.add(*params)
+
+add_(np.array([3,24]), 4)
+
+np.multiply(np.array([3,4]), 10)
+
+np.power(2,3.)
+
+FunctionRPC(add_)
+
+add_impl(np.array([2,4,5]), 4)
+
 # +
 from sympy import Function, sympify
 from sympy import Add, Mul, Pow
@@ -879,10 +905,6 @@ def rpc_expr(expr):
     return expr
 
 
-expr_ = sympify('30*a*b + c**2+sin(c)')
-rpc_expr(expr_)
-
-
 def add_impl(*args):
     print('computing {}'.format('+'.join((str(_) for _ in args))))
     return reduce(add, args)
@@ -898,13 +920,10 @@ def pow_impl(base, exp):
 
 # -
 
+expr_ = sympify('30*a*b + c**2+sin(c)')
 expr_
 
-k = Kamodo(f='x**2')
-
-k['g'] = 'f**2'
-
-k
+rpc_expr(expr_)
 
 add_impl(3,4,5)
 
@@ -949,6 +968,8 @@ kamodo.f(3)
 assert kamodo.f(3) == 3**2 - 3 - 1
 
 kamodo
+
+kamodo.g(4)
 
 # ## Serverside Algebra
 

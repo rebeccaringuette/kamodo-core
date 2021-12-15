@@ -11,12 +11,13 @@ nav:
 - Kameleon: notebooks/kameleon-kamodo.ipynb
 - TIEGCM: notebooks/TIEGCM.ipynb
 - CommandLine: notebooks/CommandLineInterface.ipynb
+- RPC: rpc.md
 - Additional Resources: additional_resources.md
 
 theme: readthedocs
 plugins:
   - mknotebooks:
-      execute: true
+      execute: false
   - search
 markdown_extensions:
   - admonition

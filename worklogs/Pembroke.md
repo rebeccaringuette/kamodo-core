@@ -1,3 +1,5 @@
+* documentation for rpc
+* to_latex for lambda functions is messed up. kamodofying assigns None to rhs rather than lambda(lhs.args)
 
 ### 2021-12-15 12:07:30.907034: clock-in
 

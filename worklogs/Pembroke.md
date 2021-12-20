@@ -1,3 +1,5 @@
+### 2021-12-20 13:04:45.901311: clock-out
+
 * looking at pipelining
 * Currently, our Variable is a struct, but Calculator uses a Value object to pipeline results.
 * Need to impelment evaluate, expression, and value

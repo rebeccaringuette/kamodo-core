@@ -1,3 +1,6 @@
+
+### 2021-12-20 16:04:51.106743: clock-in
+
 ### 2021-12-20 13:04:45.901311: clock-out
 
 * looking at pipelining

@@ -1,3 +1,22 @@
+* looking at pipelining
+* Currently, our Variable is a struct, but Calculator uses a Value object to pipeline results.
+* Need to impelment evaluate, expression, and value
+* pipelining is enabled by the evaluate function, so Function will still return a Variable struct
+* evaluate handles all the pipelining via dictionary
+```capnp
+evaluate @0 (expression: Expression) -> (value: Value);
+```
+```python
+
+eval_promise = calculator.evaluate(
+    {'call': {'function': subtract, # getOperator('subtract').func
+              'params': [{'call': {'function': add, # getOperator('add').func
+                                   'params': [{'literal': 123},
+                                              {'literal': 45}]}},
+                         {'literal': 67.0}]}})
+```
+
+
 
 ### 2021-12-20 11:52:34.714917: clock-in
 

@@ -7,6 +7,14 @@ from kamodo import Kamodo, kamodofy
 import numpy as np
 ```
 
+```python
+k = Kamodo('f=x**2+y**2')
+```
+
+```python
+k.evaluate('f', x=np.array([3,4,5]), y=np.array([6,7,8]))
+```
+
 First we'll initialize a Kamodo object to act as a server, using one pure function `f` initialized without defaults and one black-box function `g` with defaults.
 
 ```python
@@ -63,10 +71,10 @@ kclient.to_latex()
 \\begin{equation}f{\\left(x \\right)} = \\sqrt{\\left(x^{2} - x - 1\\right)^{2}}\\end{equation} \\begin{equation}g{\\left(x \\right)} = \\lambda{\\left(x \\right)}\\end{equation}
 
 
-The client now has access to the same function hosted on the server. This allows the client to call the server-side function without needing any of its dependencies!
+The client now has access to the functions hosted on the server. This allows the client to call server-side functions without needing any of their dependencies!
 
 
-Client functions will inherit the defaults of their server-side counterparts.
+Client functions inherit the defaults of their server-side counterparts.
 
 ```python
 from kamodo import get_defaults
@@ -99,10 +107,24 @@ pio.write_image(fig, 'notebooks/images/rpc-plot2.svg')
 <!-- #region -->
 # RPC Spec
 
-Kamodo's rpc specification file is located in `kamodo/rpc/kamodo.capnp`:
+Kamodo uses capnproto to communicate binary data between functions hosted on different systems. This avoids the need for json serialization and allows for server-side function pipelining while minimizing data transfers.
 
+Kamodo's RPC specification file is located in `kamodo/rpc/kamodo.capnp`:
 
 ```sh
 {! ../kamodo/rpc/kamodo.capnp !}
 ```
+
+The above spec allows a Kamodo client (or server) to be implemented in many languages, including [C++](https://capnproto.org/cxx.html), C# (.NET Core), Erlang, Go, Haskell, JavaScript, OCaml, and Rust.
+
+Further reading on capnproto may be found here: 
+
+* [Overview](https://capnproto.org/index.html)
+* [Schema language](https://capnproto.org/language.html)
+* [RPC](https://capnproto.org/rpc.html)
+* Python implementation - [pycapnp](http://capnproto.github.io/pycapnp/quickstart.html)
 <!-- #endregion -->
+
+```python
+
+```

@@ -15,6 +15,39 @@ interface Kamodo {
   getMath @1 () -> (math :Map(Text, Function));
 
 
+  interface Value {
+    # Wraps a numeric value in an RPC object.  This allows the value
+    # to be used in subsequent evaluate() requests without the client
+    # waiting for the evaluate() that returns the Value to finish.
+
+    read @0 () -> (value :Variable);
+    # Read back the raw numeric value.
+  }
+
+  struct Expression {
+    # A numeric expression.
+
+    union {
+      literal @0 :Variable;
+      # A literal numeric value.
+
+      previousResult @1 :Value;
+      # A value that was (or, will be) returned by a previous
+      # evaluate().
+
+      parameter @2 :UInt32;
+      # A parameter to the function (only valid in function bodies;
+      # see defFunction).
+
+      call :group {
+        # Call a function on a list of parameters.
+        function @3 :Function;
+        params @4 :List(Expression);
+      }
+    }
+  }
+
+
   # everything needed for registration
   struct Field {
     func @0 :Function;

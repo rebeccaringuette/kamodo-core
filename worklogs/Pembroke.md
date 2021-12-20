@@ -1,3 +1,6 @@
+
+### 2021-12-20 11:52:34.714917: clock-in
+
 ### 2021-12-15 17:10:25.541242: clock-out
 
 * fixed latex rendering, rpc demo in docs

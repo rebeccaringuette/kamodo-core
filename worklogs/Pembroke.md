@@ -1,3 +1,4 @@
+* researching expression pipelining
 
 ### 2021-12-21 11:07:10.183487: clock-in
 

@@ -1,3 +1,6 @@
+
+### 2021-12-21 11:07:10.183487: clock-in
+
 ### 2021-12-20 17:38:17.588502: clock-out
 
 * client side expressions

@@ -200,11 +200,15 @@ from kamodo.rpc.proto import KamodoRPC
 ```
 
 ```python
-k = KamodoRPC()
+k = KamodoRPC(verbose=True)
 ```
 
 ```python
 literal.to_dict()
+```
+
+```python
+kclient
 ```
 
 ```python
@@ -238,6 +242,89 @@ response = read_promise.wait()
 
 ```python
 param_to_array(response.value)
+```
+
+### Sympy to RPC expression
+
+The client will generate expressions that will be turned into Expression messages to be sent and executed on the server.
+
+
+```python
+from sympy import sympify
+```
+
+```python
+expr = sympify('x**2-x-1')
+expr
+```
+
+```python
+from sympy import Function, sympify
+from sympy import Add, Mul, Pow
+from functools import reduce
+from operator import mul, add, pow
+
+AddRPC = Function('AddRPC')
+MulRPC = Function('MulRPC')
+PowRPC = Function('PowRPC')
+
+def rpc_expr(expr):
+    if len(expr.args) > 0:
+        gather = [rpc_expr(arg) for arg in expr.args]
+        if expr.func == Add:
+            return AddRPC(*gather)
+        if expr.func == Mul:
+            return MulRPC(*gather)
+        if expr.func == Pow:
+            return PowRPC(*gather)
+    return expr
+```
+
+```python
+expr
+```
+
+```python
+rpc_expr(expr)
+```
+
+```python
+expr.args
+```
+
+```python
+type(expr.args[0])
+```
+
+```python
+def expr_to_rpc(expr):
+    """convert a sympy expression to rpc message
+     message = {'call': {'function': subtract, # getOperator('subtract').func
+              'params': [{'call': {'function': add, # getOperator('add').func
+                                   'params': [{'literal': 123},
+                                              {'literal': 45}]}},
+                         {'literal': 67.0}]}})
+    
+    """
+    message = dict()
+    return message
+```
+
+```python
+class KamodoClient(Kamodo):
+    def __init__(self, server, **kwargs):
+        self._server = server
+        super(KamodoClient, self).__init__(**kwargs)
+        
+    def vectorize_function(self, symbol, rhs_expr, composition):
+        """lambdify the input expression using server-side promises"""
+        print('vectorizing {} = {}'.format(symbol, rhs_expr))
+        print('composition keys {}'.format(list(composition.keys())))
+        func = lambdify(symbol.args,
+                        rpc_expr(rhs_expr),
+                        modules=[func_impl, 'numpy', composition])
+        signature = sign_defaults(symbol, rhs_expr, composition)
+        return signature(func)
 ```
 
 <!-- #region -->

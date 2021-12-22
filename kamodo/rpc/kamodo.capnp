@@ -14,6 +14,7 @@ interface Kamodo {
 
   getMath @1 () -> (math :Map(Text, Function));
 
+  evaluate @2 (expression: Expression) -> (value: Value);
 
   interface Value {
     # Wraps a numeric value in an RPC object.  This allows the value
@@ -31,7 +32,7 @@ interface Kamodo {
       literal @0 :Variable;
       # A literal numeric value.
 
-      previousResult @1 :Value;
+      store @1 :Value;
       # A value that was (or, will be) returned by a previous
       # evaluate().
 

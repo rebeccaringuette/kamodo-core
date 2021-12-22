@@ -104,6 +104,142 @@ pio.write_image(fig, 'notebooks/images/rpc-plot2.svg')
 
 ![rpc_plot1](notebooks/images/rpc-plot2.svg)
 
+
+# Pipelining
+
+To fascilitate pipelining, the server needs to wrap all function results in promises
+
+
+# Collecting terms
+
+A client can point to terms located on different servers. Suppose the client wants to evaluate the following expression:
+
+$$ f(x,y,z) = g(x) + h_1(y) + h_2(z)$$
+
+where $h_1$ and $h_2$ are on the same server. In order to minimize data transfers, we want to execute $h_1(y) + h_2(z)$ on the server, retrieve the result and add it to $g(x)$. I don't know how to automatically do this. However, one approach would be to split $f$ into two functions $f_1$ and $f_2$:
+
+$$ f_2(y,z) = h_1(y) + h_2(z) $$
+$$ f_1(x,y,z) = g(x) + f_2(y,z) $$
+
+Now we could detect if all terms are on the same server. If so, we can pipeline the whole expression.
+
+A KamodoClient would do all of the above by default.
+
+
+### Function
+
+```python
+from kamodo.rpc.proto import FunctionRPC
+```
+
+```python
+f = FunctionRPC(lambda x=np.linspace(-3,3,33): x**2)
+f.getArgs()
+```
+
+```python
+from kamodo.rpc.proto import Value, array_to_param, param_to_array
+import numpy as np
+```
+
+### Value
+
+```python
+from kamodo.rpc.proto import Value
+```
+
+```python
+v = Value(array_to_param(np.linspace(-5,5,12)))
+```
+
+```python
+v.read().to_dict()
+```
+
+### Parameter
+
+```python
+param = array_to_param(np.linspace(-5,5,12))
+param.to_dict()
+```
+
+### Expression
+
+
+RPC expressions can refer to functions or values.
+
+```python
+import capnp
+# capnp.remove_import_hook()
+kamodo_capnp = capnp.load('/Users/asherp/git/ensemblegovservices/kamodo-core/kamodo/rpc/kamodo.capnp')
+Expression = kamodo_capnp.Kamodo.Expression
+```
+
+```python
+literal = Expression(literal=param)
+```
+
+```python
+expr = Expression(call=dict(function=f, params=[]))
+```
+
+```python
+expr.which()
+```
+
+```python
+expr.to_dict()
+```
+
+### Evaluate
+
+Regardless of expression type, `evaluate` returns a `Value`.
+
+```python
+from kamodo.rpc.proto import KamodoRPC
+```
+
+```python
+k = KamodoRPC()
+```
+
+```python
+literal.to_dict()
+```
+
+```python
+eval_promise =  kclient._client.evaluate(literal)
+read_promise = eval_promise.value.read()
+```
+
+```python
+response = read_promise.wait()
+```
+
+```python
+param_to_array(response.value)
+```
+
+```python
+expr = Expression(call=dict(function=f, params=[literal]))
+```
+
+```python
+eval_promise = kclient._client.evaluate(expr)
+```
+
+```python
+read_promise = eval_promise.value.read()
+```
+
+```python
+response = read_promise.wait()
+```
+
+```python
+param_to_array(response.value)
+```
+
 <!-- #region -->
 # RPC Spec
 

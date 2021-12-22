@@ -1,3 +1,6 @@
+
+### 2021-12-22 16:58:48.849563: clock-in
+
 ### 2021-12-22 13:39:03.436634: clock-out
 
 * got serverside pipelining to work

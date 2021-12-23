@@ -21,7 +21,7 @@ interface Kamodo {
     # to be used in subsequent evaluate() requests without the client
     # waiting for the evaluate() that returns the Value to finish.
 
-    read @0 () -> (value :Variable);
+    read @0 () -> (value :Literal);
     # Read back the raw numeric value.
   }
 
@@ -29,7 +29,7 @@ interface Kamodo {
     # A numeric expression.
 
     union {
-      literal @0 :Variable;
+      literal @0 :Literal;
       # A literal numeric value.
 
       store @1 :Value;
@@ -48,12 +48,42 @@ interface Kamodo {
     }
   }
 
+# Void: Void
+# Boolean: Bool
+# Integers: Int8, Int16, Int32, Int64
+# Unsigned integers: UInt8, UInt16, UInt32, UInt64
+# Floating-point: Float32, Float64
+# Blobs: Text, Data
+# Lists: List(T)
+
+
+  struct Literal {
+    union {
+      void @0 :Void;
+      bool @1 :Bool;
+      int8 @2 :Int8;
+      int16 @3 :Int16;
+      int32 @4 :Int32;
+      int64 @5 :Int64;
+      uint8 @6 :UInt8;
+      uint16 @7 :UInt16;
+      uint32 @8 :UInt32;
+      uint64 @9 :UInt64;
+      float32 @10 :Float32;
+      float64 @11 :Float64;
+      text @12 :Text;
+      data @13 :Data;
+      list @14 :List(Literal);
+      array @15 :Array;
+    }
+  }
+
 
   # everything needed for registration
   struct Field {
     func @0 :Function;
     meta @1 :Meta;
-    data @2 :Variable;
+    data @2 :Array;
   }
 
   # match kamodo's meta attribute
@@ -67,11 +97,11 @@ interface Kamodo {
 
   struct Argument {
     name @0 :Text;
-    value @1 :Variable;
+    value @1 :Literal;
   }
 
   # needs to be an interface
-  struct Variable {
+  struct Array {
     data @0 :Data;
     shape @1 :List(UInt32);
     dtype @2 :Text;
@@ -80,7 +110,7 @@ interface Kamodo {
 
   interface Function {
     # A pythonic function f(*args, **kwargs)
-    call @0 (args :List(Variable), kwargs :List(Argument)) -> (result: Variable);
+    call @0 (args :List(Literal), kwargs :List(Argument)) -> (result: Literal);
     getArgs @1 () -> (args :List(Text));
     getKwargs @2 () -> (kwargs: List(Argument));
   }

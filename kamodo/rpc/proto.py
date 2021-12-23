@@ -41,7 +41,7 @@ def param_to_array(param):
 
 def array_to_param(arr):
     """convert an array to an rpc parameter"""
-    param = kamodo_capnp.Kamodo.Variable.new_message()
+    param = kamodo_capnp.Kamodo.Array.new_message()
     arr_ = np.array(arr)
     if len(arr) > 0:
         param.data = arr_.tobytes()
@@ -50,7 +50,60 @@ def array_to_param(arr):
     return param
 
 
+def from_rpc_literal(literal):
+    """unwrap a literal"""
+    which = literal.which()
+    if which == 'void':
+        return np.nan
+    elif which == 'bool':
+        return bool(literal.bool)
+    elif which == 'array':
+        return param_to_array(literal.array)
+    elif which == 'text':
+        return str(literal.text)
+    elif which == 'data':
+        return literal.data
+    elif which == 'list':
+        return [from_rpc_literal(lit) for lit in literal.list]
+    elif which in ('int8', 'int16', 'int32', 'int64',
+                   'uint8', 'uint16', 'uint32', 'uint64',
+                   'float32', 'float64'):
+        return getattr(np, which)(getattr(literal, which))
+    else:
+        raise NotImplementedError('Unknown type {}'.format(which))
 
+def to_rpc_literal(value):
+    return kamodo_capnp.Kamodo.Literal(value)
+
+def test_rpc_literal():
+    a = np.linspace(-5,5,12).reshape(3,4)
+    lit_check = dict(
+        void=None,
+        bool=True,
+        int8=-2,
+        int16=-4,
+        int32=-8,
+        int64=-16,
+        uint8=2,
+        uint16=4,
+        uint32=6,
+        uint64=11,
+        float32=3,
+        float64=3,
+        array=array_to_param(a),
+        text='hello there',
+        list=[
+            dict(float32=3),
+            dict(list=[dict(list=[
+                dict(bool=True),
+                dict(array=array_to_param(a)),
+                ])])
+            ]
+        )
+    lit = kamodo_capnp.Kamodo.Literal(list = [{k: v} for k,v in lit_check.items()])
+
+    for _ in from_rpc_literal(lit):
+        print('{}: {}'.format(type(_).__name__, _))
 
 AddRPC = Function('AddRPC')
 MulRPC = Function('MulRPC')
@@ -87,10 +140,8 @@ def read_value(value):
 
 
 def evaluate_impl(expression, params=None):
-    """Implementation of CalculatorImpl::evaluate(), also shared by
-    FunctionImpl::call().  In the latter case, `params` are the parameter
-    values passed to the function; in the former case, `params` is just an
-    empty list."""
+    """
+    Borrows heavily from CalculatorImpl::evaluate()"""
 
     which = expression.which()
     print('found {}'.format(which))
@@ -111,12 +162,13 @@ def evaluate_impl(expression, params=None):
         joinedParams = capnp.join_promises(paramPromises)
         # When the parameters are complete, call the function.
         print('returning result')
-        ret = joinedParams.then(lambda vals: func.call(vals)).then(
+        ret = joinedParams.then(
+            lambda vals: func.call(vals)).then(
             lambda result: result.result
         )
         return ret
     else:
-        raise ValueError("Unknown expression type: " + which)
+        raise NotImplementedError("Unknown expression type: " + which)
 
 
 
@@ -160,18 +212,21 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         self.verbose = verbose
         self.args = get_args(self._func)
         self.kwargs = get_defaults(self._func)
-    
+
     def getArgs(self, **rpc_kwargs):
+        """getArgs @1 () -> (args :List(Text));"""
         return list(self.args)
         
     def getKwargs(self, **rpc_kwargs):
+        """getKwargs @2 () -> (kwargs: List(Argument));"""
         if self.verbose:
             print('retrieving kwargs')
         return [dict(name=k, value=array_to_param(v)) for k,v in self.kwargs.items()]
         
     def call(self, args, kwargs, **rpc_kwargs):
-        """mimic a pythonic function
-        
+        """call @0 (args :List(Literal), kwargs :List(Argument)) -> (result: Literal);
+
+        mimic a pythonic function
         raises TypeError when detecting multiple values for argument"""
         
         param_dict = self.kwargs

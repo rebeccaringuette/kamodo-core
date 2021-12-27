@@ -1,3 +1,6 @@
+
+### 2021-12-27 14:59:02.727777: clock-in
+
 ### 2021-12-23 13:48:44.293666: clock-out
 
 * switching to literals

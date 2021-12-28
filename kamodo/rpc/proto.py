@@ -54,7 +54,7 @@ def from_rpc_literal(literal):
     """unwrap a literal"""
     which = literal.which()
     if which == 'void':
-        return np.nan
+        return None
     elif which == 'bool':
         return bool(literal.bool)
     elif which == 'array':
@@ -69,11 +69,55 @@ def from_rpc_literal(literal):
                    'uint8', 'uint16', 'uint32', 'uint64',
                    'float32', 'float64'):
         return getattr(np, which)(getattr(literal, which))
+    elif which == 'int':
+        return int(literal.int)
     else:
         raise NotImplementedError('Unknown type {}'.format(which))
 
 def to_rpc_literal(value):
-    return kamodo_capnp.Kamodo.Literal(value)
+    """
+    void @0 :Void;
+    bool @1 :Bool;
+    int8 @2 :Int8;
+    int16 @3 :Int16;
+    int32 @4 :Int32;
+    int64 @5 :Int64;
+    uint8 @6 :UInt8;
+    uint16 @7 :UInt16;
+    uint32 @8 :UInt32;
+    uint64 @9 :UInt64;
+    float32 @10 :Float32;
+    float64 @11 :Float64;
+    text @12 :Text;
+    data @13 :Data;
+    list @14 :List(Literal);
+    array @15 :Array;
+    int @16 :Text;
+    """
+    if isinstance(value, bytes):
+        which = 'data'
+    elif value is None:
+        which = 'void'
+    elif isinstance(value, bool):
+        which = 'bool'
+    elif isinstance(value, int):
+        # will encode as text (too many types of ints to choose from)
+        which = 'int'
+        value = str(value)
+    elif isinstance(value, float):
+        # python standard float is C double
+        which = 'float64'
+    elif isinstance(value, str):
+        which = 'text'
+    elif isinstance(value, list):
+        which = 'list'
+        value = [to_rpc_literal(_) for _ in value]
+    else:
+        which = type(value).__name__
+    try:
+        return kamodo_capnp.Kamodo.Literal(**{which: value})
+    except:
+        raise NotImplementedError('{} type not yet supported: {}'.format(which, value))
 
 def test_rpc_literal():
     a = np.linspace(-5,5,12).reshape(3,4)
@@ -92,6 +136,7 @@ def test_rpc_literal():
         float64=3,
         array=array_to_param(a),
         text='hello there',
+        int='30000333',
         list=[
             dict(float32=3),
             dict(list=[dict(list=[

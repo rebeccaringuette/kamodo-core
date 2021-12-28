@@ -75,6 +75,7 @@ interface Kamodo {
       data @13 :Data;
       list @14 :List(Literal);
       array @15 :Array;
+      int @16 :Text;
     }
   }
 

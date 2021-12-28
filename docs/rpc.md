@@ -355,21 +355,11 @@ lit.list[1].array.to_dict()
 ```
 
 ```python
-
-```
-
-```python
 lit.list[2].which()
 ```
 
 ```python
 str.startswith('float')
-```
-
-```python
-which = 'float64'
-    pass
-    
 ```
 
 ```python
@@ -385,139 +375,12 @@ getattr(np, 'float64')
 * Lists: List(T)
 
 ```python
-from kamodo.rpc.proto import array_to_param, param_to_array, kamodo_capnp, from_rpc_literal
+from kamodo.rpc.proto import array_to_param, param_to_array, kamodo_capnp, from_rpc_literal, test_rpc_literal, to_rpc_literal
 import numpy as np
 ```
 
 ```python
-a = np.linspace(-5,5,12).reshape(3,4)
-lit_check = dict(
-    void=None,
-    bool=True,
-    int8=-2,
-    int16=-4,
-    int32=-8,
-    int64=-16,
-    uint8=2,
-    uint16=4,
-    uint32=6,
-    uint64=11,
-    float32=3,
-    float64=3,
-    array=array_to_param(a),
-    text='hello there',
-    list=[
-        dict(float32=3),
-        dict(list=[dict(list=[
-            dict(bool=True),
-            dict(array=array_to_param(a)),
-            ])])
-        ]
-    )
-lit = kamodo_capnp.Kamodo.Literal(list = [{k: v} for k,v in lit_check.items()])
-
-for _ in from_rpc_literal(lit):
-    print('{}: {}'.format(type(_).__name__, _))
-```
-
-```python
-import sys
-```
-
-```python
-sys.getsizeof(1)
-```
-
-```python
-np.linspace(-35,5,3)
-```
-
-```python
-def get_int_type(int_):
-    bounds = None, 'int64', 'int32', 'int16', 'int8', 'uint8', 'uint8', 'uint16', 'uint16', 'uint32', 'uint64', None
-    
-    a = np.array([-np.inf,
-                  -9223372036854775808, #int64 lower bound
-                  -2147483648, #int32 lower bound
-                  -32768, # int16 lower bound
-                  -128, # int8 lower bound
-                  0, # uint8
-                  255, # uint8
-                  65535, # uint16
-                  4294967295, #uint32
-                  18446744073709551615, #uint64
-                  np.inf])
-    
-    for i, val in enumerate(a):
-        if val >= int_:
-            which = bounds[i]
-            print('{} >= {}: {}'.format(val, int_, which))
-            break
-        else:
-            which = 'nothing found'
-    return which
-
-get_int_type(-1)
-```
-
-```python
-def from_int(_):
-    """
-    Int8: [-128,127]
-    Int16: [-32768,32767]
-    Int32: [-2147483648,2147483647]
-    Int64: [-9223372036854775808,9223372036854775807]
-    Int128: [-170141183460469231731687303715884105728,170141183460469231731687303715884105727]
-    UInt8: [0,255]
-    UInt16: [0,65535]
-    UInt32: [0,4294967295]
-    UInt64: [0,18446744073709551615]
-    UInt128: [0,340282366920938463463374607431768211455]
-    
-    ranges from https://stackoverflow.com/a/52176129
-    """
-    if (_ >= -9223372036854775808) & (_ <= -2147483648):
-        which = 'int64'
-    elif (_ )
-        
-    
-    if (_ >= -128) & (_ <= 127):
-        which = 'int8'
-    elif (_ >= -32768) & (_ <= 32767):
-        which = 'int16'
-    elif (_ >= -2147483648) & (_ <= 2147483647):
-        which = 'int32'
-    elif (_ >= -9223372036854775808) & (_ <= 9223372036854775807):
-        which = 'int64'
-    else:
-        raise NotImplementedError('{} ({} bit) not yet supported: {}'.format(type(_), 8*sys.getsizeof(_), _))
-
-    return which
-    
-from_int(-9223372036854775808)
-```
-
-```python
-sys.getsizeof?
-```
-
-```python
-def to_rpc_literal(value):
-    if isinstance(value, str):
-        which = 'text'
-    elif isinstance(value, float):
-        #python standard float is C double
-        which = 'float64'
-    elif isinstance(value, int):
-        which = 
-    else:
-        which = type(value).__name__
-    if isinstance(value, list):
-        return kamodo_capnp.Kamodo.Literal(list=[to_rpc_literal(_) for _ in value])
-    try:
-        return kamodo_capnp.Kamodo.Literal(**{which: value})
-    except:
-        raise NotImplementedError('{} type not yet supported: {}'.format(which, value))
+test_rpc_literal()
 ```
 
 ```python
@@ -526,9 +389,27 @@ literals = [True,
             ['hey', 'there', ['are', 'you', 'listening?']],
             33.3,
             -5,
+            None,
            ]
 
 to_rpc_literal(literals).to_dict()
+```
+
+```python
+to_rpc_literal([True, 1, 1.0]).to_dict()
+```
+
+```python
+result = from_rpc_literal(to_rpc_literal([
+    True,
+    1,
+    70**80,
+    [3, 4, 5],
+    'json sucks!',
+    [bytes(4), 3., 'two', 1, None],
+    bytes(2)]))
+assert result[-1] == bytes(2)
+result
 ```
 
 <!-- #region -->

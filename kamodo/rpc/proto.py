@@ -96,6 +96,9 @@ def to_rpc_literal(value):
     """
     if isinstance(value, bytes):
         which = 'data'
+    elif isinstance(value, np.ndarray):
+        which = 'array'
+        value = array_to_param(value)
     elif value is None:
         which = 'void'
     elif isinstance(value, bool):
@@ -174,7 +177,7 @@ class Value(kamodo_capnp.Kamodo.Value.Server):
         self.value = value
 
     def read(self, **kwargs):
-        return self.value
+        return to_rpc_literal(self.value)
 
 def read_value(value):
     """Helper function to asynchronously call read() on a Calculator::Value and
@@ -239,8 +242,8 @@ class KamodoRPC(kamodo_capnp.Kamodo.Server):
 
     def evaluate(self, expression, _context, **kwargs):
         # evaluate @2 (expression: Expression) -> (value: Value);
-        return evaluate_impl(expression).then(
-            lambda value: setattr(_context.results, "value", Value(value))
+        return evaluate_impl(expression).then( # after recursive evaluation
+            lambda value: setattr(_context.results, "value", Value(from_rpc_literal(value)))
         )
 
     def __getitem__(self, key):
@@ -266,7 +269,7 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         """getKwargs @2 () -> (kwargs: List(Argument));"""
         if self.verbose:
             print('retrieving kwargs')
-        return [dict(name=k, value=array_to_param(v)) for k,v in self.kwargs.items()]
+        return [dict(name=k, value=to_rpc_literal(v)) for k,v in self.kwargs.items()]
         
     def call(self, args, kwargs, **rpc_kwargs):
         """call @0 (args :List(Literal), kwargs :List(Argument)) -> (result: Literal);
@@ -279,18 +282,18 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         # insert args
         arg_dict = {}
         for i, value in enumerate(args):
-            arg_dict.update({self.args[i]: param_to_array(value)})
+            arg_dict.update({self.args[i]: from_rpc_literal(value)})
         param_dict.update(arg_dict)
         
         # insert kwargs
         for kwarg in kwargs:
             if kwarg.name in arg_dict:
                 raise TypeError('multiple values for argument {}, len(args)={}'.format(kwarg.name, len(args)))
-            param_dict.update({kwarg.name: param_to_array(kwarg.value)})
+            param_dict.update({kwarg.name: from_rpc_literal(kwarg.value)})
         if self.verbose:
             print('serverside function called with {} params'.format(len(param_dict)))
         result = self._func(**param_dict)
-        result_param = array_to_param(result)
+        result_param = to_rpc_literal(result)
         return result_param
 
 

@@ -73,7 +73,7 @@ from sympy.abc import _clash
 import sympy
 
 from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
-from rpc.proto import array_to_param, param_to_array
+from rpc.proto import from_rpc_literal, to_rpc_literal
 from util import construct_signature
 
 _clash['rad'] = Symbol('rad')
@@ -1021,7 +1021,7 @@ class Kamodo(UserDict):
         arg_units = rpc_map_to_dict(meta.argUnits)
         
         defaults_ = field.func.getKwargs().wait().kwargs
-        func_defaults = {_.name: param_to_array(_.value) for _ in defaults_}
+        func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
         func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
         func_args = [_ for _ in func_args_ if _ not in func_defaults]
         
@@ -1038,10 +1038,10 @@ class Kamodo(UserDict):
         @forge.sign(*construct_signature(*func_args, **func_defaults))
         def remote_func(*args, **kwargs):
             # params must be List(Variable) for now
-            args_ = [array_to_param(arg) for arg in args]
-            kwargs_ = [dict(name=k, value= array_to_param(v)) for k, v in kwargs.items()]
+            args_ = [to_rpc_literal(arg) for arg in args]
+            kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
             result = field.func.call(args=args_, kwargs=kwargs_).wait().result
-            return param_to_array(result)
+            return from_rpc_literal(result)
 
         self[symbol] = remote_func
 

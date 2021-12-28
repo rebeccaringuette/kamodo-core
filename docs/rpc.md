@@ -19,8 +19,10 @@ First we'll initialize a Kamodo object to act as a server, using one pure functi
 
 ```python
 kserver = Kamodo(f='sqrt((x**2-x-1)**2)',
-                 g = kamodofy(lambda x=np.linspace(-1, 2, 12): np.sin(x)))
+                 g = kamodofy(lambda x=np.linspace(-1, 2, 12): np.sin(np.array(x))),
+                cat = 'a+b')
 kserver.to_latex()
+kserver
 ```
 
 \\begin{equation}f{\\left(x \\right)} = \\sqrt{\\left(x^{2} - x - 1\\right)^{2}}\\end{equation} \\begin{equation}g{\\left(x \\right)} = \\lambda{\\left(x \\right)}\\end{equation}
@@ -86,12 +88,36 @@ get_defaults(kclient.g)
 #          1.72727273,  2.        ])}
 ```
 
-Arguments are automatically converted to numpy arrays before being passed to the server.
+Typecasting will only be handled by the server-side function implementation.
 
 ```python
-kclient.f([3, 4, 5])
+kclient.f(np.array([3, 4, 5]))
 
 # >>> array([ 5., 11., 19.]) # matches above evaluation on server
+```
+
+```python
+from capnp import KjException
+try:
+    kclient.f([3, 4, 5])
+except KjException as m: 
+    #raises remote exception TypeError
+    pass
+```
+
+```python
+# g implementation upcasts argument to np.array
+assert (kclient.g([3, 4, 5]) == kserver.g([3, 4, 5])).all()
+```
+
+The client can send other types besides arrays, provided the server-side implementation supports them.
+
+```python
+kclient.cat('two', 'three')
+```
+
+```python
+kclient.cat(['two'], ['three'])
 ```
 
 We can verify that the clientside plots reproduce that found on the server.
@@ -100,6 +126,7 @@ We can verify that the clientside plots reproduce that found on the server.
 fig = kclient.plot('g', f=dict(x=np.linspace(-1,2,33)))
 
 pio.write_image(fig, 'notebooks/images/rpc-plot2.svg')
+fig
 ```
 
 ![rpc_plot1](notebooks/images/rpc-plot2.svg)
@@ -123,7 +150,7 @@ $$ f_1(x,y,z) = g(x) + f_2(y,z) $$
 
 Now we could detect if all terms are on the same server. If so, we can pipeline the whole expression.
 
-A KamodoClient would do all of the above by default.
+A KamodoClient would do all of the above by default. It would only point to one server. Since a kamodo object can be composed of functions coming from other Kamodo objects, this provides a natural separation of resposibilities. It also offloads handling name collisions to the end user.
 
 
 ### Function
@@ -138,18 +165,18 @@ f.getArgs()
 ```
 
 ```python
-from kamodo.rpc.proto import Value, array_to_param, param_to_array
+from kamodo.rpc.proto import Value
 import numpy as np
 ```
 
 ### Value
 
 ```python
-from kamodo.rpc.proto import Value
+from kamodo.rpc.proto import Value, to_rpc_literal, from_rpc_literal
 ```
 
 ```python
-v = Value(array_to_param(np.linspace(-5,5,12)))
+v = Value(np.linspace(-5,5,12))
 ```
 
 ```python
@@ -159,7 +186,7 @@ v.read().to_dict()
 ### Parameter
 
 ```python
-param = array_to_param(np.linspace(-5,5,12))
+param = to_rpc_literal(np.linspace(-5,5,12))
 param.to_dict()
 ```
 
@@ -221,11 +248,15 @@ response = read_promise.wait()
 ```
 
 ```python
-param_to_array(response.value)
+from_rpc_literal(response.value)
 ```
 
 ```python
 expr = Expression(call=dict(function=f, params=[literal]))
+```
+
+```python
+expr.to_dict()
 ```
 
 ```python
@@ -241,7 +272,7 @@ response = read_promise.wait()
 ```
 
 ```python
-param_to_array(response.value)
+from_rpc_literal(response.value)
 ```
 
 ### Sympy to RPC expression
@@ -329,6 +360,8 @@ class KamodoClient(Kamodo):
 
 ## Literals
 
+Kamodo's capnp messages support most core python data types in addition to numpy arrays.
+
 ```python
 from kamodo.rpc.proto import kamodo_capnp as kcap
 ```
@@ -356,14 +389,6 @@ lit.list[1].array.to_dict()
 
 ```python
 lit.list[2].which()
-```
-
-```python
-str.startswith('float')
-```
-
-```python
-getattr(np, 'float64')
 ```
 
 * Void: Void
@@ -397,6 +422,18 @@ to_rpc_literal(literals).to_dict()
 
 ```python
 to_rpc_literal([True, 1, 1.0]).to_dict()
+```
+
+```python
+from numpy import ndarray
+```
+
+```python
+isinstance(np.linspace(-3,3,12), ndarray)
+```
+
+```python
+to_rpc_literal(np.linspace(-3,3,12).reshape((3,4))).to_dict()
 ```
 
 ```python

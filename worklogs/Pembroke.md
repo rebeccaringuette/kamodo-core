@@ -1,3 +1,6 @@
+
+### 2021-12-29 15:12:52.407329: clock-in
+
 ### 2021-12-28 12:15:34.847427: clock-out
 
 * expressions working with literals

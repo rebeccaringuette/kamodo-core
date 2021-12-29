@@ -281,6 +281,10 @@ The client will generate expressions that will be turned into Expression message
 
 
 ```python
+from kamodo.rpc.proto import to_rpc_expr
+```
+
+```python
 from sympy import sympify
 ```
 
@@ -290,55 +294,33 @@ expr
 ```
 
 ```python
-from sympy import Function, sympify
-from sympy import Add, Mul, Pow
-from functools import reduce
-from operator import mul, add, pow
-
-AddRPC = Function('AddRPC')
-MulRPC = Function('MulRPC')
-PowRPC = Function('PowRPC')
-
-def rpc_expr(expr):
-    if len(expr.args) > 0:
-        gather = [rpc_expr(arg) for arg in expr.args]
-        if expr.func == Add:
-            return AddRPC(*gather)
-        if expr.func == Mul:
-            return MulRPC(*gather)
-        if expr.func == Pow:
-            return PowRPC(*gather)
-    return expr
+from sympy.abc import a,b,c
+expr = a**3+b*c*4.2
+to_rpc_expr(expr, a=4, b=5, c=3).to_dict()
 ```
 
 ```python
+try:
+    to_rpc_expr(expr, a=4, b=5)
+except KeyError as m:
+    print(m)
+```
+
+Custom functions can be included on client or server. See calculator example.
+
+```python
+from sympy import Function
+g = Function('g')
+expr = g(a) + b
 expr
 ```
 
 ```python
-rpc_expr(expr)
+from kamodo.rpc.proto import FunctionRPC
 ```
 
 ```python
-expr.args
-```
-
-```python
-type(expr.args[0])
-```
-
-```python
-def expr_to_rpc(expr):
-    """convert a sympy expression to rpc message
-     message = {'call': {'function': subtract, # getOperator('subtract').func
-              'params': [{'call': {'function': add, # getOperator('add').func
-                                   'params': [{'literal': 123},
-                                              {'literal': 45}]}},
-                         {'literal': 67.0}]}})
-    
-    """
-    message = dict()
-    return message
+to_rpc_expr(expr, a=3, b=5, g=FunctionRPC(lambda x: x**2)).to_dict()
 ```
 
 ```python

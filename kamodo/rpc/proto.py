@@ -10,7 +10,9 @@ kamodo_capnp = capnp.load('{}/kamodo.capnp'.format(current_dir))
 from util import get_args, get_defaults
 import numpy as np
 
-from sympy import Function
+from sympy import Function, Symbol
+from sympy import Add, Mul, Pow
+from sympy.core.numbers import Float, Integer
 
 def rpc_map_to_dict(rpc_map, callback = None):
     if callback is not None:
@@ -298,5 +300,42 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
 
 
 
+add_rpc = FunctionRPC(lambda *a: reduce(lambda x, y: x+y, a))
+mul_rpc = FunctionRPC(lambda *a: reduce(lambda x, y: x*y, a))
+pow_rpc = FunctionRPC(lambda a, b: pow(a, b))
+
+
+
+
+def to_rpc_expr(expr, **kwargs):
+    """takes a sympy expression with kwargs and returns
+    an RPC expression ready for evaluation
+    """
+    message = dict()
+    if len(expr.args) > 0:
+        message['call'] = dict(params=[to_rpc_expr(arg, **kwargs) for arg in expr.args])
+        if expr.func == Add:
+            message['call']['function'] = add_rpc
+        elif expr.func == Mul:
+            message['call']['function'] = mul_rpc
+        elif expr.func == Pow:
+            message['call']['function'] = pow_rpc
+        elif str(expr.func) in kwargs:
+            message['call']['function'] = kwargs[str(expr.func)]
+        else:
+            raise NotImplementedError(expr.func)
+    elif isinstance(expr, Float):
+        message['literal'] = to_rpc_literal(float(expr))
+    elif isinstance(expr, Integer):
+        message['literal'] = to_rpc_literal(int(expr))
+    elif isinstance(expr, Symbol):
+        sym = str(expr)
+        if sym in kwargs:
+            message['literal'] = to_rpc_literal(kwargs[sym])
+        else:
+            raise KeyError('Free parameter {} unspecified'.format(sym))
+    else:
+        raise NotImplementedError(expr)
+    return kamodo_capnp.Kamodo.Expression(**message)
 
 

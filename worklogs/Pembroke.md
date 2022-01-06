@@ -1,3 +1,8 @@
+* pipelining, getting index error
+* tried storing data as AnyPointer with enum type
+* could not encode integer as AnyPointer, could not create List(AnyPointer)
+* reverting to type as union
+* need kamodo object to execute rpc expression on server
 
 ### 2022-01-06 10:55:08.149836: clock-in
 

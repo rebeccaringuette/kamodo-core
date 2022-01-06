@@ -41,8 +41,8 @@ Now generate a server-side test plot for both functions.
 ```python
 import plotly.io as pio
 fig = kserver.plot('g', f=dict(x=np.linspace(-1,2,33)))
-
 pio.write_image(fig, 'notebooks/images/rpc-plot.svg')
+fig
 ```
 
 ![rpc_plot1](notebooks/images/rpc-plot.svg)
@@ -70,7 +70,7 @@ client = kclient.client(read)
 kclient.to_latex()
 ```
 
-\\begin{equation}f{\\left(x \\right)} = \\sqrt{\\left(x^{2} - x - 1\\right)^{2}}\\end{equation} \\begin{equation}g{\\left(x \\right)} = \\lambda{\\left(x \\right)}\\end{equation}
+\\begin{equation}f{\\left(x \\right)} = \\sqrt{\\left(x^{2} - x - 1\\right)^{2}}\\end{equation} \\begin{equation}g{\\left(x \\right)} = \\lambda{\\left(x \\right)}\\end{equation} \\begin{equation}\\operatorname{cat}{\\left(a,b \\right)} = a + b\\end{equation}
 
 
 The client now has access to the functions hosted on the server. This allows the client to call server-side functions without needing any of their dependencies!
@@ -106,7 +106,7 @@ except KjException as m:
 ```
 
 ```python
-# g implementation upcasts argument to np.array
+# g implementation happens to cast argument to np.array
 assert (kclient.g([3, 4, 5]) == kserver.g([3, 4, 5])).all()
 ```
 
@@ -160,7 +160,7 @@ from kamodo.rpc.proto import FunctionRPC
 ```
 
 ```python
-f = FunctionRPC(lambda x=np.linspace(-3,3,33): x**2)
+f = FunctionRPC(lambda x=np.linspace(-3, 3, 33): x**2)
 f.getArgs()
 ```
 
@@ -231,48 +231,16 @@ k = KamodoRPC(verbose=True)
 ```
 
 ```python
-literal.to_dict()
-```
-
-```python
-kclient
-```
-
-```python
-eval_promise =  kclient._client.evaluate(literal)
-read_promise = eval_promise.value.read()
-```
-
-```python
-response = read_promise.wait()
-```
-
-```python
-from_rpc_literal(response.value)
-```
-
-```python
 expr = Expression(call=dict(function=f, params=[literal]))
-```
-
-```python
 expr.to_dict()
 ```
 
 ```python
 eval_promise = kclient._client.evaluate(expr)
-```
 
-```python
-read_promise = eval_promise.value.read()
-```
+read_promise = eval_promise.value.read().wait()
 
-```python
-response = read_promise.wait()
-```
-
-```python
-from_rpc_literal(response.value)
+from_rpc_literal(read_promise.value)
 ```
 
 ### Sympy to RPC expression
@@ -282,6 +250,7 @@ The client will generate expressions that will be turned into Expression message
 
 ```python
 from kamodo.rpc.proto import to_rpc_expr
+help(to_rpc_expr)
 ```
 
 ```python
@@ -294,6 +263,15 @@ expr
 ```
 
 ```python
+from kamodo.rpc.proto import add_rpc, mul_rpc, pow_rpc
+from sympy import Add, Mul, Pow
+```
+
+```python
+math_rpc = {Add: add_rpc, Mul:mul_rpc, Pow: pow_rpc}
+```
+
+```python
 from sympy.abc import a,b,c
 expr = a**3+b*c*4.2
 to_rpc_expr(expr, a=4, b=5, c=3).to_dict()
@@ -302,25 +280,89 @@ to_rpc_expr(expr, a=4, b=5, c=3).to_dict()
 ```python
 try:
     to_rpc_expr(expr, a=4, b=5)
-except KeyError as m:
+except TypeError as m:
     print(m)
 ```
 
-Custom functions can be included on client or server. See calculator example.
+Evaluate the expression
 
 ```python
-from sympy import Function
-g = Function('g')
-expr = g(a) + b
+expr = sympify('x + y + g(x)')
 expr
 ```
+
+```python
+rpc_expr = to_rpc_expr(expr, x=3, y=4, g = FunctionRPC(lambda x: x**2))
+```
+
+```python
+eval_promise = kclient._client.evaluate(rpc_expr)
+
+read_promise = eval_promise.value.read().wait()
+
+from_rpc_literal(read_promise.value)
+```
+
+Custom functions can be included on client or server. See calculator example.
 
 ```python
 from kamodo.rpc.proto import FunctionRPC
 ```
 
 ```python
-to_rpc_expr(expr, a=3, b=5, g=FunctionRPC(lambda x: x**2)).to_dict()
+expr = sympify('a+b + g(x)')
+expr
+```
+
+## KamodoClient
+Our previous example demonstrated running a remote kamodo function from the client. However, compositions involving those functions will be carried out locally:
+
+```python
+kclient['h'] = 'g+f'
+kclient
+```
+
+```python
+assert kclient.h(3) == np.sin(np.array(3)) + ((3**2-3-1)**2)**.5
+```
+
+Here, the results for `f(x)` and `g(x)` are returned to the client and the client adds the two results. This increases the amount of data being sent. Instead, we can have the server execute the composition requested by the client, so only the final calculation is returned.
+
+The KamodoClient is a subclass of Kamodo that can send and receive server-side compositions.
+The KamodoClient will include FunctionRPC for local functions. This allows the server to call them where necessary.
+
+```python
+from kamodo.rpc.proto import rpc_map_to_dict
+```
+
+```python
+def get_remote_composition(self, expr, **kwargs):
+    """Generate a callable function composition that is executed remotely"""
+    def remote_composition(**params):
+        remote_expr = to_rpc_expr(expr, **params, **kwargs)
+        print(remote_expr.to_dict())
+        evaluated = kclient._client.evaluate(remote_expr).wait()
+        print('evaluation occurred')
+        result_message = eval_promise.value.read().wait()
+        result = from_rpc_literal(result_message.value)
+        return result
+    
+    return remote_composition
+        
+    
+```
+
+```python
+expr = a+b
+expr
+```
+
+```python
+kclient
+```
+
+```python
+get_remote_composition(kclient, expr)(a=1, b=2)
 ```
 
 ```python
@@ -338,6 +380,18 @@ class KamodoClient(Kamodo):
                         modules=[func_impl, 'numpy', composition])
         signature = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
+```
+
+```python
+from kamodo import Kamodo
+```
+
+```python
+k = Kamodo(f='x**2-x-1')
+```
+
+```python
+k = Kamodo('f=x*y')
 ```
 
 ## Literals
@@ -359,18 +413,6 @@ import numpy as np
 ```python
 a = np.linspace(-5,5,12).reshape(3,4)
 a
-```
-
-```python
-lit = kcap.Kamodo.Literal(list=[dict(float64=3), dict(array=array_to_param(a)), dict(text='hello guvnah')])
-```
-
-```python
-lit.list[1].array.to_dict()
-```
-
-```python
-lit.list[2].which()
 ```
 
 * Void: Void

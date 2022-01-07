@@ -1,3 +1,5 @@
+### 2022-01-06 19:27:17.497958: clock-out
+
 * need to support expressions with multiple arguments
 
 ### 2022-01-06 18:10:29.406958: clock-in

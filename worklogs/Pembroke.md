@@ -1,3 +1,4 @@
+* got pipelined expression working
 
 ### 2022-01-06 20:49:26.231934: clock-in
 

@@ -14,6 +14,8 @@ from sympy import Function, Symbol
 from sympy import Add, Mul, Pow
 from sympy.core.numbers import Float, Integer
 
+from functools import reduce
+
 def rpc_map_to_dict(rpc_map, callback = None):
     if callback is not None:
         return {_.key: callback(_.value) for _ in rpc_map.entries}
@@ -55,7 +57,7 @@ def array_to_param(arr):
 def from_rpc_literal(literal):
     """unwrap a literal"""
     which = literal.which()
-    print('unwrapping literal {}'.format(which))
+    # print('unwrapping literal {}'.format(which))
     if which == 'void':
         return None
     elif which == 'bool':
@@ -170,21 +172,21 @@ def test_rpc_literal():
     for _ in from_rpc_literal(lit):
         print('{}: {}'.format(type(_).__name__, _))
 
-AddRPC = Function('AddRPC')
-MulRPC = Function('MulRPC')
-PowRPC = Function('PowRPC')
+# AddRPC = Function('AddRPC')
+# MulRPC = Function('MulRPC')
+# PowRPC = Function('PowRPC')
 
-def rpc_expr(expr):
-    """Replace expression with RPC functions"""
-    if len(expr.args) > 0:
-        gather = [rpc_expr(arg) for arg in expr.args]
-        if expr.func == Add:
-            return AddRPC(*gather)
-        if expr.func == Mul:
-            return MulRPC(*gather)
-        if expr.func == Pow:
-            return PowRPC(*gather)
-    return expr
+# def rpc_expr(expr):
+#     """Replace expression with RPC functions"""
+#     if len(expr.args) > 0:
+#         gather = [rpc_expr(arg) for arg in expr.args]
+#         if expr.func == Add:
+#             return AddRPC(*gather)
+#         if expr.func == Mul:
+#             return MulRPC(*gather)
+#         if expr.func == Pow:
+#             return PowRPC(*gather)
+#     return expr
 
 
 class Value(kamodo_capnp.Kamodo.Value.Server):
@@ -209,7 +211,6 @@ def evaluate_impl(expression, params=None):
     Borrows heavily from CalculatorImpl::evaluate()"""
 
     which = expression.which()
-    print('found {}'.format(which))
     if which == "literal":
         return capnp.Promise(expression.literal)
     elif which == "store":
@@ -223,15 +224,12 @@ def evaluate_impl(expression, params=None):
 
         # Evaluate each parameter.
         paramPromises = [evaluate_impl(param, params) for param in call.params]
-        print('joining promises')
         joinedParams = capnp.join_promises(paramPromises)
         # When the parameters are complete, call the function.
-        print('returning result')
         ret = joinedParams.then(
             lambda vals: func.call(vals)).then(
             lambda result: result.result
         )
-        print('done')
         return ret
     else:
         raise NotImplementedError("Unknown expression type: " + which)
@@ -267,11 +265,9 @@ class KamodoRPC(kamodo_capnp.Kamodo.Server):
         #         Value(from_rpc_literal(value)))
 
         evaluated = evaluate_impl(expression)
-        print('expression evaluated')
         result = evaluated.then(
             lambda value: setattr(_context.results, "value", Value(from_rpc_literal(value)))
             )
-        print('returning evaluated result')
         return result
 
     def __getitem__(self, key):
@@ -279,9 +275,6 @@ class KamodoRPC(kamodo_capnp.Kamodo.Server):
 
     def __setitem__(self, key, field):
         self.fields[key] = field
-
-
-
 
 
 class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
@@ -331,21 +324,35 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         return result_param
 
 
-def add_impl(a, b):
-    return a+b
-    # return reduce(lambda x, y: x+y, a)
+class AddRPC(kamodo_capnp.Kamodo.Function.Server):
+    def getArgs(self, **rpc_kwargs):
+        return []
 
-def mul_impl(a, b):
-    return a*b
-    # return reduce(lambda x, y: x*y, a)
+    def getKwargs(self, **rpc_kwargs):
+        return []
 
-def pow_impl(a, b):
-    print('pow called')
-    return pow(a, b)
+    def call(self, args, kwargs, **rpc_kwargs):
+        """call @0 (args :List(Literal), kwargs :List(Argument)) -> (result: Literal)"""
+        args_ = [from_rpc_literal(arg) for arg in args]
+        result = reduce(lambda a, b: a+b, args_)
+        return to_rpc_literal(result)
 
-add_rpc = FunctionRPC(add_impl)
-mul_rpc = FunctionRPC(mul_impl)
-pow_rpc = FunctionRPC(pow_impl)
+class MulRPC(kamodo_capnp.Kamodo.Function.Server):
+    def getArgs(self, **rpc_kwargs):
+        return []
+
+    def getKwargs(self, **rpc_kwargs):
+        return []
+
+    def call(self, args, kwargs, **rpc_kwargs):
+        """call @0 (args :List(Literal), kwargs :List(Argument)) -> (result: Literal)"""
+        args_ = [from_rpc_literal(arg) for arg in args]
+        result = reduce(lambda a, b: a*b, args_)
+        return to_rpc_literal(result)
+
+add_rpc = AddRPC()
+mul_rpc = MulRPC()
+pow_rpc = FunctionRPC(lambda a, b: a**b)
 
 math_rpc = {Add: add_rpc, Mul:mul_rpc, Pow: pow_rpc}
 

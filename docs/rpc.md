@@ -244,10 +244,6 @@ from_rpc_literal(read_promise.value)
 ```
 
 ```python
-kclient._client.evaluate?
-```
-
-```python
 eval_promise = kclient._client.evaluate(Expression(literal=param))
 
 read_promise = eval_promise.value.read().wait()
@@ -314,14 +310,14 @@ literal.to_dict()
 ```
 
 ```python
-rpc_expr = to_rpc_expr(sympify('x+a+f(a,x)'),
+from kamodo.rpc.proto import math_rpc, Float, Integer, Symbol
+
+rpc_expr = to_rpc_expr(sympify('x+a/b+f(a,x)'),
                        a=3,
+                       b=2,
                        x=np.linspace(-5,5,12),
                        f=FunctionRPC(lambda a, x: a+x))
-rpc_expr.to_dict()
-```
 
-```python
 eval_promise = kclient._client.evaluate(rpc_expr)
 
 read_promise = eval_promise.value.read()
@@ -366,10 +362,8 @@ def get_remote_composition(self, expr, **kwargs):
     """Generate a callable function composition that is executed remotely"""
     def remote_composition(**params):
         remote_expr = to_rpc_expr(expr, **params, **kwargs)
-        print(remote_expr.to_dict())
-        evaluated = kclient._client.evaluate(remote_expr).wait()
-        print('evaluation occurred')
-        result_message = eval_promise.value.read().wait()
+        evaluated = self._client.evaluate(remote_expr).wait()
+        result_message = evaluated.value.read().wait()
         result = from_rpc_literal(result_message.value)
         return result
     
@@ -379,16 +373,14 @@ def get_remote_composition(self, expr, **kwargs):
 ```
 
 ```python
-expr = a+b
-expr
-```
-
-```python
 kclient
 ```
 
 ```python
-get_remote_composition(kclient, expr)(a=1, b=2)
+from sympy.abc import a,b,c
+
+myfunc = get_remote_composition(kclient, a+b*c)
+myfunc(a=3, b=np.array([3, 4, 2]), c=2.)
 ```
 
 ```python

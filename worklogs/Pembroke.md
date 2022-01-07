@@ -1,3 +1,6 @@
+
+### 2022-01-07 12:22:14.758098: clock-in
+
 ### 2022-01-06 21:57:08.701380: clock-out
 
 * got pipelined expression working

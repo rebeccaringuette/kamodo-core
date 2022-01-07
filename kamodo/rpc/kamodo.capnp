@@ -76,6 +76,8 @@ interface Kamodo {
       list @14 :List(Literal);
       array @15 :Array;
       int @16 :Text;
+      listint64 @17 :List(Int64);
+      listfloat64 @18 :List(Float64);
     }
   }
 

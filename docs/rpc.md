@@ -243,6 +243,18 @@ read_promise = eval_promise.value.read().wait()
 from_rpc_literal(read_promise.value)
 ```
 
+```python
+kclient._client.evaluate?
+```
+
+```python
+eval_promise = kclient._client.evaluate(Expression(literal=param))
+
+read_promise = eval_promise.value.read().wait()
+
+from_rpc_literal(read_promise.value)
+```
+
 ### Sympy to RPC expression
 
 The client will generate expressions that will be turned into Expression messages to be sent and executed on the server.
@@ -292,15 +304,29 @@ expr
 ```
 
 ```python
-rpc_expr = to_rpc_expr(expr, x=3, y=4, g = FunctionRPC(lambda x: x**2))
+def myfunc(x):
+    print('function called with param {}'.format(x))
+    return x**2
+```
+
+```python
+literal.to_dict()
+```
+
+```python
+rpc_expr = to_rpc_expr(sympify('x+a+f(a,x)'),
+                       a=3,
+                       x=np.linspace(-5,5,12),
+                       f=FunctionRPC(lambda a, x: a+x))
+rpc_expr.to_dict()
 ```
 
 ```python
 eval_promise = kclient._client.evaluate(rpc_expr)
 
-read_promise = eval_promise.value.read().wait()
+read_promise = eval_promise.value.read()
 
-from_rpc_literal(read_promise.value)
+from_rpc_literal(read_promise.wait().value)
 ```
 
 Custom functions can be included on client or server. See calculator example.

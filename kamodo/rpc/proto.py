@@ -55,6 +55,7 @@ def array_to_param(arr):
 def from_rpc_literal(literal):
     """unwrap a literal"""
     which = literal.which()
+    print('unwrapping literal {}'.format(which))
     if which == 'void':
         return None
     elif which == 'bool':
@@ -76,6 +77,12 @@ def from_rpc_literal(literal):
     else:
         raise NotImplementedError('Unknown type {}'.format(which))
 
+def unique_type(alist):
+    if len(alist) > 0:
+        atype = type(alist[0])
+        return all(isinstance(_, atype) for _ in alist)
+    return True
+
 def to_rpc_literal(value):
     """
     void @0 :Void;
@@ -95,6 +102,8 @@ def to_rpc_literal(value):
     list @14 :List(Literal);
     array @15 :Array;
     int @16 :Text;
+    listint64 @17 :List(Int64);
+    listfloat64 @18 :List(Float64);
     """
     if isinstance(value, bytes):
         which = 'data'
@@ -105,6 +114,7 @@ def to_rpc_literal(value):
         which = 'void'
     elif isinstance(value, bool):
         which = 'bool'
+        value = bool(value)
     elif isinstance(value, int):
         # will encode as text (too many types of ints to choose from)
         which = 'int'
@@ -112,17 +122,22 @@ def to_rpc_literal(value):
     elif isinstance(value, float):
         # python standard float is C double
         which = 'float64'
+        value = float(value) # cast np.float as float
     elif isinstance(value, str):
         which = 'text'
     elif isinstance(value, list):
+        if unique_type(value):
+            pass
+
         which = 'list'
         value = [to_rpc_literal(_) for _ in value]
     else:
         which = type(value).__name__
     try:
         return kamodo_capnp.Kamodo.Literal(**{which: value})
-    except:
-        raise NotImplementedError('{} type not yet supported: {}'.format(which, value))
+    except Exception as m:
+        raise NotImplementedError('{} type not yet supported: {}\n{}'.format(
+            which, value.to_dict(), m))
 
 def test_rpc_literal():
     a = np.linspace(-5,5,12).reshape(3,4)
@@ -216,10 +231,10 @@ def evaluate_impl(expression, params=None):
             lambda vals: func.call(vals)).then(
             lambda result: result.result
         )
+        print('done')
         return ret
     else:
         raise NotImplementedError("Unknown expression type: " + which)
-
 
 
 class KamodoRPC(kamodo_capnp.Kamodo.Server):
@@ -244,15 +259,29 @@ class KamodoRPC(kamodo_capnp.Kamodo.Server):
 
     def evaluate(self, expression, _context, **kwargs):
         # evaluate @2 (expression: Expression) -> (value: Value);
-        return evaluate_impl(expression).then( # after recursive evaluation
+
+        # def set_value_context(value):
+        #     return setattr(
+        #         _context.results,
+        #         "value",
+        #         Value(from_rpc_literal(value)))
+
+        evaluated = evaluate_impl(expression)
+        print('expression evaluated')
+        result = evaluated.then(
             lambda value: setattr(_context.results, "value", Value(from_rpc_literal(value)))
-        )
+            )
+        print('returning evaluated result')
+        return result
 
     def __getitem__(self, key):
         return self.fields[key]
 
     def __setitem__(self, key, field):
         self.fields[key] = field
+
+
+
 
 
 class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
@@ -262,6 +291,9 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         self.verbose = verbose
         self.args = get_args(self._func)
         self.kwargs = get_defaults(self._func)
+
+    def __repr__(self):
+        return "FunctionRPC({})".format(self._func.__name__)
 
     def getArgs(self, **rpc_kwargs):
         """getArgs @1 () -> (args :List(Text));"""
@@ -299,31 +331,44 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
         return result_param
 
 
+def add_impl(a, b):
+    return a+b
+    # return reduce(lambda x, y: x+y, a)
 
-add_rpc = FunctionRPC(lambda *a: reduce(lambda x, y: x+y, a))
-mul_rpc = FunctionRPC(lambda *a: reduce(lambda x, y: x*y, a))
-pow_rpc = FunctionRPC(lambda a, b: pow(a, b))
+def mul_impl(a, b):
+    return a*b
+    # return reduce(lambda x, y: x*y, a)
+
+def pow_impl(a, b):
+    print('pow called')
+    return pow(a, b)
+
+add_rpc = FunctionRPC(add_impl)
+mul_rpc = FunctionRPC(mul_impl)
+pow_rpc = FunctionRPC(pow_impl)
+
+math_rpc = {Add: add_rpc, Mul:mul_rpc, Pow: pow_rpc}
 
 
-
-
-def to_rpc_expr(expr, **kwargs):
+def to_rpc_expr(expr, math_rpc=math_rpc, **kwargs):
     """takes a sympy expression with kwargs and returns
     an RPC expression ready for evaluation
+    math_rpc is a dictionary mapping <func symbol> -> <rpc function>
+    
+    math_rpc = {Add: add_rpc, Mul: mul_rpc, Pow: pow_rpc}
+    
+    Note: math_rpc can contain a mix of client and server-defined rpc funcions
     """
     message = dict()
     if len(expr.args) > 0:
-        message['call'] = dict(params=[to_rpc_expr(arg, **kwargs) for arg in expr.args])
-        if expr.func == Add:
-            message['call']['function'] = add_rpc
-        elif expr.func == Mul:
-            message['call']['function'] = mul_rpc
-        elif expr.func == Pow:
-            message['call']['function'] = pow_rpc
+        params = [to_rpc_expr(arg, math_rpc, **kwargs) for arg in expr.args]
+        message['call'] = dict(params=params)
+        if expr.func in math_rpc:
+            message['call']['function'] = math_rpc[expr.func]
         elif str(expr.func) in kwargs:
             message['call']['function'] = kwargs[str(expr.func)]
         else:
-            raise NotImplementedError(expr.func)
+            raise NotImplementedError("{}".format(expr.func))
     elif isinstance(expr, Float):
         message['literal'] = to_rpc_literal(float(expr))
     elif isinstance(expr, Integer):
@@ -333,7 +378,7 @@ def to_rpc_expr(expr, **kwargs):
         if sym in kwargs:
             message['literal'] = to_rpc_literal(kwargs[sym])
         else:
-            raise KeyError('Free parameter {} unspecified'.format(sym))
+            raise TypeError('Expression missing required argument {}'.format(sym))
     else:
         raise NotImplementedError(expr)
     return kamodo_capnp.Kamodo.Expression(**message)

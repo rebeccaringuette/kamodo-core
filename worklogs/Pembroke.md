@@ -1,3 +1,6 @@
+
+### 2022-01-06 18:10:29.406958: clock-in
+
 ### 2022-01-06 14:34:06.432788: clock-out
 
 * pipelining, getting index error

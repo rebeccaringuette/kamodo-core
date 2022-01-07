@@ -358,6 +358,12 @@ from kamodo.rpc.proto import rpc_map_to_dict
 ```
 
 ```python
+kclient
+```
+
+```python
+from sympy.abc import a,b,c
+
 def get_remote_composition(self, expr, **kwargs):
     """Generate a callable function composition that is executed remotely"""
     def remote_composition(**params):
@@ -366,10 +372,129 @@ def get_remote_composition(self, expr, **kwargs):
         result_message = evaluated.value.read().wait()
         result = from_rpc_literal(result_message.value)
         return result
-    
     return remote_composition
+
+myfunc = get_remote_composition(kclient, a+b*c)
+myfunc(a=3, b=np.array([3, 4, 2]), c=2.)
+```
+
+```python
+from kamodo.util import sign_defaults
+import capnp
+```
+
+```python
+from kamodo.rpc.proto import kamodo_capnp, rpc_map_to_dict, to_rpc_literal, from_rpc_literal
+```
+
+```python
+import forge
+```
+
+```python
+from kamodo.util import construct_signature, get_undefined_funcs
+```
+
+```python
+class KamodoClient(Kamodo):
+    def __init__(self, server=None, **kwargs):
+        super(KamodoClient, self).__init__(**kwargs)
+        if server is not None:
+            self.client(server)
+            
+    def client(self, read):
+        """register the client's remote functions
+        """
+        client = capnp.TwoPartyClient(read)
+
+        self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+        self._rpc_fields = self._client.getFields().wait().fields
+        self._rpc_math = self._client.getMath().wait().math
         
+        for entry in self._rpc_fields.entries:
+            self.register_remote_field(entry)
+
+        return client
+
+    def register_remote_field(self, entry):
+        """resolve the remote signature
+        f(*args, **kwargs) -> f(x,y,z=value)
+        """
+        symbol = entry.key
+        field = entry.value
+        
+        meta = field.meta
+        arg_units = rpc_map_to_dict(meta.argUnits)
+        
+        defaults_ = field.func.getKwargs().wait().kwargs
+        func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
+        func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
+        func_args = [_ for _ in func_args_ if _ not in func_defaults]
+        
+        if len(meta.equation) > 0:
+            equation = meta.equation
+        else:
+            equation = None
+        
+        @kamodofy(units=meta.units,
+                  arg_units=arg_units,
+                  citation=meta.citation,
+                  equation=equation,
+                  hidden_args=meta.hiddenArgs)
+        @forge.sign(*construct_signature(*func_args, **func_defaults))
+        def remote_func(*args, **kwargs):
+            # params must be List(Variable) for now
+            args_ = [to_rpc_literal(arg) for arg in args]
+            kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
+            result = field.func.call(args=args_, kwargs=kwargs_).wait().result
+            return from_rpc_literal(result)
+
+        self[symbol] = remote_func
+
     
+    def get_remote_composition(self, expr, **kwargs):
+        """Generate a callable function composition that is executed remotely"""
+        def remote_composition(**params):
+            remote_expr = to_rpc_expr(expr, **params, **kwargs)
+            evaluated = self._client.evaluate(remote_expr).wait()
+            result_message = evaluated.value.read().wait()
+            result = from_rpc_literal(result_message.value)
+            return result
+        
+        return remote_composition
+    
+    def get_rpc_funcs(self, expr):
+        raise NotImplementedError("not yet defined {}".format(get_undefined_funcs(expr)))
+    
+    def vectorize_function(self, symbol, rhs_expr, composition):
+        """lambdify the input expression using server-side promises"""
+        print('vectorizing {} = {}'.format(symbol, rhs_expr))
+        print('composition keys {}'.format(list(composition.keys())))
+
+        #func = lambdify(symbol.args,
+        #                rpc_expr(rhs_expr),
+        #                modules=[func_impl, 'numpy', composition])
+
+        rpc_funcs = self.get_rpc_funcs(rhs_expr)
+        func = self.get_remote_composition(rhs_expr, **rpc_funcs)
+
+        signature = sign_defaults(symbol, rhs_expr, composition)
+        return signature(func)
+
+
+kserver = Kamodo(f='x**2-x-1', g='y-1')
+```
+
+```python
+kserver
+```
+
+```python
+read, write = socket.socketpair()
+
+server = kserver.server(write)
+
+kclient = KamodoClient(read)
 ```
 
 ```python
@@ -377,27 +502,11 @@ kclient
 ```
 
 ```python
-from sympy.abc import a,b,c
-
-myfunc = get_remote_composition(kclient, a+b*c)
-myfunc(a=3, b=np.array([3, 4, 2]), c=2.)
+kserver
 ```
 
 ```python
-class KamodoClient(Kamodo):
-    def __init__(self, server, **kwargs):
-        self._server = server
-        super(KamodoClient, self).__init__(**kwargs)
-        
-    def vectorize_function(self, symbol, rhs_expr, composition):
-        """lambdify the input expression using server-side promises"""
-        print('vectorizing {} = {}'.format(symbol, rhs_expr))
-        print('composition keys {}'.format(list(composition.keys())))
-        func = lambdify(symbol.args,
-                        rpc_expr(rhs_expr),
-                        modules=[func_impl, 'numpy', composition])
-        signature = sign_defaults(symbol, rhs_expr, composition)
-        return signature(func)
+kclient['h'] = '3*g+f'
 ```
 
 ```python

@@ -257,16 +257,12 @@ class KamodoRPC(kamodo_capnp.Kamodo.Server):
 
     def evaluate(self, expression, _context, **kwargs):
         # evaluate @2 (expression: Expression) -> (value: Value);
-
-        # def set_value_context(value):
-        #     return setattr(
-        #         _context.results,
-        #         "value",
-        #         Value(from_rpc_literal(value)))
-
         evaluated = evaluate_impl(expression)
         result = evaluated.then(
-            lambda value: setattr(_context.results, "value", Value(from_rpc_literal(value)))
+            lambda value: setattr(
+                _context.results,
+                "value",
+                Value(from_rpc_literal(value)))
             )
         return result
 

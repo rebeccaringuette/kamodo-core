@@ -464,12 +464,22 @@ class KamodoClient(Kamodo):
         return remote_composition
     
     def get_rpc_funcs(self, expr):
-        raise NotImplementedError("not yet defined {}".format(get_undefined_funcs(expr)))
+        
+        rpc_raw = {entry.key: entry.value.func for entry in self._rpc_fields.entries}
+        rpc_funcs = {}
+        for f in get_undefined_funcs(expr):
+            f_str = str(type(f))
+            if f_str in rpc_raw:
+                if self.verbose:
+                    print('found {} in rpc fields'.format(f_str))
+                rpc_funcs[f_str] = rpc_raw[f_str]
+        return rpc_funcs
     
     def vectorize_function(self, symbol, rhs_expr, composition):
         """lambdify the input expression using server-side promises"""
-        print('vectorizing {} = {}'.format(symbol, rhs_expr))
-        print('composition keys {}'.format(list(composition.keys())))
+        if self.verbose:
+            print('vectorizing {} = {}'.format(symbol, rhs_expr))
+            print('composition keys {}'.format(list(composition.keys())))
 
         #func = lambdify(symbol.args,
         #                rpc_expr(rhs_expr),
@@ -481,8 +491,17 @@ class KamodoClient(Kamodo):
         signature = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
 
+@kamodofy(units='kg')
+def myf(x):
+    print('remote f called')
+    return x**2-x-1
 
-kserver = Kamodo(f='x**2-x-1', g='y-1')
+@kamodofy(units='gram')
+def myg(y):
+    print('remote g called')
+    return y - 1
+
+kserver = Kamodo(f=myf, g=myg)
 ```
 
 ```python
@@ -498,6 +517,14 @@ kclient = KamodoClient(read)
 ```
 
 ```python
+kserver
+```
+
+```python
+kserver
+```
+
+```python
 kclient
 ```
 
@@ -506,19 +533,17 @@ kserver
 ```
 
 ```python
-kclient['h'] = '3*g+f'
+kclient['h'] = 'g+f'
 ```
 
 ```python
-from kamodo import Kamodo
+kclient
 ```
 
 ```python
-k = Kamodo(f='x**2-x-1')
-```
-
-```python
-k = Kamodo('f=x*y')
+y = 7
+x = 5
+kclient.h(y, x) == 1000*(x**2 - x -1) + (y-1)
 ```
 
 ## Literals

@@ -1,3 +1,6 @@
+
+### 2022-01-10 15:33:44.616794: clock-in
+
 ### 2022-01-07 13:16:19.998170: clock-out
 
 * developing KamodoClient

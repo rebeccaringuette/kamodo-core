@@ -78,7 +78,13 @@ interface Kamodo {
       int @16 :Text;
       listint64 @17 :List(Int64);
       listfloat64 @18 :List(Float64);
+      rational @19 :Rational;
     }
+  }
+
+  struct Rational {
+    p @0 :Int64;
+    q @1 :Int64;
   }
 
 

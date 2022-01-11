@@ -358,10 +358,6 @@ from kamodo.rpc.proto import rpc_map_to_dict
 ```
 
 ```python
-kclient
-```
-
-```python
 from sympy.abc import a,b,c
 
 def get_remote_composition(self, expr, **kwargs):
@@ -396,6 +392,9 @@ from kamodo.util import construct_signature, get_undefined_funcs
 ```
 
 ```python
+from kamodo import Kamodo, kamodofy
+from kamodo.rpc.proto import to_rpc_expr
+
 class KamodoClient(Kamodo):
     def __init__(self, server=None, **kwargs):
         super(KamodoClient, self).__init__(**kwargs)
@@ -501,7 +500,12 @@ def myg(y):
     print('remote g called')
     return y - 1
 
-kserver = Kamodo(f=myf, g=myg)
+@kamodofy(units='kg', arg_units=dict(z='cm'))
+def myh(z):
+    print('remote h called')
+    return z**2
+    
+kserver = Kamodo(f=myf, g=myg, h=myh)
 ```
 
 ```python
@@ -509,6 +513,7 @@ kserver
 ```
 
 ```python
+import socket
 read, write = socket.socketpair()
 
 server = kserver.server(write)
@@ -517,11 +522,11 @@ kclient = KamodoClient(read)
 ```
 
 ```python
-kserver
+kclient
 ```
 
 ```python
-kserver
+kclient['H[kg]'] = 'f+g'
 ```
 
 ```python
@@ -529,21 +534,34 @@ kclient
 ```
 
 ```python
-kserver
-```
-
-```python
-kclient['h'] = 'g+f'
-```
-
-```python
 kclient
+```
+
+```python
+kclient.myfunc(3,4)
+```
+
+```python
+from sympy import sympify
+```
+
+```python
+expr = sympify('3/4', rational=False)
+```
+
+```python
+from sympy import Rational
+```
+
+```python
+Rational(3, 4).p
 ```
 
 ```python
 y = 7
 x = 5
-kclient.h(y, x) == 1000*(x**2 - x -1) + (y-1)
+
+assert kclient.(y, x) == 1000*(x**2 - x -1) + (y-1)
 ```
 
 ## Literals

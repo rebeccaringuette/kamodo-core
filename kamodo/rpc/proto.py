@@ -12,7 +12,7 @@ import numpy as np
 
 from sympy import Function, Symbol
 from sympy import Add, Mul, Pow
-from sympy.core.numbers import Float, Integer
+from sympy.core.numbers import Float, Integer, Rational
 
 from functools import reduce
 
@@ -76,6 +76,8 @@ def from_rpc_literal(literal):
         return getattr(np, which)(getattr(literal, which))
     elif which == 'int':
         return int(literal.int)
+    elif which == 'rational':
+        return Rational(literal.rational.p, literal.rational.q)
     else:
         raise NotImplementedError('Unknown type {}'.format(which))
 
@@ -84,6 +86,9 @@ def unique_type(alist):
         atype = type(alist[0])
         return all(isinstance(_, atype) for _ in alist)
     return True
+
+def to_rpc_rational(r):
+    return kamodo_capnp.Kamodo.Rational.new_message(p=r.p, q=r.q)
 
 def to_rpc_literal(value):
     """
@@ -133,6 +138,9 @@ def to_rpc_literal(value):
 
         which = 'list'
         value = [to_rpc_literal(_) for _ in value]
+    elif isinstance(value, Rational):
+        which = 'rational'
+        value = to_rpc_rational(value)
     else:
         which = type(value).__name__
     try:
@@ -159,6 +167,7 @@ def test_rpc_literal():
         array=array_to_param(a),
         text='hello there',
         int='30000333',
+        rational=to_rpc_rational(Rational(3,4)),
         list=[
             dict(float32=3),
             dict(list=[dict(list=[
@@ -376,6 +385,8 @@ def to_rpc_expr(expr, math_rpc=math_rpc, **kwargs):
         message['literal'] = to_rpc_literal(float(expr))
     elif isinstance(expr, Integer):
         message['literal'] = to_rpc_literal(int(expr))
+    elif isinstance(expr, Rational):
+        message['literal'] = to_rpc_literal(expr)
     elif isinstance(expr, Symbol):
         sym = str(expr)
         if sym in kwargs:
@@ -383,7 +394,7 @@ def to_rpc_expr(expr, math_rpc=math_rpc, **kwargs):
         else:
             raise TypeError('Expression missing required argument {}'.format(sym))
     else:
-        raise NotImplementedError(expr)
+        raise NotImplementedError("{} <{}>".format(expr, type(expr)))
     return kamodo_capnp.Kamodo.Expression(**message)
 
 

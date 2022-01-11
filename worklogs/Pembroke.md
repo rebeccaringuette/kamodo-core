@@ -1,3 +1,4 @@
+* added rational message type which fixes some compositions
 
 ### 2022-01-11 12:52:08.283768: clock-in
 

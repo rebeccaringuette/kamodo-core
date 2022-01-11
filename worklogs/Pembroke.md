@@ -1,4 +1,6 @@
-* added rational message type which fixes some compositions
+### 2022-01-11 15:04:36.224961: clock-out
+
+* added rational message type which fixes some compositions - still need to evaluate rational numerically?
 
 ### 2022-01-11 12:52:08.283768: clock-in
 

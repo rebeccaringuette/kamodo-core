@@ -1,3 +1,6 @@
+
+### 2022-01-11 12:52:08.283768: clock-in
+
 ### 2022-01-10 16:07:23.487422: clock-out
 
 * client working with serverside unit conversion

@@ -1079,16 +1079,21 @@ def sign_defaults(symbol, expr, composition):
             # flatten defaults
             for arg, arg_default in f_defaults.items():
                 defaults[arg] = arg_default
-
     arg_signatures = []
     # defaults have to go last, which may conflict with user's ordering
+    symbol_args = list(symbol.args)
     for arg in symbol.args:
         str_arg = str(arg)
-        if str_arg in defaults:
-            arg_default=defaults[str(arg)]
-            arg_signatures.append(forge.arg(str_arg, default=arg_default))
-        else:
+        if not (str_arg in defaults):
             arg_signatures.append(forge.arg(str_arg))
+            symbol_args.remove(arg)
+        else:
+            continue
+
+    for default_arg in symbol_args:
+        str_arg = str(default_arg)
+        arg_default=defaults[str(default_arg)]
+        arg_signatures.append(forge.arg(str_arg, default=arg_default))
 
     # will raise an error if defaults are not last
     signature = forge.sign(*arg_signatures)

@@ -453,6 +453,7 @@ class Kamodo(UserDict):
 
 
     def vectorize_function(self, symbol, rhs_expr, composition):
+        signature = sign_defaults(symbol, rhs_expr, composition)
         try:
             func = lambdify(symbol.args, rhs_expr, modules=['numexpr'])
             if self.verbose:
@@ -464,7 +465,6 @@ class Kamodo(UserDict):
                     symbol.args, rhs_expr))
                 for k, v in composition.items():
                     print('\t', k, v)
-        signature = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
 
 
@@ -687,14 +687,14 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-
+            """
             dict_symbol = {}
             for i in range(len(rhs_expr.args[1].args)):
                 dict_symbol["var{0}".format(i)] = rhs_expr.args[1].args[i]
 
             if symbol.args[0] != rhs_expr.args[0]:
                 symbol = Function('g')(*dict_symbol.values())
-
+            """
             func = self.vectorize_function(symbol, rhs_expr, composition)
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta

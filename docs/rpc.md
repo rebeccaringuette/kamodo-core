@@ -394,10 +394,23 @@ from kamodo.util import construct_signature, get_undefined_funcs
 ```python
 from kamodo import Kamodo, kamodofy
 from kamodo.rpc.proto import to_rpc_expr
+import json
+
+def print_rpc(message, indent=0):
+    if not isinstance(message, dict):
+        message_dict = message.to_dict()
+    else:
+        message_dict = message
+    for k, v in message_dict.items():
+        if isinstance(v, dict):
+            print_rpc(v)
+        else:
+            print(k, v)
 
 class KamodoClient(Kamodo):
     def __init__(self, server=None, **kwargs):
         super(KamodoClient, self).__init__(**kwargs)
+        self._local_funcs = {} # local rpc functions
         if server is not None:
             self.client(server)
             
@@ -407,10 +420,10 @@ class KamodoClient(Kamodo):
         client = capnp.TwoPartyClient(read)
 
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
-        self._rpc_fields = self._client.getFields().wait().fields
-        self._rpc_math = self._client.getMath().wait().math
+        self._remote_fields = self._client.getFields().wait().fields
+        self._remote_math = self._client.getMath().wait().math
         
-        for entry in self._rpc_fields.entries:
+        for entry in self._remote_fields.entries:
             self.register_remote_field(entry)
 
         return client
@@ -455,6 +468,8 @@ class KamodoClient(Kamodo):
         """Generate a callable function composition that is executed remotely"""
         def remote_composition(**params):
             remote_expr = to_rpc_expr(expr, **params, **kwargs)
+            if self.verbose:
+                print(from_rpc_expr(remote_expr))
             evaluated = self._client.evaluate(remote_expr).wait()
             result_message = evaluated.value.read().wait()
             result = from_rpc_literal(result_message.value)
@@ -463,8 +478,7 @@ class KamodoClient(Kamodo):
         return remote_composition
     
     def get_rpc_funcs(self, expr):
-        
-        rpc_raw = {entry.key: entry.value.func for entry in self._rpc_fields.entries}
+        rpc_raw = {entry.key: entry.value.func for entry in self._remote_fields.entries}
         rpc_funcs = {}
         for f in get_undefined_funcs(expr):
             f_str = str(type(f))
@@ -518,7 +532,7 @@ read, write = socket.socketpair()
 
 server = kserver.server(write)
 
-kclient = KamodoClient(read)
+kclient = KamodoClient(read, verbose=False)
 ```
 
 ```python
@@ -526,7 +540,7 @@ kclient
 ```
 
 ```python
-kclient['H[kg]'] = 'f+g'
+kclient['H(x,y)[kg]'] = 'f+g'
 ```
 
 ```python
@@ -538,30 +552,64 @@ kclient
 ```
 
 ```python
-kclient.myfunc(3,4)
+def from_rpc_expr(rpc_expr):
+    if rpc_expr.which() == 'literal':
+        return dict(literal=from_rpc_literal(rpc_expr.literal))
+    elif rpc_expr.which() == 'call':
+        return dict(call=dict(function=str(rpc_expr.call.function),
+                              params=[from_rpc_expr(_) for _ in rpc_expr.call.params]))
+    else:
+        raise NotImplementedError('cannot handle rpc_expr of type {}'.format(rpc_expr.which()))
 ```
 
 ```python
-from sympy import sympify
+assert kclient.H(3,4) == kclient.f(3) + kclient.g(4)/1000
 ```
 
 ```python
-expr = sympify('3/4', rational=False)
+kclient['f_2'] = 'x**2-x-1'
 ```
 
 ```python
-from sympy import Rational
+kclient
 ```
 
 ```python
-Rational(3, 4).p
+kclient['H_2(x,y)'] = '2*H'
 ```
 
 ```python
-y = 7
-x = 5
+kclient.H_2(3,4) # raises NotImplementedError since H not in registry
+```
 
-assert kclient.(y, x) == 1000*(x**2 - x -1) + (y-1)
+<!-- #region -->
+## serve local functions to remote
+
+When we compose with a locally defined function, the remote needs to be able to call the local function in its pipeline.
+
+The function will either be an expression or a lambda:
+```python
+k = KamodoClient(connection) # registers f_remote
+k['f_local'] = kamodofy(lambda x: x**2) # store these in registry
+k['g'] = 'f_local+f_remote' # pipelined, will treat these the same
+k['h_local'] = 'x**2 -x - 1' # already lambdified, can store in registry
+k['g_2'] = '1+f_remote' # executes f_remote and add 1 on the server
+k['g_3'] = '1+g_2' # after executing g_2 on server, add 1 on the client
+```
+
+We can register each of these in a local dictionary, because we might serve any of them downstream as well as upstream. It may seem wasteful that`g_3` is executed locally, but the user could register a different function if they wanted to avoid that:
+```python
+k['g_3'] = '2 + f_remote' #executes entirely on server
+```
+
+<!-- #endregion -->
+
+```python
+kclient.f_2(3) == 3**2 - 3 - 1 # needs to be registered for remote call
+```
+
+```python
+kclient.f_2
 ```
 
 ## Literals

@@ -385,8 +385,8 @@ def to_rpc_expr(expr, math_rpc=math_rpc, **kwargs):
         message['literal'] = to_rpc_literal(float(expr))
     elif isinstance(expr, Integer):
         message['literal'] = to_rpc_literal(int(expr))
-    elif isinstance(expr, Rational):
-        message['literal'] = to_rpc_literal(expr)
+    elif isinstance(expr, Rational): # convert to float
+        message['literal'] = to_rpc_literal(float(expr))
     elif isinstance(expr, Symbol):
         sym = str(expr)
         if sym in kwargs:

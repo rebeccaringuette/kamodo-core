@@ -1,3 +1,6 @@
+
+### 2022-01-13 17:18:56.716751: clock-in
+
 ### 2022-01-13 13:51:13.603868: clock-out
 
 * registering local with remote rpc. callbacks cannot wait

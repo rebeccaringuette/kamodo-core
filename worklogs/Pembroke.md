@@ -1,3 +1,6 @@
+
+### 2022-01-13 12:17:13.246906: clock-in
+
 ### 2022-01-12 18:08:52.532688: clock-out
 
 * rational to float, pipelining with local functions

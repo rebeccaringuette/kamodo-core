@@ -392,9 +392,14 @@ from kamodo.util import construct_signature, get_undefined_funcs
 ```
 
 ```python
+from kamodo.rpc.proto import FunctionRPC
+```
+
+```python
 from kamodo import Kamodo, kamodofy
 from kamodo.rpc.proto import to_rpc_expr
 import json
+from capnp import KjException
 
 def print_rpc(message, indent=0):
     if not isinstance(message, dict):
@@ -410,9 +415,15 @@ def print_rpc(message, indent=0):
 class KamodoClient(Kamodo):
     def __init__(self, server=None, **kwargs):
         super(KamodoClient, self).__init__(**kwargs)
-        self._local_funcs = {} # local rpc functions
+        self._rpc_funcs = {} # local/remote rpc functions
         if server is not None:
             self.client(server)
+
+    def __setitem__(self, sym_name, input_expr):
+        print('overriding setitem')
+        super(KamodoClient, self).__setitem__(sym_name, input_expr)
+        symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
+        self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
             
     def client(self, read):
         """register the client's remote functions
@@ -462,6 +473,7 @@ class KamodoClient(Kamodo):
             return from_rpc_literal(result)
 
         self[symbol] = remote_func
+        self._rpc_funcs[symbol] = field.func
 
     
     def get_remote_composition(self, expr, **kwargs):
@@ -470,22 +482,32 @@ class KamodoClient(Kamodo):
             remote_expr = to_rpc_expr(expr, **params, **kwargs)
             if self.verbose:
                 print(from_rpc_expr(remote_expr))
-            evaluated = self._client.evaluate(remote_expr).wait()
-            result_message = evaluated.value.read().wait()
+            evaluate_expr = self._client.evaluate(remote_expr) #.wait()
+            try:
+                result_message = evaluate_expr.value.read().wait()
+            except KjException as m:
+                print('problem waiting on expression: {}'.format(expr))
+                print(from_rpc_expr(remote_expr))
+                print(m)
+                raise
             result = from_rpc_literal(result_message.value)
             return result
+        remote_composition.__name__ = str(expr)
         
         return remote_composition
     
     def get_rpc_funcs(self, expr):
-        rpc_raw = {entry.key: entry.value.func for entry in self._remote_fields.entries}
+        # extract the remote functions - these should be stored
+#         rpc_raw = {entry.key: entry.value.func for entry in self._remote_fields.entries}
         rpc_funcs = {}
         for f in get_undefined_funcs(expr):
             f_str = str(type(f))
-            if f_str in rpc_raw:
+            if f_str in self._rpc_funcs:
                 if self.verbose:
                     print('found {} in rpc fields'.format(f_str))
-                rpc_funcs[f_str] = rpc_raw[f_str]
+                rpc_funcs[f_str] = self._rpc_funcs[f_str]
+                
+        # extract the local functions
         return rpc_funcs
     
     def vectorize_function(self, symbol, rhs_expr, composition):
@@ -536,11 +558,11 @@ kclient = KamodoClient(read, verbose=False)
 ```
 
 ```python
-kclient
+kclient['H(x,y)[kg]'] = 'f+g'
 ```
 
 ```python
-kclient['H(x,y)[kg]'] = 'f+g'
+kclient._rpc_funcs
 ```
 
 ```python
@@ -563,6 +585,22 @@ def from_rpc_expr(rpc_expr):
 ```
 
 ```python
+kclient.f(3)
+```
+
+```python
+kclient
+```
+
+```python
+kclient.g(2)
+```
+
+```python
+kclient.H(3,4)
+```
+
+```python
 assert kclient.H(3,4) == kclient.f(3) + kclient.g(4)/1000
 ```
 
@@ -575,10 +613,19 @@ kclient
 ```
 
 ```python
+kclient.verbose=True
+```
+
+```python
 kclient['H_2(x,y)'] = '2*H'
 ```
 
 ```python
+kclient._rpc_funcs
+```
+
+```python
+
 kclient.H_2(3,4) # raises NotImplementedError since H not in registry
 ```
 

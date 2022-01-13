@@ -1,3 +1,7 @@
+* registering local with remote rpc. callbacks cannot wait
+```console
+expected !loop.running; wait() is not allowed from within event callbacks
+```
 
 ### 2022-01-13 12:17:13.246906: clock-in
 

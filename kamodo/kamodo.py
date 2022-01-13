@@ -993,60 +993,6 @@ class Kamodo(UserDict):
         return server
 
 
-    # def client(self, read):
-    #     """register a single client's remote functions
-
-    #     will need to support connecting to multiple servers
-    #     """
-
-    #     client = capnp.TwoPartyClient(read)
-
-    #     self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
-    #     self._rpc_fields = self._client.getFields().wait().fields
-    #     self._rpc_math = self._client.getMath().wait().math
-        
-    #     for entry in self._rpc_fields.entries:
-    #         self.register_rpc_remote(entry)
-
-    #     return client
-
-    # def register_rpc_remote(self, entry):
-    #     """resolve the remote signature
-    #     f(*args, **kwargs) -> f(x,y,z=value)
-    #     """
-    #     symbol = entry.key
-    #     field = entry.value
-        
-    #     meta = field.meta
-    #     arg_units = rpc_map_to_dict(meta.argUnits)
-        
-    #     defaults_ = field.func.getKwargs().wait().kwargs
-    #     func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
-    #     func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
-    #     func_args = [_ for _ in func_args_ if _ not in func_defaults]
-        
-    #     if len(meta.equation) > 0:
-    #         equation = meta.equation
-    #     else:
-    #         equation = None
-        
-    #     @kamodofy(units=meta.units,
-    #               arg_units=arg_units,
-    #               citation=meta.citation,
-    #               equation=equation,
-    #               hidden_args=meta.hiddenArgs)
-    #     @forge.sign(*construct_signature(*func_args, **func_defaults))
-    #     def remote_func(*args, **kwargs):
-    #         # params must be List(Variable) for now
-    #         args_ = [to_rpc_literal(arg) for arg in args]
-    #         kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
-    #         result = field.func.call(args=args_, kwargs=kwargs_).wait().result
-    #         return from_rpc_literal(result)
-
-    #     self[symbol] = remote_func
-
-
-
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a given variable and keyword arguments"""
         result = self.evaluate(variable, **kwargs)

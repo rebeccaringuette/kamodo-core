@@ -1,3 +1,6 @@
+* troubleshooting rpc composition
+* could use try-catch: need expression to behave like FunctionRPC when wait() fails
+* could simpify new expressions so they can be pipelined with existing ones
 
 ### 2022-01-13 17:18:56.716751: clock-in
 

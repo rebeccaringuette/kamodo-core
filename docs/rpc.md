@@ -415,7 +415,8 @@ def print_rpc(message, indent=0):
 class KamodoClient(Kamodo):
     def __init__(self, server=None, **kwargs):
         super(KamodoClient, self).__init__(**kwargs)
-        self._rpc_funcs = {} # local/remote rpc functions
+        self._local_funcs = {}
+        self._remote_funcs = {}
         if server is not None:
             self.client(server)
 
@@ -478,22 +479,17 @@ class KamodoClient(Kamodo):
     
     def get_remote_composition(self, expr, **kwargs):
         """Generate a callable function composition that is executed remotely"""
+        
         def remote_composition(**params):
             remote_expr = to_rpc_expr(expr, **params, **kwargs)
             if self.verbose:
                 print(from_rpc_expr(remote_expr))
             evaluate_expr = self._client.evaluate(remote_expr) #.wait()
-            try:
-                result_message = evaluate_expr.value.read().wait()
-            except KjException as m:
-                print('problem waiting on expression: {}'.format(expr))
-                print(from_rpc_expr(remote_expr))
-                print(m)
-                raise
-            result = from_rpc_literal(result_message.value)
-            return result
+            result_message = evaluate_expr.value.read().wait()
+            print('returning evaluation of {}'.format(expr))
+            return from_rpc_literal(result_message.value)
+
         remote_composition.__name__ = str(expr)
-        
         return remote_composition
     
     def get_rpc_funcs(self, expr):
@@ -570,10 +566,6 @@ kclient
 ```
 
 ```python
-kclient
-```
-
-```python
 def from_rpc_expr(rpc_expr):
     if rpc_expr.which() == 'literal':
         return dict(literal=from_rpc_literal(rpc_expr.literal))
@@ -586,10 +578,6 @@ def from_rpc_expr(rpc_expr):
 
 ```python
 kclient.f(3)
-```
-
-```python
-kclient
 ```
 
 ```python
@@ -609,15 +597,79 @@ kclient['f_2'] = 'x**2-x-1'
 ```
 
 ```python
+kclient['H_2(x,y)'] = '2*H'
+```
+
+```python
+@kamodofy
+def myfunc(x):
+    print('myfunc called with {}'.format(x))
+    return x**2
+
+kclient['H_3'] = myfunc
+```
+
+```python
+kclient['F_2'] = '2*H_3'
+```
+
+```python
+kclient.f_2(3)
+```
+
+```python
+kclient.H(3,4)
+```
+
+```python
+k2 = Kamodo(H=kclient.H) # creates a new kamodo object loaded from client
+```
+
+```python
+k2['f(x,y)'] = '2*H'
+```
+
+```python
+k2.f(3,4)
+```
+
+```python
+kclient._rpc_funcs
+```
+
+```python
+kclient.F_2(3)
+```
+
+```python
+kclient.f_2(3)
+```
+
+```python
+kclient['F'] = '2*f_2'
+```
+
+```python
 kclient
 ```
 
 ```python
-kclient.verbose=True
+result = kclient.H_2(3,4)
+result
 ```
 
 ```python
-kclient['H_2(x,y)'] = '2*H'
+result.read().wait()
+```
+
+```python
+# result_message = evaluate_expr.value.read().wait()
+# print('returning evaluation of {}'.format(expr))
+# return from_rpc_literal(result_message.value)
+```
+
+```python
+kclient.H_2?
 ```
 
 ```python

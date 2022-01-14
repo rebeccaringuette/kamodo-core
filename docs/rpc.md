@@ -377,25 +377,15 @@ myfunc(a=3, b=np.array([3, 4, 2]), c=2.)
 ```python
 from kamodo.util import sign_defaults
 import capnp
-```
 
-```python
 from kamodo.rpc.proto import kamodo_capnp, rpc_map_to_dict, to_rpc_literal, from_rpc_literal
-```
 
-```python
 import forge
-```
 
-```python
 from kamodo.util import construct_signature, get_undefined_funcs
-```
 
-```python
 from kamodo.rpc.proto import FunctionRPC
-```
 
-```python
 from kamodo import Kamodo, kamodofy
 from kamodo.rpc.proto import to_rpc_expr
 import json
@@ -415,16 +405,17 @@ def print_rpc(message, indent=0):
 class KamodoClient(Kamodo):
     def __init__(self, server=None, **kwargs):
         super(KamodoClient, self).__init__(**kwargs)
-        self._local_funcs = {}
-        self._remote_funcs = {}
+        self._expressions = {}
+        self._rpc_funcs = {}
+
         if server is not None:
             self.client(server)
 
-    def __setitem__(self, sym_name, input_expr):
-        print('overriding setitem')
-        super(KamodoClient, self).__setitem__(sym_name, input_expr)
-        symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
-        self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
+#     def __setitem__(self, sym_name, input_expr):
+#         print('overriding setitem')
+#         super(KamodoClient, self).__setitem__(sym_name, input_expr)
+#         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
+#         self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
             
     def client(self, read):
         """register the client's remote functions
@@ -482,11 +473,11 @@ class KamodoClient(Kamodo):
         
         def remote_composition(**params):
             remote_expr = to_rpc_expr(expr, **params, **kwargs)
+#             remote_expr = to_rpc_expr(expr, expressions=self._expressions, **params, **kwargs)
             if self.verbose:
                 print(from_rpc_expr(remote_expr))
             evaluate_expr = self._client.evaluate(remote_expr) #.wait()
             result_message = evaluate_expr.value.read().wait()
-            print('returning evaluation of {}'.format(expr))
             return from_rpc_literal(result_message.value)
 
         remote_composition.__name__ = str(expr)
@@ -518,6 +509,7 @@ class KamodoClient(Kamodo):
 
         rpc_funcs = self.get_rpc_funcs(rhs_expr)
         func = self.get_remote_composition(rhs_expr, **rpc_funcs)
+        self._expressions[type(symbol)] = rhs_expr
 
         signature = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
@@ -558,11 +550,27 @@ kclient['H(x,y)[kg]'] = 'f+g'
 ```
 
 ```python
+kclient
+```
+
+```python
 kclient._rpc_funcs
 ```
 
 ```python
-kclient
+kclient._expressions
+```
+
+```python
+kclient.H(3,4)
+```
+
+```python
+kclient['H_2'] = '2*H(x,y)'
+```
+
+```python
+kclient.H_2(3,4)
 ```
 
 ```python

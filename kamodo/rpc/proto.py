@@ -362,7 +362,7 @@ pow_rpc = FunctionRPC(lambda a, b: a**b)
 math_rpc = {Add: add_rpc, Mul:mul_rpc, Pow: pow_rpc}
 
 
-def to_rpc_expr(expr, math_rpc=math_rpc, **kwargs):
+def to_rpc_expr(expr, math_rpc=math_rpc, expressions={}, **kwargs):
     """takes a sympy expression with kwargs and returns
     an RPC expression ready for evaluation
     math_rpc is a dictionary mapping <func symbol> -> <rpc function>
@@ -373,14 +373,20 @@ def to_rpc_expr(expr, math_rpc=math_rpc, **kwargs):
     """
     message = dict()
     if len(expr.args) > 0:
-        params = [to_rpc_expr(arg, math_rpc, **kwargs) for arg in expr.args]
+        func = expr.func
+        if func in expressions:
+            # found subexpression (ie {f: x**2-x-1})
+            return to_rpc_expr(expressions[func], math_rpc, expressions, **kwargs)
+
+        params = [to_rpc_expr(arg, math_rpc, expressions, **kwargs) for arg in expr.args]
         message['call'] = dict(params=params)
-        if expr.func in math_rpc:
-            message['call']['function'] = math_rpc[expr.func]
-        elif str(expr.func) in kwargs:
-            message['call']['function'] = kwargs[str(expr.func)]
+
+        if func in math_rpc:
+            message['call']['function'] = math_rpc[func]
+        elif str(func) in kwargs:
+            message['call']['function'] = kwargs[str(func)]
         else:
-            raise NotImplementedError("{}".format(expr.func))
+            raise NotImplementedError("{} {}".format(func, type(func)))
     elif isinstance(expr, Float):
         message['literal'] = to_rpc_literal(float(expr))
     elif isinstance(expr, Integer):

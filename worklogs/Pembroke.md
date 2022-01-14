@@ -1,3 +1,6 @@
+
+### 2022-01-14 13:02:02.878085: clock-in
+
 ### 2022-01-14 12:33:57.368942: clock-out
 
 * inserting subexpressions

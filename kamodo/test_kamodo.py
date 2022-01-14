@@ -574,6 +574,13 @@ def test_jit_evaluate():
     with pytest.raises(SyntaxError):
         kamodo.evaluate('f**2', x = 3)['x'] == 3
 
+def test_default_inheritance_order():
+    kamodo = Kamodo(f=lambda x=2: x ** 2, verbose=True)
+    kamodo['h'] = 'y*f'
+    assert kamodo['h'](2) == 2*2**2
+    with pytest.raises(SyntaxError):
+        kamodo['g(x,y)'] = 'y*f'
+
 def test_eval_no_defaults():
     kamodo = Kamodo(f='x', verbose=True)
     kamodo['g'] = lambda x=3: x
@@ -811,4 +818,6 @@ def test_frequency_units():
     freq = get_unit('deg')/get_unit('s')
     kamodo_units = get_kamodo_unit_system()
     convert_unit_to(omega, freq, kamodo_units)
+
+
 

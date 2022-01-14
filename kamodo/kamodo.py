@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.  
+Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 from util import np
@@ -76,7 +76,6 @@ _clash['rad'] = Symbol('rad')
 _clash['deg'] = Symbol('deg')
 
 
-
 def parse_expr(*args, **kwargs):
     try:
         return sympy.sympify(*args, **kwargs)
@@ -100,7 +99,6 @@ def clean_unit(unit_str):
 
 def get_unit(unit_str, unit_subs=unit_subs):
     """get the unit quantity corresponding to this string
-
     unit_subs should contain a dictonary {symbol: quantity} of custom units not available in sympy"""
 
     unit_str = clean_unit(unit_str)
@@ -116,8 +114,9 @@ def get_unit(unit_str, unit_subs=unit_subs):
     try:
         unit = unit_expr.subs(units)
     except:
-        raise NameError('something wrong with unit str [{}], type {}, {}'.format(
-            unit_str, type(unit_str), unit_expr))
+        raise NameError(
+            'something wrong with unit str [{}], type {}, {}'.format(
+                unit_str, type(unit_str), unit_expr))
     try:
         assert len(unit.free_symbols) == 0
     except:
@@ -126,11 +125,8 @@ def get_unit(unit_str, unit_subs=unit_subs):
     return unit
 
 
-
-
 def args_from_dict(expr, local_dict, verbose):
     """retrieve the symbols of an expression
-
     if a  {str: symbol} mapping is provided, use its symbols instead
     """
     args = []
@@ -148,9 +144,9 @@ def args_from_dict(expr, local_dict, verbose):
     # else:
     #     return expr.args
 
+
 def get_str_units(bracketed_str):
     """finds all bracketed units in a string
-
     supports functions like
         bracketed_str = 'f(x[m],y[cm**3],z[km^.5],q[(cm*g)^-3])[km/s]'
         get_str_units(bracketed_str)
@@ -158,7 +154,8 @@ def get_str_units(bracketed_str):
     """
     return re.findall(r"\[([A-Za-z0-9_/*^\\(\\)-\.]+)\]", bracketed_str)
 
-def str_has_arguments(func_str): 
+
+def str_has_arguments(func_str):
     bracket = func_str.find('[')
     paren = func_str.find('(')
     if bracket > 0:
@@ -166,7 +163,7 @@ def str_has_arguments(func_str):
             # f(x[(cm)^2]) has arguments since paren comes first
             # f[(cm)^2] has no arguments since bracket comes first
             return bracket > paren
-        return False # no paren hence no arguments
+        return False  # no paren hence no arguments
     # no bracket
     if paren > 0:
         # has argument
@@ -176,26 +173,19 @@ def str_has_arguments(func_str):
 
 def extract_units(func_str):
     """separate the units from the left-hand-side of an expression assuming bracket notation
-
     We return symbol and dictionary mapping symbols to units
-
     needs to handle the following cases:
-
         args and output have units
             extract_units('f(x[cm],y[km])[kg]')
             ('f(x,y)', {'x': 'cm', 'y': 'km', 'f(x,y)': 'kg'})
-
         args have parenthesis in units and output has no units
             extract_units('f(x[(cm )^2])')
             ('f(x)', {'x': '(cm)^2', 'f(x)': ''})
-
         output has parenthesis in units
             extract_units('f[(cm)^2]')
             ('f', {'f': '(cm)^2'})
-
         no args named and no units named
             ('f', {'f': ''})
-
     """
     # remove any spaces
     func_str = func_str.replace(' ', '')
@@ -223,7 +213,6 @@ def extract_units(func_str):
         else:
             output_units = ''
 
-
     # f(x[cm],y[km])[kg]
     lhs = func_str
     for unit in all_units:
@@ -244,7 +233,6 @@ def expr_to_symbol(expr, args):
 
 def parse_lhs(lhs, local_dict, verbose):
     """parse the left-hand-side
-
     returns: symbol, arguments, units, parsed_expr
     """
     lhs, unit_dict = extract_units(lhs)
@@ -258,7 +246,6 @@ def parse_lhs(lhs, local_dict, verbose):
 
 def parse_rhs(rhs, is_latex, local_dict):
     """parse the right-hand-side of an equation
-
     subsititute variables from local_dict where available
     """
     if is_latex:
@@ -274,32 +261,25 @@ def parse_rhs(rhs, is_latex, local_dict):
 
 def get_function_args(func, hidden_args=[]):
     """converts function arguments to list of symbols"""
-    return symbols([a for a in getfullargspec(func).args if a not in hidden_args])
-
-
+    return symbols(
+        [a for a in getfullargspec(func).args if a not in hidden_args])
 
 
 # class Kamodo(collections.OrderedDict):
 class Kamodo(UserDict):
     '''Kamodo base class demonstrating common API for space weather models
-
-
     This API provides access to space weather fields and their properties through:
-
         interpolation of variables at user-defined points
         unit conversions
         coordinate transformations specific to space weather domains
-
     Required methods that have not been implemented in child classes
     will raise a NotImplementedError
     '''
 
     def __init__(self, *funcs, **kwargs):
         """Base initialization method
-
         Args:
             param1 (str, optional): Filename of datafile to interpolate from
-
         """
 
         super(Kamodo, self).__init__()
@@ -329,10 +309,8 @@ class Kamodo(UserDict):
                 print('registering {} with {}'.format(sym_name, expr))
             self[sym_name] = expr
 
-
     def register_symbol(self, symbol):
         self.symbol_registry[str(type(symbol))] = symbol
-
 
     # def remove_symbol(self, sym_name):
     #     """remove the sym_name (str) from the object"""
@@ -374,12 +352,9 @@ class Kamodo(UserDict):
     #         except KeyError:
     #             raise KeyError('{} not in {}'.format(type(symbol), self.keys()))
 
-
     def parse_key(self, sym_name):
         """parses the symbol name
-
         sym_name must be a string
-
         returns: symbol, args, unit_dict, lhs_expr
         """
         args = tuple()
@@ -412,11 +387,12 @@ class Kamodo(UserDict):
 
     def check_or_replace_symbol(self, symbol, free_symbols, rhs_expr=None):
         """Rules of replacement:
-
         """
         if self.verbose:
-            print('symbol arguments: >>> {} {} <<<'.format(symbol.args, type(symbol.args)))
-            print('free_symbols: >>> {} {} <<<'.format(free_symbols, type(free_symbols)))
+            print('symbol arguments: >>> {} {} <<<'.format(symbol.args,
+                                                           type(symbol.args)))
+            print('free_symbols: >>> {} {} <<<'.format(free_symbols,
+                                                       type(free_symbols)))
         # try:
         lhs_args = set(symbol.args)
         # except TypeError:
@@ -432,7 +408,9 @@ class Kamodo(UserDict):
                 #     raise NotImplementedError('cannot parse', str(type(symbol)) + str(free_symbols_))
             else:
                 if len(lhs_args) > 0:
-                    raise NameError("Mismatched symbols {} and {}".format(lhs_args, free_symbols))
+                    raise NameError(
+                        "Mismatched symbols {} and {}".format(lhs_args,
+                                                              free_symbols))
                 else:
                     if self.verbose:
                         print('type of rhs symbols:', type(free_symbols))
@@ -451,22 +429,24 @@ class Kamodo(UserDict):
     def validate_function(self, lhs_expr, rhs_expr):
         assert lhs_expr.free_symbols == rhs_expr.free_symbols
 
-
     def vectorize_function(self, symbol, rhs_expr, composition):
-        signature = sign_defaults(symbol, rhs_expr, composition)
         try:
             func = lambdify(symbol.args, rhs_expr, modules=['numexpr'])
             if self.verbose:
-                print('lambda {} = {} labmdified with numexpr'.format(symbol.args, rhs_expr))
-        except: # numexpr not installed
-            func = lambdify(symbol.args, rhs_expr, modules=['numpy', composition])
+                print(
+                    'lambda {} = {} labmdified with numexpr'.format(symbol.args,
+                                                                    rhs_expr))
+        except:  # numexpr not installed
+            func = lambdify(symbol.args, rhs_expr,
+                            modules=['numpy', composition])
             if self.verbose:
-                print('lambda {} = {} lambdified with numpy and composition:'.format(
-                    symbol.args, rhs_expr))
+                print(
+                    'lambda {} = {} lambdified with numpy and composition:'.format(
+                        symbol.args, rhs_expr))
                 for k, v in composition.items():
                     print('\t', k, v)
+        signature = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
-
 
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
@@ -483,7 +463,6 @@ class Kamodo(UserDict):
         output_units = unit_dict[lhs]
         self.unit_registry[func_units] = get_unit(output_units)
         return lhs
-
 
     def register_signature(self, symbol, units, lhs_expr, rhs_expr):
         # if isinstance(units, str):
@@ -519,7 +498,9 @@ class Kamodo(UserDict):
                 print('function has metadata', func.meta.keys())
             if len(lhs_units) > 0:
                 if lhs_units != func.meta['units']:
-                    raise NameError('Units mismatch:{} != {}'.format(lhs_units, func.meta['units']))
+                    raise NameError('Units mismatch:{} != {}'.format(lhs_units,
+                                                                     func.meta[
+                                                                         'units']))
             else:
                 units = func.meta['units']
             rhs = func.meta.get('equation', func)
@@ -536,7 +517,8 @@ class Kamodo(UserDict):
 
         arg_units = func.meta.get('arg_units', None)
         if arg_units is not None:
-            unit_dict = {arg: get_unit(arg_unit) for arg, arg_unit in arg_units.items()}
+            unit_dict = {arg: get_unit(arg_unit) for arg, arg_unit in
+                         arg_units.items()}
             unit_expr = lhs_symbol.subs(unit_dict)
             self.unit_registry[lhs_symbol] = unit_expr
             self.unit_registry[unit_expr] = get_unit(units)
@@ -545,19 +527,19 @@ class Kamodo(UserDict):
 
         self.register_signature(lhs_symbol, units, lhs_expr, rhs)
         try:
-            func._repr_latex_ = lambda: self.func_latex(str(type(lhs_symbol)), mode='inline')
+            func._repr_latex_ = lambda: self.func_latex(str(type(lhs_symbol)),
+                                                        mode='inline')
         except AttributeError:
             # happens with bound methods
             pass
         super(Kamodo, self).__setitem__(lhs_symbol, func)  # assign key 'f(x)'
-        super(Kamodo, self).__setitem__(type(lhs_symbol), self[lhs_symbol])  # assign key 'f'
+        super(Kamodo, self).__setitem__(type(lhs_symbol),
+                                        self[lhs_symbol])  # assign key 'f'
         self.register_symbol(lhs_symbol)
-
 
     def __setitem__(self, sym_name, input_expr):
         """Assigns a function or expression to a new symbol,
         performs unit conversion where appropriate
-
         """
         if not isinstance(sym_name, str):
             sym_name = str(sym_name)
@@ -579,14 +561,23 @@ class Kamodo(UserDict):
                 print('symbol registry:', self.symbol_registry)
 
             rhs_expr = self.parse_value(input_expr, self.symbol_registry)
-
             if self.verbose:
                 print('parsed rhs_expr', rhs_expr)
+
+            if len(rhs_expr.args)>1:
+                if len(list(rhs_expr.args[1].free_symbols))>0:
+                    arg_temp = list(rhs_expr.args[1].free_symbols)[0]
+                    func0 = Function('P')(arg_temp)
+                    if len(lhs_expr.args)>1:
+                        func = Function('P')(lhs_expr.args[0])
+                        if func0.compare(func) ==0 and len(rhs_expr.args[1].args) ==1 and \
+                                len(rhs_expr.args[1].free_symbols)==1:
+                            raise SyntaxError('Ordering error')
 
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(rhs_expr.free_symbols))
-                else: #lhs is already a function
+                else:  # lhs is already a function
                     symbol = lhs_expr
                 lhs_str = str(symbol)
                 sym_name = sym_name.replace(str(lhs_expr), lhs_str)
@@ -596,32 +587,37 @@ class Kamodo(UserDict):
                     print('\t', k, type(k), v)
             if '[' in sym_name:
                 if self.verbose:
-                    print('updating unit registry with {} -> {}'.format(sym_name, rhs_expr))
+                    print(
+                        'updating unit registry with {} -> {}'.format(sym_name,
+                                                                      rhs_expr))
                 rhs = rhs_expr
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
                 if self.verbose:
                     print(arg_units)
                 sym_name = self.update_unit_registry(sym_name, arg_units)
                 if self.verbose:
-                    print('unit registry update returned', sym_name, self.unit_registry.get(symbol))
+                    print('unit registry update returned', sym_name,
+                          self.unit_registry.get(symbol))
             else:
 
                 if self.verbose:
                     print(sym_name,
                           symbol,
-                          'had no units. Getting units from {}'.format(rhs_expr))
+                          'had no units. Getting units from {}'.format(
+                              rhs_expr))
 
-                expr_unit = get_expr_unit(rhs_expr, self.unit_registry, self.verbose)
+                expr_unit = get_expr_unit(rhs_expr, self.unit_registry,
+                                          self.verbose)
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
 
-
                 if self.verbose:
-                    print('registering {} with {} {}'.format(symbol, expr_unit, arg_units))
+                    print('registering {} with {} {}'.format(symbol, expr_unit,
+                                                             arg_units))
 
-                if (symbol not in self.unit_registry) and (expr_unit is not None):
+                if (symbol not in self.unit_registry) and (
+                        expr_unit is not None):
                     self.unit_registry[symbol] = symbol.subs(arg_units)
                     self.unit_registry[symbol.subs(arg_units)] = expr_unit
-
 
                 if expr_unit is not None:
                     expr_dimensions = Dimension(get_dimensions(expr_unit))
@@ -639,8 +635,6 @@ class Kamodo(UserDict):
                 rhs = rhs_expr
                 sym_name = str(sym_name)
 
-
-
             if len(lhs_units) > 0:
                 if self.verbose:
                     print('about to unify lhs_units {} {} with {}'.format(
@@ -656,8 +650,8 @@ class Kamodo(UserDict):
             if self.verbose:
                 print('symbol after unify', symbol, type(symbol), rhs_expr)
                 print('unit registry to resolve units:')
-                for k,v in self.unit_registry.items():
-                    print('\t{}:{}'.format(k,v))
+                for k, v in self.unit_registry.items():
+                    print('\t{}:{}'.format(k, v))
 
             units = get_expr_unit(symbol, self.unit_registry)
             if Dimension(get_dimensions(units)) != Dimension(1):
@@ -687,24 +681,16 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-            """
-            dict_symbol = {}
-            for i in range(len(rhs_expr.args[1].args)):
-                dict_symbol["var{0}".format(i)] = rhs_expr.args[1].args[i]
-
-            if symbol.args[0] != rhs_expr.args[0]:
-                symbol = Function('g')(*dict_symbol.values())
-            """
             func = self.vectorize_function(symbol, rhs_expr, composition)
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None
             self.register_signature(symbol, units, lhs_expr, rhs_expr)
-            func._repr_latex_ = lambda: self.func_latex(str(type(symbol)), mode='inline')
+            func._repr_latex_ = lambda: self.func_latex(str(type(symbol)),
+                                                        mode='inline')
             super(Kamodo, self).__setitem__(symbol, func)
             super(Kamodo, self).__setitem__(type(symbol), self[symbol])
             self.register_symbol(symbol)
-
 
     def __getitem__(self, key):
         try:
@@ -735,7 +721,8 @@ class Kamodo(UserDict):
         if name in self:
             symbol = self.symbol_registry[name]
             if self.verbose:
-                print('__delattr__: removing name {}, symbol {}'.format(name, symbol))
+                print('__delattr__: removing name {}, symbol {}'.format(name,
+                                                                        symbol))
                 print(self.keys())
             # del self[symbol]
             super().pop(symbol)
@@ -749,7 +736,8 @@ class Kamodo(UserDict):
             print('__delitem__: got {} type: {}'.format(key, type(key)))
         if isinstance(key, str):
             if self.verbose:
-                print('__delitem__: removing {} from symbol_registry'.format(key))
+                print(
+                    '__delitem__: removing {} from symbol_registry'.format(key))
             symbol = self.symbol_registry.pop(key, None)
             if symbol is None:
                 symbol, args, unit_dict, parsed = parse_lhs(
@@ -760,7 +748,6 @@ class Kamodo(UserDict):
                 print('__delitem__: received non str key {}'.format(symbol))
         if self.verbose:
             print('__delitem__: removing {} {}'.format(symbol, type(symbol)))
-
 
         remove_keys = []
         for k in self.data:
@@ -807,10 +794,10 @@ class Kamodo(UserDict):
                 arg_strs.append("{}[{}]".format(
                     latex(arg),
                     latex(get_abbrev(arg_unit),
-                        fold_frac_powers=True,
-                        fold_short_frac=True,
-                        root_notation=False,
-                        )))
+                          fold_frac_powers=True,
+                          fold_short_frac=True,
+                          root_notation=False,
+                          )))
             lhs_str = "{}({})".format(latex(type(lhs)), ",".join(arg_strs))
         else:
             lhs_str = latex(lhs)
@@ -818,25 +805,25 @@ class Kamodo(UserDict):
             #     latex(type(lhs)),
             #     ','.join([latex(s) for s in lhs.args]))
         if len(units) > 0:
-            lhs_str += "[{}]".format(latex(parse_expr(units.replace('^', '**'), locals=_clash),
-                    fold_frac_powers=True,
-                    fold_short_frac=True,
-                    root_notation=False,
-                ))
-
+            lhs_str += "[{}]".format(
+                latex(parse_expr(units.replace('^', '**'), locals=_clash),
+                      fold_frac_powers=True,
+                      fold_short_frac=True,
+                      root_notation=False,
+                      ))
 
         latex_eq = ''
         latex_eq_rhs = ''
 
         if isinstance(rhs, str):
-            latex_eq_rhs = rhs       
+            latex_eq_rhs = rhs
         elif hasattr(rhs, '__call__') | (rhs is None):
             lambda_ = symbols('lambda', cls=UndefinedFunction)
             # latex_eq = latex(Eq(lhs, lambda_(*lhs.args)), mode=mode)
-            latex_eq_rhs = latex(lambda_(*lhs.args)) # no $$
+            latex_eq_rhs = latex(lambda_(*lhs.args))  # no $$
         else:
             # latex_eq = latex(Eq(lhs, rhs), mode=mode)
-            latex_eq_rhs = latex(rhs) # no $$ delimiter
+            latex_eq_rhs = latex(rhs)  # no $$ delimiter
 
         if len(str(units)) > 0:
             latex_eq = latex_eq.replace('=', '[{}] ='.format(units))
@@ -851,8 +838,6 @@ class Kamodo(UserDict):
             repr_latex += r"$"
 
         return repr_latex
-
-
 
     def to_latex(self, keys=None, mode='equation'):
         """Generate list of LaTeX-formated formulas
@@ -882,7 +867,6 @@ class Kamodo(UserDict):
         """Constructs a pandas dataframe from signatures"""
         return pd.DataFrame(self.signatures).T
 
-
     def simulate(self, **kwargs):
         state_funcs = []
         for name, func_key in list(self.symbol_registry.items()):
@@ -895,14 +879,14 @@ class Kamodo(UserDict):
 
     def evaluate(self, variable, *args, **kwargs):
         """evaluates the variable
-
         if the variable is not present, try to parse it as a semicolon-delimited list
         """
         if not hasattr(self, variable):
             var_dict = {}
             for variable_ in variable.split(';'):
                 if len(variable_.split('=')) == 2:
-                    variable_name, variable_expr = variable_.strip("'").split('=')
+                    variable_name, variable_expr = variable_.strip("'").split(
+                        '=')
                     var_dict[variable_name] = variable_expr
                 else:
                     raise SyntaxError('cannot parse {}'.format(variable_))
@@ -910,7 +894,6 @@ class Kamodo(UserDict):
             # evaluate the last variable
             result = knew.evaluate(variable=variable_name, *args, **kwargs)
             return result
-
 
         if isinstance(self[variable], np.vectorize):
             params = get_defaults(self[variable].pyfunc)
@@ -930,14 +913,16 @@ class Kamodo(UserDict):
                 print('user-supplied args:', list(params.keys()))
         result = eval_func(self[variable], params)
         if isinstance(result, GeneratorType):
-            if (len(params) == 1) & isinstance(list(params.values())[0], GeneratorType):
+            if (len(params) == 1) & isinstance(list(params.values())[0],
+                                               GeneratorType):
                 if self.verbose:
                     print('found parametric generator')
                 # raise NotImplementedError('Animations not yet supported')
                 params.update({variable: result})
             else:
                 if self.verbose:
-                    print('evaluate found generator function. Concatonating solutions')
+                    print(
+                        'evaluate found generator function. Concatonating solutions')
                     print('generator params:', params)
 
                 params = concat_solution(result, variable)
@@ -963,7 +948,8 @@ class Kamodo(UserDict):
         scope = {'result': result, 'varname': varname}
 
         soln_str = r"""def solution({varname} = result['t']):
-            return result['sol'].__call__({varname}).T.squeeze()""".format(varname=varname)
+            return result['sol'].__call__({varname}).T.squeeze()""".format(
+            varname=varname)
 
         exec(soln_str.format(), scope)
 
@@ -978,7 +964,8 @@ class Kamodo(UserDict):
             units = '[{}]'.format(units)
         title = self.to_latex([variable], 'inline')
         title_lhs = title.split(' =')[0] + '$'
-        title_short = '{}'.format(variable + units)  # something wrong with colorbar latex being vertical
+        title_short = '{}'.format(
+            variable + units)  # something wrong with colorbar latex being vertical
         titles = dict(
             title=title, title_lhs=title_lhs,
             title_short=title_short, units=units, variable=variable)
@@ -998,7 +985,8 @@ class Kamodo(UserDict):
             raise NotImplementedError('Animations not yet supported!')
 
         try:
-            out_dim, *arg_dims = symbolic_shape(result[variable].shape, *arg_shapes)
+            out_dim, *arg_dims = symbolic_shape(result[variable].shape,
+                                                *arg_shapes)
         except IndexError:
             print('could not interpret shapes from variable shape {}'.format(
                 result[variable].shape))
@@ -1008,7 +996,8 @@ class Kamodo(UserDict):
         try:
             plot_func = plot_dict[out_dim][tuple(arg_dims)]['func']
         except KeyError:
-            print('not supported: out_dim {}, arg_dims {}'.format(out_dim, arg_dims))
+            print('not supported: out_dim {}, arg_dims {}'.format(out_dim,
+                                                                  arg_dims))
             raise
 
         traces, chart_type, layout = plot_func(
@@ -1039,12 +1028,12 @@ class Kamodo(UserDict):
 
     def plot(self, *variables, plot_partial={}, **figures):
         if len(plot_partial) > 0:
-            kpartial = from_kamodo(self) # copy kamodo object
+            kpartial = from_kamodo(self)  # copy kamodo object
             for k, v in plot_partial.items():
                 regname = k
                 kpartial[regname] = partial(kpartial[k], **v)
             return kpartial.plot(*variables, **figures)
-        
+
         for k in variables:
             figures[k] = {}
         if len(figures) == 1:
@@ -1071,6 +1060,7 @@ class Kamodo(UserDict):
 
 class KamodoAPI(Kamodo):
     """JSON api wrapper for kamodo services"""
+
     def __init__(self, url_path, **kwargs):
         self._url_path = url_path
         super(KamodoAPI, self).__init__(**kwargs)
@@ -1101,12 +1091,12 @@ class KamodoAPI(Kamodo):
                 func,
                 data=self._data[k],
                 units=v['units'],
-                )
+            )
 
     def _get(self, url_path):
         req_result = requests.get(url_path)
         try:
-            result = req_result.json() # returns a dictionary maybe
+            result = req_result.json()  # returns a dictionary maybe
         except json.JSONDecodeError as m:
             print('could not decode request {}'.format(req_result.text))
             raise json.JSONDecodeError(m)
@@ -1127,7 +1117,7 @@ class KamodoAPI(Kamodo):
             params.append((k, json.dumps(v, default=serialize)))
         result = requests.get(
             url=url_path,
-            params=params).json() #returns a dictionary
+            params=params).json()  # returns a dictionary
 
         if isinstance(result, str):
             if self.verbose:
@@ -1152,6 +1142,7 @@ class KamodoAPI(Kamodo):
         api_func.__doc__ = "{}/{}".format(self._url_path, func_name)
         return api_func
 
+
 def compose(**kamodos):
     """Kamposes multiple kamodo instances into one"""
     kamodo = Kamodo()
@@ -1169,6 +1160,7 @@ def compose(**kamodos):
                 kamodo[registry_name] = str(rhs)
 
     return kamodo
+
 
 def copy_func(f):
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)
@@ -1196,6 +1188,7 @@ def from_kamodo(kobj, **funcs):
         knew[symbol] = func
     return knew
 
+
 def get_figures(func, iterator, verbose=False):
     plots = []
     for a in func(iterator):
@@ -1213,6 +1206,7 @@ def get_figures(func, iterator, verbose=False):
             print('appending {}'.format(a.__name__))
         plots.append(full_fig)
     return plots
+
 
 # +
 def animate(func_, iterator=None, verbose=False):
@@ -1243,14 +1237,14 @@ def animate(func_, iterator=None, verbose=False):
         "frames": []
     }
 
-
     fig_dict["layout"]["updatemenus"] = [
         {
             "buttons": [
                 {
                     "args": [None, {"frame": {"duration": 100, "redraw": True},
-                                    "fromcurrent": True, "transition": {"duration": 100,
-                                                                        "easing": "quadratic-in-out"}}],
+                                    "fromcurrent": True,
+                                    "transition": {"duration": 100,
+                                                   "easing": "quadratic-in-out"}}],
                     "label": "Play",
                     "method": "animate",
                 },
@@ -1295,7 +1289,7 @@ def animate(func_, iterator=None, verbose=False):
     for p, figure in zip(iterator, figures):
         frame = {"data": figure['data'],
                  "name": str(p)}
-#         print(figure['layout']['xaxis']['range'])
+        #         print(figure['layout']['xaxis']['range'])
 
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
@@ -1306,9 +1300,9 @@ def animate(func_, iterator=None, verbose=False):
             "label": '{:.2f}'.format(p),
             "method": "animate"}
         sliders_dict["steps"].append(slider_step)
-#     print(len(fig_dict['frames']), ' frames')
+    #     print(len(fig_dict['frames']), ' frames')
 
-#     fig_dict["data"] = fig_dict["data"] + fig_dict["frames"][0]["data"]
+    #     fig_dict["data"] = fig_dict["data"] + fig_dict["frames"][0]["data"]
     fig_dict["layout"]["sliders"] = [sliders_dict]
 
     fig = go.Figure(fig_dict)

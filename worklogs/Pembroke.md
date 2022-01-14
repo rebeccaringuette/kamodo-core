@@ -1,3 +1,5 @@
+### 2022-01-13 18:22:04.387686: clock-out
+
 * troubleshooting rpc composition
 * could use try-catch: need expression to behave like FunctionRPC when wait() fails
 * could simpify new expressions so they can be pipelined with existing ones

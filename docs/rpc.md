@@ -472,10 +472,10 @@ class KamodoClient(Kamodo):
         """Generate a callable function composition that is executed remotely"""
         
         def remote_composition(**params):
-            remote_expr = to_rpc_expr(expr, **params, **kwargs)
-#             remote_expr = to_rpc_expr(expr, expressions=self._expressions, **params, **kwargs)
-            if self.verbose:
-                print(from_rpc_expr(remote_expr))
+#             remote_expr = to_rpc_expr(expr, **params, **kwargs)
+            remote_expr = to_rpc_expr(expr, expressions=self._expressions, **params, **kwargs)
+#             if self.verbose:
+#                 print(from_rpc_expr(remote_expr))
             evaluate_expr = self._client.evaluate(remote_expr) #.wait()
             result_message = evaluate_expr.value.read().wait()
             return from_rpc_literal(result_message.value)
@@ -507,9 +507,9 @@ class KamodoClient(Kamodo):
         #                rpc_expr(rhs_expr),
         #                modules=[func_impl, 'numpy', composition])
 
-        rpc_funcs = self.get_rpc_funcs(rhs_expr)
-        func = self.get_remote_composition(rhs_expr, **rpc_funcs)
-        self._expressions[type(symbol)] = rhs_expr
+#         rpc_funcs = self.get_rpc_funcs(rhs_expr)
+        func = self.get_remote_composition(rhs_expr, **self._rpc_funcs)
+        self._expressions[str(type(symbol))] = rhs_expr
 
         signature = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
@@ -566,11 +566,23 @@ kclient.H(3,4)
 ```
 
 ```python
-kclient['H_2'] = '2*H(x,y)'
+kclient['H_2(x,y)'] = '2*H(x,y)'
 ```
 
 ```python
-kclient.H_2(3,4)
+kclient._expressions
+```
+
+```python
+kclient._rpc_funcs
+```
+
+```python
+kclient
+```
+
+```python
+assert kclient.H_2(3,4) == 2*(kclient.f(3) + kclient.g(4)/1000)
 ```
 
 ```python

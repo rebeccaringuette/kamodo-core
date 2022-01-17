@@ -374,9 +374,9 @@ def to_rpc_expr(expr, math_rpc=math_rpc, expressions={}, **kwargs):
     message = dict()
     if len(expr.args) > 0:
         func = expr.func
-        if func in expressions:
+        if str(func) in expressions:
             # found subexpression (ie {f: x**2-x-1})
-            return to_rpc_expr(expressions[func], math_rpc, expressions, **kwargs)
+            return to_rpc_expr(expressions[str(func)], math_rpc, expressions, **kwargs)
 
         params = [to_rpc_expr(arg, math_rpc, expressions, **kwargs) for arg in expr.args]
         message['call'] = dict(params=params)
@@ -386,7 +386,11 @@ def to_rpc_expr(expr, math_rpc=math_rpc, expressions={}, **kwargs):
         elif str(func) in kwargs:
             message['call']['function'] = kwargs[str(func)]
         else:
-            raise NotImplementedError("{} {}".format(func, type(func)))
+            raise NotImplementedError("{} {}, available: {} {}".format(
+                func,
+                type(func),
+                list(expressions.keys()),
+                list(kwargs.keys())))
     elif isinstance(expr, Float):
         message['literal'] = to_rpc_literal(float(expr))
     elif isinstance(expr, Integer):

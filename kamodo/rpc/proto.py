@@ -181,22 +181,6 @@ def test_rpc_literal():
     for _ in from_rpc_literal(lit):
         print('{}: {}'.format(type(_).__name__, _))
 
-# AddRPC = Function('AddRPC')
-# MulRPC = Function('MulRPC')
-# PowRPC = Function('PowRPC')
-
-# def rpc_expr(expr):
-#     """Replace expression with RPC functions"""
-#     if len(expr.args) > 0:
-#         gather = [rpc_expr(arg) for arg in expr.args]
-#         if expr.func == Add:
-#             return AddRPC(*gather)
-#         if expr.func == Mul:
-#             return MulRPC(*gather)
-#         if expr.func == Pow:
-#             return PowRPC(*gather)
-#     return expr
-
 
 class Value(kamodo_capnp.Kamodo.Value.Server):
     "Simple implementation of the Kamodo.Value Cap'n Proto interface."

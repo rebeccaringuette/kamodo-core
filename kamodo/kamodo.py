@@ -73,7 +73,7 @@ from sympy.abc import _clash
 import sympy
 
 from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
-from rpc.proto import from_rpc_literal, to_rpc_literal
+from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
 from util import construct_signature
 
 _clash['rad'] = Symbol('rad')
@@ -283,16 +283,15 @@ def get_function_args(func, hidden_args=[]):
 
 
 
-# class Kamodo(collections.OrderedDict):
 class Kamodo(UserDict):
     '''Kamodo base class demonstrating common API for space weather models
 
 
-    This API provides access to space weather fields and their properties through:
+    This API provides access to scientific fields and their properties through:
 
         interpolation of variables at user-defined points
         unit conversions
-        coordinate transformations specific to space weather domains
+        domain-specific coordinate transformations
 
     Required methods that have not been implemented in child classes
     will raise a NotImplementedError
@@ -302,8 +301,13 @@ class Kamodo(UserDict):
         """Base initialization method
 
         Args:
-            param1 (str, optional): Filename of datafile to interpolate from
+            *funcs (str, optional): list expressions
+            **kwargs (key, str) or (key, func): function expression or implementation
 
+        examples:
+            k = Kamodo('f=x**2')
+            k = Kamodo(f='x**2')
+            k = Kamodo(f = lambda x: x**2)
         """
 
         super(Kamodo, self).__init__()
@@ -1092,6 +1096,97 @@ class Kamodo(UserDict):
             # Todo: merge the layouts instead of selecting the last one
             return go.Figure(data=traces, layout=layouts[-1])
 
+
+
+class KamodoClient(Kamodo):
+    def __init__(self, server=None, **kwargs):
+        """CapnProto Kamodo client
+        Abstracts a remote kamodo server using capn proto binary message types
+        """
+        super(KamodoClient, self).__init__(**kwargs)
+        self._expressions = {} # expressions for server-side pipelining
+        self._rpc_funcs = {} # rpc functions (may be served to downstream applications)
+
+        if server is not None:
+            self.client(server)
+
+    def __setitem__(self, sym_name, input_expr):
+        """register function symbol with implementation"""
+        super(KamodoClient, self).__setitem__(sym_name, input_expr)
+        symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
+        self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
+            
+    def client(self, read):
+        """register the client's remote functions"""
+        client = capnp.TwoPartyClient(read)
+
+        self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+        self._remote_fields = self._client.getFields().wait().fields
+        self._remote_math = self._client.getMath().wait().math
+        
+        for entry in self._remote_fields.entries:
+            self.register_remote_field(entry)
+
+        return client
+
+    def register_remote_field(self, entry):
+        """resolve the remote signature
+        f(*args, **kwargs) -> f(x,y,z=value)
+        """
+        symbol = entry.key
+        field = entry.value
+        
+        meta = field.meta
+        arg_units = rpc_map_to_dict(meta.argUnits)
+        
+        defaults_ = field.func.getKwargs().wait().kwargs
+        func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
+        func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
+        func_args = [_ for _ in func_args_ if _ not in func_defaults]
+        
+        if len(meta.equation) > 0:
+            equation = meta.equation
+        else:
+            equation = None
+        
+        @kamodofy(units=meta.units,
+                  arg_units=arg_units,
+                  citation=meta.citation,
+                  equation=equation,
+                  hidden_args=meta.hiddenArgs)
+        @forge.sign(*construct_signature(*func_args, **func_defaults))
+        def remote_func(*args, **kwargs):
+            # params must be List(Variable) for now
+            args_ = [to_rpc_literal(arg) for arg in args]
+            kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
+            result = field.func.call(args=args_, kwargs=kwargs_).wait().result
+            return from_rpc_literal(result)
+
+        self[symbol] = remote_func
+        self._rpc_funcs[symbol] = field.func
+
+    
+    def get_remote_composition(self, expr, **kwargs):
+        """Generate a callable function composition that is executed remotely"""        
+        def remote_composition(**params):
+            remote_expr = to_rpc_expr(expr, expressions=self._expressions, **params, **kwargs)
+            evaluate_expr = self._client.evaluate(remote_expr) #.wait()
+            result_message = evaluate_expr.value.read().wait()
+            return from_rpc_literal(result_message.value)
+
+        remote_composition.__name__ = str(expr)
+        return remote_composition
+    
+    def vectorize_function(self, symbol, rhs_expr, composition):
+        """lambdify the input expression using server-side promises"""
+        if self.verbose:
+            print('vectorizing {} = {}'.format(symbol, rhs_expr))
+            print('composition keys {}'.format(list(composition.keys())))
+        func = self.get_remote_composition(rhs_expr, **self._rpc_funcs)
+        self._expressions[str(type(symbol))] = rhs_expr
+
+        signature = sign_defaults(symbol, rhs_expr, composition)
+        return signature(func)
 
 
 class KamodoAPI(Kamodo):

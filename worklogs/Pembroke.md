@@ -1,3 +1,4 @@
+* moving KamodoClient into kamodo.py
 
 ### 2022-01-18 15:16:20.921930: clock-in
 

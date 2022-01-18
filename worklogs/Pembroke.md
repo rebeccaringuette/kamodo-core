@@ -1,3 +1,6 @@
+
+### 2022-01-18 15:16:20.921930: clock-in
+
 ### 2022-01-17 13:49:24.747834: clock-out
 
 * subexpressions working

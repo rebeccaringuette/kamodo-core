@@ -984,7 +984,7 @@ class Kamodo(UserDict):
         self._server[key] = field
 
 
-    def server(self, write):
+    def serve(self, write):
         self._server = KamodoRPC()
         
         for key in self.signatures:
@@ -1149,11 +1149,13 @@ class KamodoClient(Kamodo):
         else:
             equation = None
         
+        hidden_args = list(meta.hidden_args)
+
         @kamodofy(units=meta.units,
                   arg_units=arg_units,
                   citation=meta.citation,
                   equation=equation,
-                  hidden_args=meta.hiddenArgs)
+                  hidden_args=hidden_args)
         @forge.sign(*construct_signature(*func_args, **func_defaults))
         def remote_func(*args, **kwargs):
             # params must be List(Variable) for now

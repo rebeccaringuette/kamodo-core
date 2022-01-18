@@ -571,7 +571,7 @@ class Kamodo(UserDict):
                     if len(lhs_expr.args)>1:
                         func = Function('P')(lhs_expr.args[0])
                         if func0.compare(func) ==0 and len(rhs_expr.args[1].args) ==1 and \
-                                len(rhs_expr.args[1].free_symbols)==1:
+                                len(rhs_expr.args[1].free_symbols)==1 and isinstance(rhs_expr.args[0], Symbol):
                             raise SyntaxError('Ordering error')
 
             if not isinstance(symbol, Symbol):

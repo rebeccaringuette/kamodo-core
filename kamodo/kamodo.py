@@ -144,6 +144,11 @@ def args_from_dict(expr, local_dict, verbose):
     # else:
     #     return expr.args
 
+def alphabetize(symbols):
+    """alphabetical ordering for the input symbols"""
+    # can't use > on symbols, so need to convert to str first
+    return tuple(Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
+
 
 def get_str_units(bracketed_str):
     """finds all bracketed units in a string
@@ -576,7 +581,8 @@ class Kamodo(UserDict):
 
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
-                    symbol = Function(lhs_expr)(*tuple(rhs_expr.free_symbols))
+                    symbol = Function(lhs_expr)(*tuple(alphabetize(
+                                    rhs_expr.free_symbols)))
                 else:  # lhs is already a function
                     symbol = lhs_expr
                 lhs_str = str(symbol)

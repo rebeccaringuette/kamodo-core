@@ -19,6 +19,7 @@ from sympy import Function
 from kamodo import KamodoAPI
 from .util import serialize, NumpyArrayEncoder
 from .util import get_kamodo_unit_system
+from kamodo.util import get_args
 
 import warnings
 
@@ -325,6 +326,21 @@ def test_komodofy_decorator():
     assert my_density.meta['units'] == 'kg/cm^3'
     assert my_density(3, 4, 5) == 12
 
+
+def test_alphabetize():
+    k = Kamodo(f='x + y + a + b + c')
+
+    args = get_args(k.f)
+
+    answer = tuple('a b c x y'.split())
+    try:
+        assert args == answer
+    except:
+        print("{} != {}".format(args, answer))
+        raise
+
+
+test_alphabetize()
 
 def test_komodofy_register():
     @kamodofy(units='kg/cm^3')

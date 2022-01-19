@@ -74,7 +74,10 @@ import sympy
 
 from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
 from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
+import socket
 from util import construct_signature
+
+import yaml
 
 _clash['rad'] = Symbol('rad')
 _clash['deg'] = Symbol('deg')
@@ -984,7 +987,7 @@ class Kamodo(UserDict):
         self._server[key] = field
 
 
-    def serve(self, write):
+    def serve(self, socket_='*:60000'):
         self._server = KamodoRPC()
         
         for key in self.signatures:
@@ -992,10 +995,13 @@ class Kamodo(UserDict):
                 print('serving {}'.format(key))
             self.register_rpc_field(key)
 
-        
-        server = capnp.TwoPartyServer(write, bootstrap=self._server)
-        return server
-
+        # server = capnp.TwoPartyServer('*:60000', bootstrap=CalculatorImpl())
+        # server.run_forever()
+        if isinstance(socket_, socket.socket):
+            server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
+        else:
+            server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
+            server.run_forever()
 
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a given variable and keyword arguments"""
@@ -1149,7 +1155,7 @@ class KamodoClient(Kamodo):
         else:
             equation = None
         
-        hidden_args = list(meta.hidden_args)
+        hidden_args = list(meta.hiddenArgs)
 
         @kamodofy(units=meta.units,
                   arg_units=arg_units,
@@ -1435,3 +1441,18 @@ def animate(func_, iterator=None, verbose=False):
 
     fig = go.Figure(fig_dict)
     return fig
+
+def kamodo_constructor(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode) -> Kamodo:
+  """Construct a kamodo object from yaml."""
+  return Kamodo(**loader.construct_mapping(node))
+
+def kamodo_client_constructor(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode) -> KamodoClient:
+  """Construct an kamodo."""
+  return KamodoClient(**loader.construct_mapping(node))
+
+def yaml_loader():
+      """Add Kamodo constructors to PyYAML loader."""
+      loader = yaml.SafeLoader
+      loader.add_constructor("!Kamodo", kamodo_constructor)
+      loader.add_constructor("!KamodoClient", kamodo_client_constructor)
+      return loader

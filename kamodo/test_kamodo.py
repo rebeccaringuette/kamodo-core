@@ -339,9 +339,6 @@ def test_alphabetize():
         print("{} != {}".format(args, answer))
         raise
 
-
-test_alphabetize()
-
 def test_komodofy_register():
     @kamodofy(units='kg/cm^3')
     def my_density(x, y, z):

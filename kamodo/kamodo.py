@@ -569,6 +569,9 @@ class Kamodo(UserDict):
             if self.verbose:
                 print('parsed rhs_expr', rhs_expr)
 
+            #  Below check is to make sure if default parameter comes first
+            #  and then non-default parameter, in such cases it will throw
+            #  syntax error
             if len(rhs_expr.args)>1:
                 if len(list(rhs_expr.args[1].free_symbols))>0:
                     arg_temp = list(rhs_expr.args[1].free_symbols)[0]

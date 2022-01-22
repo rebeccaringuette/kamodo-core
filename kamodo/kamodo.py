@@ -572,15 +572,18 @@ class Kamodo(UserDict):
             #  Below check is to make sure if default parameter comes first
             #  and then non-default parameter, in such cases it will throw
             #  syntax error
-            if len(rhs_expr.args)>1:
-                if len(list(rhs_expr.args[1].free_symbols))>0:
-                    arg_temp = list(rhs_expr.args[1].free_symbols)[0]
-                    func0 = Function('P')(arg_temp)
-                    if len(lhs_expr.args)>1:
-                        func = Function('P')(lhs_expr.args[0])
-                        if func0.compare(func) ==0 and len(rhs_expr.args[1].args) ==1 and \
-                                len(rhs_expr.args[1].free_symbols)==1 and isinstance(rhs_expr.args[0], Symbol):
+            try:
+                if  isinstance(rhs_expr.args[0], Symbol) and len(
+                        rhs_expr.args)>1:
+                    if type(rhs_expr.args[1]) !=rhs_expr.args[1].name:
+                        if rhs_expr.args[0] != lhs_expr.args[0]:
                             raise SyntaxError('Ordering error')
+            except IndexError:
+                pass
+            except TypeError:
+                pass
+            except AttributeError:
+                pass
 
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):

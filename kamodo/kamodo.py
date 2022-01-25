@@ -64,7 +64,8 @@ import inspect
 
 import re
 
-import urllib.request, json
+import urllib.request
+import json
 import requests
 from util import serialize, deserialize
 from util import sign_defaults
@@ -144,10 +145,33 @@ def args_from_dict(expr, local_dict, verbose):
     # else:
     #     return expr.args
 
+
 def alphabetize(symbols):
     """alphabetical ordering for the input symbols"""
     # can't use > on symbols, so need to convert to str first
     return tuple(Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
+
+
+def default_inheritance_check(rhs_expr, lhs_expr):
+    """
+    Checking  if default parameter comes first and then non-default
+    parameter, ex:G(X,Y).In such cases length of rhs_expr will be greater
+    than 1, 1st and 2nd argument of rhs_expr will be sympy Symbol and
+    sympy function data type.If condition satisfies, then checking if the
+    first argument for both rhs_expr and lhs_expr is same or not.If not same
+    then raise syntax error.
+    """
+    try:
+        if isinstance(rhs_expr.args[0], Symbol):
+            if type(rhs_expr.args[1]) != rhs_expr.args[1].name:
+                if rhs_expr.args[0] != lhs_expr.args[0]:
+                    raise SyntaxError('Ordering error')
+    except IndexError:
+        pass
+    except TypeError:
+        pass
+    except AttributeError:
+        pass
 
 
 def get_str_units(bracketed_str):
@@ -272,14 +296,14 @@ def get_function_args(func, hidden_args=[]):
 
 # class Kamodo(collections.OrderedDict):
 class Kamodo(UserDict):
-    '''Kamodo base class demonstrating common API for space weather models
+    """Kamodo base class demonstrating common API for space weather models
     This API provides access to space weather fields and their properties through:
         interpolation of variables at user-defined points
         unit conversions
         coordinate transformations specific to space weather domains
     Required methods that have not been implemented in child classes
     will raise a NotImplementedError
-    '''
+    """
 
     def __init__(self, *funcs, **kwargs):
         """Base initialization method
@@ -569,21 +593,7 @@ class Kamodo(UserDict):
             if self.verbose:
                 print('parsed rhs_expr', rhs_expr)
 
-            #  Below check is to make sure if default parameter comes first
-            #  and then non-default parameter, in such cases it will throw
-            #  syntax error
-            try:
-                if  isinstance(rhs_expr.args[0], Symbol) and len(
-                        rhs_expr.args)>1:
-                    if type(rhs_expr.args[1]) !=rhs_expr.args[1].name:
-                        if rhs_expr.args[0] != lhs_expr.args[0]:
-                            raise SyntaxError('Ordering error')
-            except IndexError:
-                pass
-            except TypeError:
-                pass
-            except AttributeError:
-                pass
+            default_inheritance_check(rhs_expr, lhs_expr)
 
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):

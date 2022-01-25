@@ -594,6 +594,17 @@ def test_default_inheritance_order():
     with pytest.raises(SyntaxError):
         kamodo['g(x,y)'] = 'y*f'
 
+def test_greater_than_two_arg_defaults():
+    k = Kamodo(f=lambda x=3: x**2)
+    
+    with pytest.raises(SyntaxError):
+        k['g(a,x,y)'] = 'a + y + f'
+
+    k['h'] = 'a + y + f' # should have registered h(a,y,x)
+    # get_args will return a string list, which should match arguments of h
+    for a, b in zip(k.signatures['h']['symbol'].args, get_args(k.h)):
+        assert str(a) == b
+
 def test_eval_no_defaults():
     kamodo = Kamodo(f='x', verbose=True)
     kamodo['g'] = lambda x=3: x

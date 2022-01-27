@@ -19,6 +19,7 @@ from sympy import Function
 from kamodo import KamodoAPI
 from .util import serialize, NumpyArrayEncoder
 from .util import get_kamodo_unit_system
+from kamodo.util import get_args
 
 import warnings
 
@@ -278,6 +279,7 @@ def test_unit_composition():
         print(kamodo.signatures)
         raise
 
+
 def test_unit_composition_mixed():
     kamodo = Kamodo('$rho[kg/m^3] = x^3$', '$v[cm/s] = y^2$', verbose=True)
     kamodo['p[Pa]'] = '$\\rho v^2$'
@@ -325,6 +327,18 @@ def test_komodofy_decorator():
     assert my_density.meta['units'] == 'kg/cm^3'
     assert my_density(3, 4, 5) == 12
 
+
+def test_alphabetize():
+    k = Kamodo(f='x + y + a + b + c')
+
+    args = get_args(k.f)
+
+    answer = tuple('a b c x y'.split())
+    try:
+        assert args == answer
+    except:
+        print("{} != {}".format(args, answer))
+        raise
 
 def test_komodofy_register():
     @kamodofy(units='kg/cm^3')
@@ -574,6 +588,30 @@ def test_jit_evaluate():
     with pytest.raises(SyntaxError):
         kamodo.evaluate('f**2', x = 3)['x'] == 3
 
+def test_default_inheritance_order():
+    kamodo = Kamodo(f=lambda x=2: x ** 2, verbose=True)
+    kamodo['h'] = 'y*f'
+    assert kamodo['h'](2) == 2*2**2
+    with pytest.raises(SyntaxError):
+        kamodo['g(x,y)'] = 'y*f'
+
+def test_greater_than_two_arg_defaults():
+    k = Kamodo(f=lambda x=3: x**2, f_2 = lambda x=2, y=3: x*y)
+
+    with pytest.raises(SyntaxError):
+        k['g(x,z,y)'] = 'z*f_2'
+
+    with pytest.raises(SyntaxError):
+        k['g(a,x,y)'] = 'a + y + f'
+
+    with pytest.raises(SyntaxError):
+        k['g(x,z,y)'] = 'z*f_2'
+
+    k['h'] = 'a + y + f' # should have registered h(a,y,x)
+    # get_args will return a string list, which should match arguments of h
+    for a, b in zip(k.signatures['h']['symbol'].args, get_args(k.h)):
+        assert str(a) == b
+
 def test_eval_no_defaults():
     kamodo = Kamodo(f='x', verbose=True)
     kamodo['g'] = lambda x=3: x
@@ -811,4 +849,6 @@ def test_frequency_units():
     freq = get_unit('deg')/get_unit('s')
     kamodo_units = get_kamodo_unit_system()
     convert_unit_to(omega, freq, kamodo_units)
+
+
 

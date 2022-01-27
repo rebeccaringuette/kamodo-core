@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.  
+Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 import logging
@@ -9,7 +9,6 @@ import tempfile
 import sys
 import numpy.f2py  # just to check it presents
 from numpy.distutils.exec_command import exec_command
-
 
 import sympy
 from collections import OrderedDict, defaultdict
@@ -51,8 +50,6 @@ from sympy.physics.units import UnitSystem
 from sympy.physics.units import Dimension
 
 
-
-
 def get_unit_quantity(name, base, scale_factor, abbrev=None, unit_system='SI'):
     '''Define a unit in terms of a base unit'''
     unit = units.Quantity(name, abbrev=abbrev)
@@ -76,18 +73,19 @@ unit_subs = dict(
     R_S=get_unit_quantity('solar radii', 'm', 6.957e8, 'R_S', 'SI'),
     erg=get_unit_quantity('erg', 'J', .0000001, 'erg', 'SI'),
     nPa=get_unit_quantity('nanopascals', 'pascal', .000000001, 'nPa', 'SI'),
-    cc=sympy_units.cm**3,
+    cc=sympy_units.cm ** 3,
     AU=get_unit_quantity('astronomical unit', 'm', 1.496e+11, 'AU', 'SI'),
-    arcsec=get_unit_quantity('arc seconds', 'degrees', 1./3600, '\"', 'SI'),
-    hr = get_unit_quantity('hour','s',3600.,'hr','SI')
-    #TECU = get_unit_quantity('TECU','1/m**2',10**16, 'TECU','SI')
-    )
+    arcsec=get_unit_quantity('arc seconds', 'degrees', 1. / 3600, '\"', 'SI'),
+    hr=get_unit_quantity('hour', 's', 3600., 'hr', 'SI')
+    # TECU = get_unit_quantity('TECU','1/m**2',10**16, 'TECU','SI')
+)
 
 sympy_units.erg = unit_subs['erg']
 
-prefix_dict = sympy_units.prefixes.PREFIXES  #built-in dictionary of Prefix instances
-#test_unit_subs={}  #dictionary to replace subs in kamodo.get_unit_quantities()
-unit_list = ['m', 's', 'g', 'A', 'K', 'radian', 'sr', 'cd', 'mole', 'eV', 'Pa', 'F', 'N',
+prefix_dict = sympy_units.prefixes.PREFIXES  # built-in dictionary of Prefix instances
+# test_unit_subs={}  #dictionary to replace subs in kamodo.get_unit_quantities()
+unit_list = ['m', 's', 'g', 'A', 'K', 'radian', 'sr', 'cd', 'mole', 'eV', 'Pa',
+             'F', 'N',
              'V', 'Hz', 'C', 'W', 'Wb', 'H', 'S', 'Bq', 'Gy', 'erg', 'T']
 
 # list of SI units included in sympy (likely not complete)
@@ -96,10 +94,12 @@ for item in unit_list:
     unit_item = getattr(sympy_units, item)
     unit_subs[item] = unit_item
     for key in prefix_dict.keys():
-        unit_subs[key+item] = get_unit_quantity(str(prefix_dict[key].name)+
-                                                str(unit_item.name), str(unit_item.name),
-                                                float(prefix_dict[key].scale_factor),
-                                                abbrev=key+item)
+        unit_subs[key + item] = get_unit_quantity(str(prefix_dict[key].name) +
+                                                  str(unit_item.name),
+                                                  str(unit_item.name),
+                                                  float(prefix_dict[
+                                                            key].scale_factor),
+                                                  abbrev=key + item)
 
 reserved_names = dir(sympy)
 
@@ -117,7 +117,8 @@ def get_kamodo_unit_system():
     kamodo_dims = si_dimension_system.extend(
         new_base_dims=(angle,),
         new_derived_dims=[Dimension('angular_velocity')],
-        new_dim_deps={Symbol('angular_velocity'): {Symbol('angle'): 1, Symbol('time'): -1}})
+        new_dim_deps={Symbol('angular_velocity'): {Symbol('angle'): 1,
+                                                   Symbol('time'): -1}})
 
     kamodo_units = si_unit_system.extend(
         (radian,),
@@ -128,6 +129,7 @@ def get_kamodo_unit_system():
 
 
 kamodo_unit_system = get_kamodo_unit_system()
+
 
 def get_ufunc(expr, variable_map):
     """Numerically optimize expression"""
@@ -144,7 +146,8 @@ def compile_fortran(source, module_name, extra_args='', folder='./'):
         fortran_file.write(source)
         fortran_file.flush()
 
-        args = ' -c -m {} {} {}'.format(module_name, fortran_file.name, extra_args)
+        args = ' -c -m {} {} {}'.format(module_name, fortran_file.name,
+                                        extra_args)
         command = 'cd "{}" && "{}" -c "import numpy.f2py as f2py;f2py.main()" {}'.format(
             folder, sys.executable, args)
         status, output = exec_command(command)
@@ -194,7 +197,6 @@ def kamodofy(
         hidden_args=[],
         **kwargs):
     """Adds meta and data attributes to functions for compatibility with Komodo
-
     meta: a dictionary containing {units: <str>}
     data:
         if supplied, set f.data = data
@@ -244,7 +246,6 @@ def kamodofy(
         return decorator_kamodofy(_func)
 
 
-
 def sort_symbols(symbols):
     symbols_ = list(symbols)
     symbols_.sort(key=str)
@@ -283,9 +284,11 @@ def get_defaults(func):
 
     return defaults
 
+
 def get_args(func):
     sig = inspect.signature(func)
     return tuple(sig.parameters.keys())
+
 
 def cast_0_dim(a, to):
     if a.ndim == 0:
@@ -296,13 +299,10 @@ def cast_0_dim(a, to):
 
 def simulate(state_funcs, **kwargs):
     """Iterate over functions.
-
     state_funcs(OrderedDict)
         key: the variable to update
         value: the function that updates the variable
-
     Any remaining kwargs are passed to the state functions.
-
     The order of the keys in state_funcs determines which variables get updated first.
     """
 
@@ -337,14 +337,14 @@ def pad_nan(array):
         else:
             raise NotImplementedError('cannot pad shape {}'.format(array.shape))
     except:
-        raise NotImplementedError('cannot handle {} of type {}'.format(array, type(array)))
+        raise NotImplementedError(
+            'cannot handle {} of type {}'.format(array, type(array)))
 
 
 def concat_solution(gen, variable):
     """combine solutions of a function generator
     iterates through a function generator and extracts defaults for each function
     these solutions are then padded with nans and stacked
-
     stacking is vertically for N-d, horizontally for 1-d
     """
     params = defaultdict(list)
@@ -376,17 +376,17 @@ existing_plot_types = pd.DataFrame({
     ('3', '1, M, N', 'MxN'): ['Map-to-plane', 'indexing*'],
     ('3', 'L, 1, N', 'LxN'): ['Map-to-plane', 'indexing*']
 }).T
-existing_plot_types.index.set_names(['nargs', 'arg shapes', 'out shape'], inplace=True)
+existing_plot_types.index.set_names(['nargs', 'arg shapes', 'out shape'],
+                                    inplace=True)
 existing_plot_types.columns = ['Plot Type', 'notes']
 
 
 def gridify(_func=None, order='A', squeeze=True, **defaults):
     """Given a function of shape (n,dim) and arguments of shape (L), (M), calls f with points L*M
-    
+
     order: 'A' (default) uses indexing='xy' in meshgrid
            'C' uses indexing='ij' in meshgrid
     squeeze: True (default) passed to reshape before returning
-
     """
 
     def decorator_gridify(f):
@@ -440,11 +440,14 @@ def pointlike(_func=None, signature=None, otypes=[float], squeeze=None):
                     args[i] = np.expand_dims(x, axis=0)
             if squeeze is not None:
                 try:
-                    return np.vectorize(f, otypes=otypes, signature=signature)(*args, **kwargs).squeeze(squeeze)
+                    return np.vectorize(f, otypes=otypes, signature=signature)(
+                        *args, **kwargs).squeeze(squeeze)
                 except:
-                    return np.vectorize(f, otypes=otypes, signature=signature)(*args, **kwargs)
+                    return np.vectorize(f, otypes=otypes, signature=signature)(
+                        *args, **kwargs)
             else:
-                return np.vectorize(f, otypes=otypes, signature=signature)(*args, **kwargs)
+                return np.vectorize(f, otypes=otypes, signature=signature)(
+                    *args, **kwargs)
 
         if not hasattr(func, '__name__'):
             func.__name__ = 'pointlike'
@@ -475,7 +478,6 @@ def solve(fprime=None, seeds=None, varname=None, interval=None,
           verbose=False,
           ):
     """Decorator that solves initial value problem for a given function
-
     Can be used to generate streamlines, streaklines, fieldlines, etc
     """
 
@@ -504,7 +506,8 @@ def solve(fprime=None, seeds=None, varname=None, interval=None,
                                    t_eval=t_eval)
                 solutions.append(result['sol'])
                 interval_bounded = result['t']
-                seed_numbers = np.ones(len(interval_bounded)) * i  # *len(directions) + 1*(d > 0)
+                seed_numbers = np.ones(
+                    len(interval_bounded)) * i  # *len(directions) + 1*(d > 0)
                 integrals = interval_bounded[::d] * d * 1j
                 if d < 0:
                     t.extend(list(seed_numbers + integrals))
@@ -518,7 +521,8 @@ def solve(fprime=None, seeds=None, varname=None, interval=None,
             if len(s.shape) == 0:
                 s = np.expand_dims(s, axis=0)
 
-            isolution = np.floor(s.real).astype(int) * len(directions) + (s.imag > 0)
+            isolution = np.floor(s.real).astype(int) * len(directions) + (
+                        s.imag > 0)
 
             results = []
             seed_number = []
@@ -535,7 +539,8 @@ def solve(fprime=None, seeds=None, varname=None, interval=None,
                     results.append(np.ones(isolution.shape[-1]) * np.nan)
             index_ = pd.MultiIndex.from_arrays([seed_number, integral],
                                                names=['seed', 'integral'])
-            return pd.DataFrame(np.vstack(results), index=index_).drop_duplicates()
+            return pd.DataFrame(np.vstack(results),
+                                index=index_).drop_duplicates()
 
         solution.__name__ = varname
 
@@ -547,19 +552,16 @@ def solve(fprime=None, seeds=None, varname=None, interval=None,
         return decorator_solve(fprime)
 
 
-def convert_unit_to(expr, target_units, unit_system=kamodo_unit_system, raise_errors=True):
+def convert_unit_to(expr, target_units, unit_system=kamodo_unit_system,
+                    raise_errors=True):
     """
     Same as sympy.convert_to but accepts equations and allows functions of units to pass
-
     Convert ``expr`` to the same expression with all of its units and quantities
     represented as factors of ``target_units``, whenever the dimension is compatible.
-
     ``target_units`` may be a single unit/quantity, or a collection of
     units/quantities.
-
     Examples
     ========
-
     >>> from sympy.physics.units import speed_of_light, meter, gram, second, day
     >>> from sympy.physics.units import mile, newton, kilogram, atomic_mass_constant
     >>> from sympy.physics.units import kilometer, centimeter
@@ -579,22 +581,16 @@ def convert_unit_to(expr, target_units, unit_system=kamodo_unit_system, raise_er
     3*kilogram*meter/second**2
     >>> convert_to(atomic_mass_constant, gram)
     1.660539060e-24*gram
-
     Conversion to multiple units:
-
     >>> convert_to(speed_of_light, [meter, second])
     299792458*meter/second
     >>> convert_to(3*newton, [centimeter, gram, second])
     300000*centimeter*gram/second**2
-
     Conversion to Planck units:
-
     >>> from sympy.physics.units import gravitational_constant, hbar
     >>> convert_to(atomic_mass_constant, [gravitational_constant, speed_of_light, hbar]).n()
     7.62963085040767e-20*gravitational_constant**(-0.5)*hbar**0.5*speed_of_light**0.5
-
     """
-
 
     from sympy.physics.units import UnitSystem
     unit_system = UnitSystem.get_unit_system(unit_system)
@@ -602,17 +598,17 @@ def convert_unit_to(expr, target_units, unit_system=kamodo_unit_system, raise_er
     if not isinstance(target_units, (Iterable, Tuple)):
         target_units = [target_units]
 
-
     if hasattr(expr, 'rhs'):
         return Eq(convert_unit_to(expr.lhs, target_units, unit_system),
-            convert_unit_to(expr.rhs, target_units, unit_system))
+                  convert_unit_to(expr.rhs, target_units, unit_system))
     # if type(type(expr)) is UndefinedFunction:
     if is_function(expr):
         # print('undefined input expr:{}'.format(expr))
         return nsimplify(expr, rational=True)
 
     if isinstance(expr, Add):
-        return Add.fromiter(convert_unit_to(i, target_units, unit_system) for i in expr.args)
+        return Add.fromiter(
+            convert_unit_to(i, target_units, unit_system) for i in expr.args)
 
     expr = sympify(expr)
 
@@ -627,7 +623,8 @@ def convert_unit_to(expr, target_units, unit_system=kamodo_unit_system, raise_er
 
     def get_total_scale_factor(expr):
         if isinstance(expr, Mul):
-            return reduce(lambda x, y: x * y, [get_total_scale_factor(i) for i in expr.args])
+            return reduce(lambda x, y: x * y,
+                          [get_total_scale_factor(i) for i in expr.args])
         elif isinstance(expr, Pow):
             return get_total_scale_factor(expr.base) ** expr.exp
         elif isinstance(expr, Quantity):
@@ -640,12 +637,15 @@ def convert_unit_to(expr, target_units, unit_system=kamodo_unit_system, raise_er
     depmat = _get_conversion_matrix_for_expr(expr, target_units, unit_system)
     if depmat is None:
         if raise_errors:
-            raise NameError('cannot convert {} to {} {}'.format(expr, target_units, unit_system))
+            raise NameError(
+                'cannot convert {} to {} {}'.format(expr, target_units,
+                                                    unit_system))
         return nsimplify(expr, rational=True)
 
     expr_scale_factor = get_total_scale_factor(expr)
     result = expr_scale_factor * Mul.fromiter(
-        (1/get_total_scale_factor(u) * u) ** p for u, p in zip(target_units, depmat))
+        (1 / get_total_scale_factor(u) * u) ** p for u, p in
+        zip(target_units, depmat))
     return nsimplify(result, rational=True)
 
 
@@ -656,7 +656,8 @@ def get_expr_unit(expr, unit_registry, verbose=False):
             if type(expr) == type(func):
                 # b(a) = b(x)
                 if verbose:
-                    print('get_expr_unit: found match {} for {}'.format(func, expr))
+                    print('get_expr_unit: found match {} for {}'.format(func,
+                                                                        expr))
                 # {f(x): f(cm), f(cm): kg}
                 func_units = unit_registry[func]
                 if func_units in unit_registry:
@@ -679,7 +680,7 @@ def get_expr_unit(expr, unit_registry, verbose=False):
     if len(unit_registry) > 0:
         expr_unit = expr.subs(
             unit_registry, simultaneous=False).subs(
-                unit_registry, simultaneous=False)
+            unit_registry, simultaneous=False)
     else:
         expr_unit = expr
 
@@ -718,6 +719,7 @@ def get_arg_units(expr, unit_registry, arg_units=None):
         arg_units = get_arg_units(arg, unit_registry, arg_units)
     return arg_units
 
+
 def replace_args(expr, from_map, to_map):
     # func_symbol = type(expr)
     arg_map = dict()
@@ -728,12 +730,14 @@ def replace_args(expr, from_map, to_map):
             try:
                 assert get_dimensions(from_unit) == get_dimensions(to_unit)
                 arg_map[arg] = convert_unit_to(
-                    arg*to_unit,
+                    arg * to_unit,
                     from_unit,
-                    kamodo_unit_system)/from_unit
+                    kamodo_unit_system) / from_unit
             except:
-                raise NameError('cannot convert from {} to {}'.format(from_unit, to_unit))
+                raise NameError(
+                    'cannot convert from {} to {}'.format(from_unit, to_unit))
     return expr.subs(arg_map)
+
 
 def unify_args(expr, unit_registry, to_symbol, verbose):
     """replaces arguments in an expression"""
@@ -746,6 +750,7 @@ def unify_args(expr, unit_registry, to_symbol, verbose):
     if verbose:
         print('unify_args: converted expression:', expr)
     return expr
+
 
 def unify(expr, unit_registry, to_symbol=None, verbose=False):
     """adds unit conversion factors to composed functions"""
@@ -761,7 +766,9 @@ def unify(expr, unit_registry, to_symbol=None, verbose=False):
         if verbose:
             print('unify: Adding expression: {} -> {}'.format(
                 expr, get_expr_unit(to_symbol, unit_registry, verbose)))
-        return Add.fromiter([unify(arg, unit_registry, to_symbol, verbose) for arg in expr.args])
+        return Add.fromiter(
+            [unify(arg, unit_registry, to_symbol, verbose) for arg in
+             expr.args])
 
     expr_unit = get_expr_unit(expr, unit_registry, verbose)
 
@@ -781,7 +788,8 @@ def unify(expr, unit_registry, to_symbol=None, verbose=False):
         if to_symbol is not None:
             if verbose:
                 print('\nunify: to_symbol args: {}'.format(to_symbol.args))
-                print('unify: to_symbol free symbols: {}'.format(to_symbol.free_symbols))
+                print('unify: to_symbol free symbols: {}'.format(
+                    to_symbol.free_symbols))
                 print('unify: expr args: {}'.format(expr.args))
                 print('unify: expr free symbols: {}'.format(expr.free_symbols))
 
@@ -789,7 +797,8 @@ def unify(expr, unit_registry, to_symbol=None, verbose=False):
                 if isinstance(expr, type(k)):
                     if len(k.free_symbols) > 0:
                         if verbose:
-                            print('unify: found matching {} -> {}'.format(expr, k))
+                            print('unify: found matching {} -> {}'.format(expr,
+                                                                          k))
                         arg_units = get_arg_units(k, unit_registry)
                         if verbose:
                             print('unify: func units:', arg_units)
@@ -798,11 +807,12 @@ def unify(expr, unit_registry, to_symbol=None, verbose=False):
                         for arg, sym in zip(expr.args, k.args):
                             to_unit = arg_units.get(sym)
                             from_unit = get_expr_unit(arg, unit_registry)
-                            if (from_unit is not None) and (to_unit is not None):
+                            if (from_unit is not None) and (
+                                    to_unit is not None):
                                 expr_units[arg] = convert_unit_to(
-                                    arg*from_unit,
+                                    arg * from_unit,
                                     to_unit,
-                                    kamodo_unit_system)/to_unit
+                                    kamodo_unit_system) / to_unit
                         expr = expr.subs(expr_units)
 
                         if verbose:
@@ -821,22 +831,24 @@ def unify(expr, unit_registry, to_symbol=None, verbose=False):
                 print('unify: {} [{}] -> to_symbol: {}[{}]'.format(
                     expr, expr_unit, to_symbol, to_unit))
             expr = convert_unit_to(
-                expr*expr_unit,
+                expr * expr_unit,
                 to_unit,
-                kamodo_unit_system)/to_unit
+                kamodo_unit_system) / to_unit
         else:
             if verbose:
                 print('unify: registry:')
                 for k, v in unit_registry.items():
                     print('unify:\t{} -> {}'.format(k, v))
-                print('compare:{}'.format(expr_dimensions.compare(to_dimensions)))
+                print(
+                    'compare:{}'.format(expr_dimensions.compare(to_dimensions)))
                 error_msg = 'cannot convert {} [{}] {} to {}[{}] {}'.format(
-                expr, expr_unit, expr_dimensions,
-                to_symbol, to_unit, to_dimensions)
+                    expr, expr_unit, expr_dimensions,
+                    to_symbol, to_unit, to_dimensions)
                 print(error_msg)
             raise NameError(error_msg)
 
     return expr
+
 
 def get_abbrev(unit):
     """get the abbreviation for a mixed unit"""
@@ -852,7 +864,9 @@ def get_abbrev(unit):
 
 def base_dimensions(d):
     dependencies = dimsys_SI.get_dimensional_dependencies(d)
-    return Mul.fromiter(Pow(Dimension(base), exp_) for base, exp_ in dependencies.items())
+    return Mul.fromiter(
+        Pow(Dimension(base), exp_) for base, exp_ in dependencies.items())
+
 
 def get_dimensions(unit):
     """get the set of basis units"""
@@ -861,7 +875,8 @@ def get_dimensions(unit):
         if len(base_dims.args) == 1:
             return base_dims.args[0]
         else:
-            return Mul.fromiter([arg.args[0] for arg in base_dimensions(unit.dimension).args])
+            return Mul.fromiter(
+                [arg.args[0] for arg in base_dimensions(unit.dimension).args])
     if isinstance(unit, Mul):
         terms = [get_dimensions(arg) for arg in unit.args]
         return Mul.fromiter(terms)
@@ -899,9 +914,9 @@ def get_base_unit(expr):
         return get_base_unit(expr.args[0])
     return None
 
+
 def is_function(expr):
     """returns True if expr is a function
-
     examples:
         f(x): True
         symbols('f', cls=UndefinedFunction): True
@@ -918,6 +933,7 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
+
 class NumpyArrayEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -929,11 +945,13 @@ class NumpyArrayEncoder(json.JSONEncoder):
         else:
             return super(NumpyArrayEncoder, self).default(obj)
 
+
 def full_classname(o):
     module = o.__class__.__module__
     if module is None or module == str.__class__.__module__:
         return o.__class__.__name__
     return module + '.' + o.__class__.__name__
+
 
 def serialize(obj):
     if isinstance(obj, (np.ndarray, np.generic)):
@@ -982,14 +1000,15 @@ def serialize(obj):
 
     if isinstance(obj, types.GeneratorType):
         return {'__lambdagen__': [{
-            'params':{k:serialize(v) for k, v in get_defaults(func).items()},
-            'result':serialize(func())} for func in obj]}
+            'params': {k: serialize(v) for k, v in get_defaults(func).items()},
+            'result': serialize(func())} for func in obj]}
 
     if isinstance(obj, int):
         return obj
 
     # Let the base class default method raise the TypeError
     raise TypeError('Unable to serialise object of type {}'.format(type(obj)))
+
 
 def lambdagen(obj):
     """create a generator of lambda functions"""
@@ -999,12 +1018,14 @@ def lambdagen(obj):
             signature.append(forge.arg(
                 arg,
                 default=deserialize(arg_default)))
+
         @forge.sign(*signature)
         def func(*args, **kwargs):
             """API function"""
             return deserialize(func_['result'])
 
         yield kamodofy(func)
+
 
 def deserialize(obj):
     # convert obj into numpy, pandas
@@ -1044,6 +1065,7 @@ def deserialize(obj):
 
     return obj
 
+
 # over-write the load(s)/dump(s) functions
 def load(*args, **kwargs):
     kwargs['object_hook'] = deserialize
@@ -1064,13 +1086,15 @@ def dumps(*args, **kwargs):
     kwargs['default'] = serialize
     return json.dumps(*args, **kwargs)
 
+
 def get_undefined_funcs(expr):
     """retrieve an expression's undefined functions"""
     return expr.atoms(sympy.function.AppliedUndef)
 
+
 def sign_defaults(symbol, expr, composition):
     '''gets defaults from an expression using composition'''
-    defaults={}
+    defaults = {}
     for f_ in get_undefined_funcs(expr):
         # includes {h(f(g)), f(g)}
         if str(f_) in composition:
@@ -1079,20 +1103,25 @@ def sign_defaults(symbol, expr, composition):
             # flatten defaults
             for arg, arg_default in f_defaults.items():
                 defaults[arg] = arg_default
-
     arg_signatures = []
     # defaults have to go last, which may conflict with user's ordering
+    symbol_args = list(symbol.args)
     for arg in symbol.args:
         str_arg = str(arg)
-        if str_arg in defaults:
-            arg_default=defaults[str(arg)]
-            arg_signatures.append(forge.arg(str_arg, default=arg_default))
-        else:
+        if not (str_arg in defaults):
             arg_signatures.append(forge.arg(str_arg))
+            symbol_args.remove(arg)
+        else:
+            continue
 
+    for default_arg in symbol_args:
+        str_arg = str(default_arg)
+        arg_default = defaults[str(default_arg)]
+        arg_signatures.append(forge.arg(str_arg, default=arg_default))
     # will raise an error if defaults are not last
     signature = forge.sign(*arg_signatures)
-    return signature
+    return signature, defaults
+
 
 class LambdaGenerator(object):
     def __init__(self, lambda_generator):
@@ -1101,45 +1130,56 @@ class LambdaGenerator(object):
 
     def __add__(self, other):
         if isinstance(other, LambdaGenerator):
-            for func, gunc in zip(self._lambda_generator, other._lambda_generator):
-                yield lambda: func()+gunc()
+            for func, gunc in zip(self._lambda_generator,
+                                  other._lambda_generator):
+                yield lambda: func() + gunc()
         else:
             for func in self._lambda_generator:
-                yield lambda: func()+other
+                yield lambda: func() + other
+
     def __sub__(self, other):
         if isinstance(other, LambdaGenerator):
-            for func, gunc in zip(self._lambda_generator, other._lambda_generator):
-                yield lambda: func()-gunc()
+            for func, gunc in zip(self._lambda_generator,
+                                  other._lambda_generator):
+                yield lambda: func() - gunc()
         else:
             for func in self._lambda_generator:
-                yield lambda: func()-other
+                yield lambda: func() - other
+
     def __mul__(self, other):
         if isinstance(other, LambdaGenerator):
-            for func, gunc in zip(self._lambda_generator, other._lambda_generator):
+            for func, gunc in zip(self._lambda_generator,
+                                  other._lambda_generator):
                 # what do we do with defaults?
-                yield lambda: func()*gunc()
+                yield lambda: func() * gunc()
         else:
             for func in self._lambda_generator:
-                yield lambda: func()*other
+                yield lambda: func() * other
+
     def __truediv__(self, other):
         if isinstance(other, LambdaGenerator):
-            for func, gunc in zip(self._lambda_generator, other._lambda_generator):
+            for func, gunc in zip(self._lambda_generator,
+                                  other._lambda_generator):
                 # what do we do with defaults?
                 yield lambda: func().__truediv__(gunc())
         else:
             for func in self._lambda_generator:
                 yield lambda: func().__truediv__(other)
+
     def __floordiv__(self, other):
         if isinstance(other, LambdaGenerator):
-            for func, gunc in zip(self._lambda_generator, other._lambda_generator):
+            for func, gunc in zip(self._lambda_generator,
+                                  other._lambda_generator):
                 # what do we do with defaults?
                 yield lambda: func().__floordiv__(gunc())
         else:
             for func in self._lambda_generator:
                 yield lambda: func().__floordiv__(other)
+
     def __pow__(self, other):
         if isinstance(other, LambdaGenerator):
-            for func, gunc in zip(self._lambda_generator, other._lambda_generator):
+            for func, gunc in zip(self._lambda_generator,
+                                  other._lambda_generator):
                 yield lambda: func().__pow__(gunc())
         else:
             for func in self._lambda_generator:
@@ -1174,14 +1214,15 @@ def get_bbox(fig):
 
 def set_aspect(fig):
     """sets aspect ratio of the scene based on bounding box of traces"""
-    fig.layout.scene.aspectmode='manual'
+    fig.layout.scene.aspectmode = 'manual'
     xmin, xmax, ymin, ymax, zmin, zmax = get_bbox(fig)
-    fig.layout.scene.aspectratio=dict(x=xmax-xmin, y=ymax-ymin,z=zmax-zmin)
+    fig.layout.scene.aspectratio = dict(x=xmax - xmin, y=ymax - ymin,
+                                        z=zmax - zmin)
     return fig
+
 
 def curry(func):
     """currying function
-
     borrowed from https://www.python-course.eu/currying_in_python.php
     """
     # to keep the name of the curried function:
@@ -1201,13 +1242,14 @@ def curry(func):
             result = func(*f_args, **f_kwargs)
             f_args, f_kwargs = [], {}
             return result
+
     return f
 
 
 def construct_signature(*args, **kwargs):
     """construct a signature
     usage:
-    
+
         @forge.sign(*get_signature('x','y',z=3))
         def f(*args, **kargs):
             pass
@@ -1219,13 +1261,14 @@ def construct_signature(*args, **kwargs):
         signature.append(forge.arg(k, default=v))
     return signature
 
+
 def array_to_latex(arr, max_chars=3):
     """a latex-friendly render for arrays"""
     try:
         iter(arr)
     except:
         return arr
-    
+
     if hasattr(arr, 'shape'):
         if len(arr.shape) > 1:
             return '[{},..]'.format(''.join(array_to_latex(arr[0], max_chars)))
@@ -1242,13 +1285,13 @@ def array_to_latex(arr, max_chars=3):
 def latex_repr_values(values_dict):
     sigs = []
     for k, v in values_dict.items():
-        sigs.append('{} = {}'.format(k, getattr(v, '_repr_latex_', array_to_latex(v,2))))
+        sigs.append('{} = {}'.format(k, getattr(v, '_repr_latex_',
+                                                array_to_latex(v, 2))))
     return ','.join(sigs)
 
 
 def partial(_func=None, **partial_kwargs):
     """A partial function decorator
-
     Reduces function signature to reflect partially assigned kwargs
     """
     verbose = partial_kwargs.pop('verbose', False)
@@ -1259,13 +1302,15 @@ def partial(_func=None, **partial_kwargs):
         orig_defaults.update(partial_kwargs)
         orig_latex_func = getattr(f,
                                   '_repr_latex_',
-                                  lambda: '\\lambda ({})'.format(','.join(orig_args)))
+                                  lambda: '\\lambda ({})'.format(
+                                      ','.join(orig_args)))
         orig_meta = getattr(f, 'meta', {}).copy()
-        
-        orig_meta['equation'] = orig_meta.get('equation', orig_latex_func()).strip("$")
+
+        orig_meta['equation'] = orig_meta.get('equation',
+                                              orig_latex_func()).strip("$")
         if len(orig_defaults) > 0:
             orig_meta['equation'] += ', ' + latex_repr_values(orig_defaults)
-        new_latex_func = lambda : '${}$'.format(orig_meta['equation'])
+        new_latex_func = lambda: '${}$'.format(orig_meta['equation'])
         if verbose:
             print('partial kwargs', partial_kwargs)
             print('original args:', orig_args)
@@ -1301,7 +1346,7 @@ def partial(_func=None, **partial_kwargs):
 
         wrapped.__name__ = f.__name__
         orig_docs = f.__doc__
-        
+
         for k, v in sig_defaults.items():
             sig_args.append('{}={}'.format(k, v))
         doc_args = ', '.join(sig_args)
@@ -1318,7 +1363,7 @@ def partial(_func=None, **partial_kwargs):
             orig_args_fixed=doc_orig_args,
             doc_args=doc_args,
             fname=f.__name__,
-            orig_args = ', '.join(orig_args),
+            orig_args=', '.join(orig_args),
             partial_keys=', '.join(partial_kwargs.keys()),
         )
         wrapped._repr_latex_ = new_latex_func
@@ -1332,7 +1377,3 @@ def partial(_func=None, **partial_kwargs):
         return decorator_partial
     else:
         return decorator_partial(_func)
-
-
-
-

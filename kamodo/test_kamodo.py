@@ -279,6 +279,7 @@ def test_unit_composition():
         print(kamodo.signatures)
         raise
 
+
 def test_unit_composition_mixed():
     kamodo = Kamodo('$rho[kg/m^3] = x^3$', '$v[cm/s] = y^2$', verbose=True)
     kamodo['p[Pa]'] = '$\\rho v^2$'

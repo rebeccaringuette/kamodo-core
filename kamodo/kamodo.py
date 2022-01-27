@@ -152,6 +152,33 @@ def alphabetize(symbols):
     return tuple(Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
 
 
+def reorder_symbol(defaults, default_non_default_parameter, symbol):
+    """
+    Changed the value of symbol based on the order of
+    default_non_default_parameter, if the order is not appropriate then
+    reorder both default and non default  parameter alphabetically,
+    updates symbol value and make sure default comes always after non default
+    parameter
+    """
+    default_parameter_keys = set(defaults.keys())
+    default_non_default_parameter = set(default_non_default_parameter)
+    non_default_parameters = default_non_default_parameter - default_parameter_keys
+    non_default_parameters = sorted(non_default_parameters)
+    non_default_parameters_prev = non_default_parameters
+    default_parameters = sorted(default_parameter_keys)
+    non_default_parameters.extend(default_parameters)
+    new_symbol = tuple(Symbol(symbol_) for symbol_ in
+                       [str(_) for _ in non_default_parameters])
+    dict_symbol = {}
+    for i in range(len(new_symbol)):
+        dict_symbol["var{0}".format(i)] = new_symbol[i]
+
+    new_symbol = Function(symbol.name)(*dict_symbol.values())
+    if new_symbol.args != symbol.args:
+        symbol = new_symbol
+    return symbol
+
+
 def default_inheritance_check(rhs_expr, lhs_expr):
     """
     Checking  if default parameter comes first and then non-default
@@ -159,13 +186,24 @@ def default_inheritance_check(rhs_expr, lhs_expr):
     than 1, 1st and 2nd argument of rhs_expr will be sympy Symbol and
     sympy function data type.If condition satisfies, then checking if the
     first argument for both rhs_expr and lhs_expr is same or not.If not same
-    then raise syntax error.
+    then raise syntax error.Same chek will happen in case more than 1 default
+    value, additionally it will discard few cases to pass all the other
+    functionalities
     """
     try:
         if isinstance(rhs_expr.args[0], Symbol):
-            if type(rhs_expr.args[1]) != rhs_expr.args[1].name:
-                if rhs_expr.args[0] != lhs_expr.args[0]:
-                    raise SyntaxError('Ordering error')
+            if len(rhs_expr.args) == 2:
+                if type(rhs_expr.args[1]) != rhs_expr.args[1].name:
+                    if rhs_expr.args[0] != lhs_expr.args[0]:
+                        raise SyntaxError('Ordering error')
+            elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args:
+                for each in rhs_expr.args:
+                    if isinstance(each, Symbol):
+                        pass
+                    else:
+                        if rhs_expr.args[0] != lhs_expr.args[-1]:
+                            print('2')
+                            raise SyntaxError('Ordering error')
     except IndexError:
         pass
     except TypeError:
@@ -474,8 +512,14 @@ class Kamodo(UserDict):
                         symbol.args, rhs_expr))
                 for k, v in composition.items():
                     print('\t', k, v)
-        signature = sign_defaults(symbol, rhs_expr, composition)
-        return signature(func)
+        signature, defaults = sign_defaults(symbol, rhs_expr, composition)
+        default_non_default_parameter = []
+        try:
+            for parm in signature.parameters:
+                default_non_default_parameter.append(parm.name)
+        except KeyError:
+            pass
+        return signature(func), default_non_default_parameter, defaults
 
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
@@ -553,7 +597,6 @@ class Kamodo(UserDict):
             self.unit_registry[unit_expr] = get_unit(units)
         else:
             self.unit_registry[lhs_symbol] = get_unit(units)
-
         self.register_signature(lhs_symbol, units, lhs_expr, rhs)
         try:
             func._repr_latex_ = lambda: self.func_latex(str(type(lhs_symbol)),
@@ -574,7 +617,6 @@ class Kamodo(UserDict):
             sym_name = str(sym_name)
 
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
-
         if hasattr(input_expr, '__call__'):
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
 
@@ -594,7 +636,6 @@ class Kamodo(UserDict):
                 print('parsed rhs_expr', rhs_expr)
 
             default_inheritance_check(rhs_expr, lhs_expr)
-
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(alphabetize(
@@ -703,7 +744,10 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-            func = self.vectorize_function(symbol, rhs_expr, composition)
+            func, default_non_default_parameter, defaults = \
+                self.vectorize_function(symbol, rhs_expr, composition)
+            symbol = reorder_symbol(defaults,default_non_default_parameter,
+                                    symbol)
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None

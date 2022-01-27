@@ -1118,10 +1118,9 @@ def sign_defaults(symbol, expr, composition):
         str_arg = str(default_arg)
         arg_default = defaults[str(default_arg)]
         arg_signatures.append(forge.arg(str_arg, default=arg_default))
-
     # will raise an error if defaults are not last
     signature = forge.sign(*arg_signatures)
-    return signature
+    return signature, defaults
 
 
 class LambdaGenerator(object):

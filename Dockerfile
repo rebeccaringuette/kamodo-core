@@ -11,6 +11,7 @@ WORKDIR /
 COPY . /Kamodo
 
 RUN pip install -e Kamodo
+RUN pip install pycapnp
 
 # Add Tini. Tini operates as a process subreaper for jupyter. This prevents kernel crashes.
 ENV TINI_VERSION v0.6.0

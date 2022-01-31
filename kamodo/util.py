@@ -92,6 +92,8 @@ unit_list = ['m', 's', 'g', 'A', 'K', 'radian', 'sr', 'cd', 'mole', 'eV', 'Pa', 
 
 # list of SI units included in sympy (likely not complete)
 
+lambda_ = symbols('lambda', cls=UndefinedFunction)
+
 for item in unit_list:
     unit_item = getattr(sympy_units, item)
     unit_subs[item] = unit_item

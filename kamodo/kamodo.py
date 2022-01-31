@@ -76,7 +76,7 @@ from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_di
 from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
 import socket
 from util import construct_signature
-
+from util import lambda_
 import yaml
 
 _clash['rad'] = Symbol('rad')
@@ -87,6 +87,8 @@ _clash['deg'] = Symbol('deg')
 def parse_expr(*args, **kwargs):
     try:
         return sympy.sympify(*args, **kwargs)
+    except TypeError as m:
+        raise
     except:
         raise NameError('cannot parse {}, {}'.format(args, kwargs))
 
@@ -460,10 +462,10 @@ class Kamodo(UserDict):
         # if isinstance(units, str):
         unit_str = units
         if self.verbose:
-            print('unit str {}'.format(unit_str))
+            print('unit str: {}, rhs_expr: {}'.format(unit_str, rhs_expr))
 
         if rhs_expr is None:
-            lambda_ = symbols('lambda', cls=UndefinedFunction)
+            # lambda_ = symbols('lambda', cls=UndefinedFunction)
             rhs_expr = lambda_(*symbol.args)
 
         self.signatures[str(type(symbol))] = dict(
@@ -798,7 +800,7 @@ class Kamodo(UserDict):
         if isinstance(rhs, str):
             latex_eq_rhs = rhs       
         elif hasattr(rhs, '__call__') | (rhs is None):
-            lambda_ = symbols('lambda', cls=UndefinedFunction)
+            # lambda_ = symbols('lambda', cls=UndefinedFunction)
             # latex_eq = latex(Eq(lhs, lambda_(*lhs.args)), mode=mode)
             latex_eq_rhs = latex(lambda_(*lhs.args)) # no $$
         else:
@@ -1287,11 +1289,13 @@ def compose(**kamodos):
         for name, symbol in k.symbol_registry.items():
             signature = k.signatures[name]
             meta = k[symbol].meta
-            data = getattr(k[symbol], 'data', None)
+            data = getattr(k[symbol], 'data', {})
 
             rhs = signature['rhs']
             registry_name = '{}_{}'.format(name, kname)
             if (rhs is None) | hasattr(rhs, '__call__'):
+                kamodo[registry_name] = kamodofy(k[symbol], data=data, **meta)
+            elif getattr(rhs, 'func') == lambda_:
                 kamodo[registry_name] = kamodofy(k[symbol], data=data, **meta)
             else:
                 kamodo[registry_name] = str(rhs)

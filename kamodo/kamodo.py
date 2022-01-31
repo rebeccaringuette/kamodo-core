@@ -3,6 +3,8 @@
 Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.  
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
+import asyncio
+
 from util import np
 from sympy import Integral, Symbol, symbols, Function
 
@@ -83,7 +85,6 @@ _clash['rad'] = Symbol('rad')
 _clash['deg'] = Symbol('deg')
 
 
-
 def parse_expr(*args, **kwargs):
     try:
         return sympy.sympify(*args, **kwargs)
@@ -133,8 +134,6 @@ def get_unit(unit_str, unit_subs=unit_subs):
     return unit
 
 
-
-
 def args_from_dict(expr, local_dict, verbose):
     """retrieve the symbols of an expression
 
@@ -155,6 +154,7 @@ def args_from_dict(expr, local_dict, verbose):
     # else:
     #     return expr.args
 
+
 def get_str_units(bracketed_str):
     """finds all bracketed units in a string
 
@@ -165,7 +165,8 @@ def get_str_units(bracketed_str):
     """
     return re.findall(r"\[([A-Za-z0-9_/*^\\(\\)-\.]+)\]", bracketed_str)
 
-def str_has_arguments(func_str): 
+
+def str_has_arguments(func_str):
     bracket = func_str.find('[')
     paren = func_str.find('(')
     if bracket > 0:
@@ -173,7 +174,7 @@ def str_has_arguments(func_str):
             # f(x[(cm)^2]) has arguments since paren comes first
             # f[(cm)^2] has no arguments since bracket comes first
             return bracket > paren
-        return False # no paren hence no arguments
+        return False  # no paren hence no arguments
     # no bracket
     if paren > 0:
         # has argument
@@ -230,7 +231,6 @@ def extract_units(func_str):
         else:
             output_units = ''
 
-
     # f(x[cm],y[km])[kg]
     lhs = func_str
     for unit in all_units:
@@ -282,8 +282,6 @@ def parse_rhs(rhs, is_latex, local_dict):
 def get_function_args(func, hidden_args=[]):
     """converts function arguments to list of symbols"""
     return symbols([a for a in getfullargspec(func).args if a not in hidden_args])
-
-
 
 
 class Kamodo(UserDict):
@@ -340,11 +338,8 @@ class Kamodo(UserDict):
                 print('registering {} with {}'.format(sym_name, expr))
             self[sym_name] = expr
 
-
     def register_symbol(self, symbol):
         self.symbol_registry[str(type(symbol))] = symbol
-
-
 
     def parse_key(self, sym_name):
         """parses the symbol name
@@ -422,13 +417,12 @@ class Kamodo(UserDict):
     def validate_function(self, lhs_expr, rhs_expr):
         assert lhs_expr.free_symbols == rhs_expr.free_symbols
 
-
     def vectorize_function(self, symbol, rhs_expr, composition):
         try:
             func = lambdify(symbol.args, rhs_expr, modules=['numexpr'])
             if self.verbose:
                 print('lambda {} = {} labmdified with numexpr'.format(symbol.args, rhs_expr))
-        except: # numexpr not installed
+        except:  # numexpr not installed
             func = lambdify(symbol.args, rhs_expr, modules=['numpy', composition])
             if self.verbose:
                 print('lambda {} = {} lambdified with numpy and composition:'.format(
@@ -437,7 +431,6 @@ class Kamodo(UserDict):
                     print('\t', k, v)
         signature = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
-
 
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
@@ -454,7 +447,6 @@ class Kamodo(UserDict):
         output_units = unit_dict[lhs]
         self.unit_registry[func_units] = get_unit(output_units)
         return lhs
-
 
     def register_signature(self, symbol, units, lhs_expr, rhs_expr):
         # if isinstance(units, str):
@@ -528,7 +520,6 @@ class Kamodo(UserDict):
         super(Kamodo, self).__setitem__(type(lhs_symbol), self[lhs_symbol])  # assign key 'f'
         self.register_symbol(lhs_symbol)
 
-
     def __setitem__(self, sym_name, input_expr):
         """Assigns a function or expression to a new symbol,
         performs unit conversion where appropriate
@@ -561,7 +552,7 @@ class Kamodo(UserDict):
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(rhs_expr.free_symbols))
-                else: #lhs is already a function
+                else:  # lhs is already a function
                     symbol = lhs_expr
                 lhs_str = str(symbol)
                 sym_name = sym_name.replace(str(lhs_expr), lhs_str)
@@ -589,14 +580,12 @@ class Kamodo(UserDict):
                 expr_unit = get_expr_unit(rhs_expr, self.unit_registry, self.verbose)
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
 
-
                 if self.verbose:
                     print('registering {} with {} {}'.format(symbol, expr_unit, arg_units))
 
                 if (symbol not in self.unit_registry) and (expr_unit is not None):
                     self.unit_registry[symbol] = symbol.subs(arg_units)
                     self.unit_registry[symbol.subs(arg_units)] = expr_unit
-
 
                 if expr_unit is not None:
                     expr_dimensions = Dimension(get_dimensions(expr_unit))
@@ -614,8 +603,6 @@ class Kamodo(UserDict):
                 rhs = rhs_expr
                 sym_name = str(sym_name)
 
-
-
             if len(lhs_units) > 0:
                 if self.verbose:
                     print('about to unify lhs_units {} {} with {}'.format(
@@ -631,8 +618,8 @@ class Kamodo(UserDict):
             if self.verbose:
                 print('symbol after unify', symbol, type(symbol), rhs_expr)
                 print('unit registry to resolve units:')
-                for k,v in self.unit_registry.items():
-                    print('\t{}:{}'.format(k,v))
+                for k, v in self.unit_registry.items():
+                    print('\t{}:{}'.format(k, v))
 
             units = get_expr_unit(symbol, self.unit_registry)
             if Dimension(get_dimensions(units)) != Dimension(1):
@@ -671,7 +658,6 @@ class Kamodo(UserDict):
             super(Kamodo, self).__setitem__(symbol, func)
             super(Kamodo, self).__setitem__(type(symbol), self[symbol])
             self.register_symbol(symbol)
-
 
     def __getitem__(self, key):
         try:
@@ -728,7 +714,6 @@ class Kamodo(UserDict):
         if self.verbose:
             print('__delitem__: removing {} {}'.format(symbol, type(symbol)))
 
-
         remove_keys = []
         for k in self.data:
             if str(k) == str(symbol):
@@ -774,10 +759,10 @@ class Kamodo(UserDict):
                 arg_strs.append("{}[{}]".format(
                     latex(arg),
                     latex(get_abbrev(arg_unit),
-                        fold_frac_powers=True,
-                        fold_short_frac=True,
-                        root_notation=False,
-                        )))
+                          fold_frac_powers=True,
+                          fold_short_frac=True,
+                          root_notation=False,
+                          )))
             lhs_str = "{}({})".format(latex(type(lhs)), ",".join(arg_strs))
         else:
             lhs_str = latex(lhs)
@@ -786,24 +771,23 @@ class Kamodo(UserDict):
             #     ','.join([latex(s) for s in lhs.args]))
         if len(units) > 0:
             lhs_str += "[{}]".format(latex(parse_expr(units.replace('^', '**'), locals=_clash),
-                    fold_frac_powers=True,
-                    fold_short_frac=True,
-                    root_notation=False,
-                ))
-
+                                           fold_frac_powers=True,
+                                           fold_short_frac=True,
+                                           root_notation=False,
+                                           ))
 
         latex_eq = ''
         latex_eq_rhs = ''
 
         if isinstance(rhs, str):
-            latex_eq_rhs = rhs       
+            latex_eq_rhs = rhs
         elif hasattr(rhs, '__call__') | (rhs is None):
             lambda_ = symbols('lambda', cls=UndefinedFunction)
             # latex_eq = latex(Eq(lhs, lambda_(*lhs.args)), mode=mode)
-            latex_eq_rhs = latex(lambda_(*lhs.args)) # no $$
+            latex_eq_rhs = latex(lambda_(*lhs.args))  # no $$
         else:
             # latex_eq = latex(Eq(lhs, rhs), mode=mode)
-            latex_eq_rhs = latex(rhs) # no $$ delimiter
+            latex_eq_rhs = latex(rhs)  # no $$ delimiter
 
         if len(str(units)) > 0:
             latex_eq = latex_eq.replace('=', '[{}] ='.format(units))
@@ -818,8 +802,6 @@ class Kamodo(UserDict):
             repr_latex += r"$"
 
         return repr_latex
-
-
 
     def to_latex(self, keys=None, mode='equation'):
         """Generate list of LaTeX-formated formulas
@@ -849,7 +831,6 @@ class Kamodo(UserDict):
         """Constructs a pandas dataframe from signatures"""
         return pd.DataFrame(self.signatures).T
 
-
     def simulate(self, **kwargs):
         state_funcs = []
         for name, func_key in list(self.symbol_registry.items()):
@@ -877,7 +858,6 @@ class Kamodo(UserDict):
             # evaluate the last variable
             result = knew.evaluate(variable=variable_name, *args, **kwargs)
             return result
-
 
         if isinstance(self[variable], np.vectorize):
             params = get_defaults(self[variable].pyfunc)
@@ -936,7 +916,6 @@ class Kamodo(UserDict):
 
         return scope['solution']
 
-
     def to_rpc_meta(self, key):
         """create rpc metadata"""
         meta = self[key].meta
@@ -946,9 +925,9 @@ class Kamodo(UserDict):
             units = ''
 
         arg_unit_entries = []
-        arg_units = meta.get('arg_units') # may be None
+        arg_units = meta.get('arg_units')  # may be None
         if arg_units is not None:
-            for k,v in arg_units.items():
+            for k, v in arg_units.items():
                 arg_unit_entries.append({'key': k, 'value': v})
 
         citation = meta.get('citation')
@@ -962,11 +941,9 @@ class Kamodo(UserDict):
         if self.verbose:
             print('equation: {}'.format(equation))
 
-
         hidden_args = meta.get('hidden_args')
         if hidden_args is None:
             hidden_args = []
-            
 
         return kamodo_capnp.Kamodo.Meta(
             units=units,
@@ -975,7 +952,6 @@ class Kamodo(UserDict):
             equation=equation,
             hiddenArgs=hidden_args,
         )
-
 
     def register_rpc_field(self, key):
         func = self[key]
@@ -986,22 +962,100 @@ class Kamodo(UserDict):
         )
         self._server[key] = field
 
+    class Server():
+        async def server_reader(self):
+            """
+            Reader for the server side.
+            """
+            while self.retry:
+                try:
+                    # Must be a wait_for so we don't block on read()
+                    data = await asyncio.wait_for(
+                        self.reader.read(4096),
+                        timeout=0.1
+                    )
+                except asyncio.TimeoutError:
+                    print("reader timeout.")
+                    continue
+                except Exception as err:
+                    print("Unknown reader err: %s", err)
+                    return False
+                await self.server.write(data)
+            print("reader done.")
+            return True
 
-    def serve(self, socket_='*:60000'):
-        self._server = KamodoRPC()
-        
-        for key in self.signatures:
-            if self.verbose:
-                print('serving {}'.format(key))
-            self.register_rpc_field(key)
+        async def server_writer(self):
+            """
+            Writer for the server side.
+            """
+            while self.retry:
+                try:
+                    # Must be a wait_for so we don't block on read()
+                    data = await asyncio.wait_for(
+                        self.server.read(4096),
+                        timeout=0.1
+                    )
+                    self.writer.write(data.tobytes())
+                except asyncio.TimeoutError:
+                    print("writer timeout.")
+                    continue
+                except Exception as err:
+                    print("Unknown writer err: %s", err)
+                    return False
+            print("writer done.")
+            return True
 
-        # server = capnp.TwoPartyServer('*:60000', bootstrap=CalculatorImpl())
-        # server.run_forever()
-        if isinstance(socket_, socket.socket):
-            server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
-        else:
-            server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
-            server.run_forever()
+        async def kamodo_server(self, reader, writer):
+            # Start TwoPartyServer using TwoWayPipe (only requires bootstrap)
+            self.server = capnp.TwoPartyServer(bootstrap=KamodoRPC())
+            self.reader = reader
+            self.writer = writer
+            self.retry = True
+
+            # Assemble reader and writer tasks, run in the background
+            coroutines = [self.server_reader(), self.server_writer()]
+            tasks = asyncio.gather(*coroutines, return_exceptions=True)
+
+            while True:
+                self.server.poll_once()
+                # Check to see if reader has been sent an eof (disconnect)
+                if self.reader.at_eof():
+                    self.retry = False
+                    break
+                await asyncio.sleep(0.01)
+
+            # Make wait for reader/writer to finish (prevent possible resource leaks)
+            await tasks
+
+    async def new_connection(self, reader, writer):
+        server = self.Server()
+        await server.kamodo_server(reader, writer)
+
+    async def server(self):
+        """
+        Method to start communication as asynchronous server.
+        """
+        addr = 'localhost'
+        port = '60000'
+
+        # Handle both IPv4 and IPv6 cases
+        try:
+            print("Try IPv4")
+            server = await asyncio.start_server(
+                self.new_connection,
+                addr, port,
+                family=socket.AF_INET
+            )
+        except Exception:
+            print("Try IPv6")
+            server = await asyncio.start_server(
+                self.new_connection,
+                addr, port,
+                family=socket.AF_INET6
+            )
+
+        async with server:
+            await server.serve_forever()
 
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a given variable and keyword arguments"""
@@ -1073,12 +1127,12 @@ class Kamodo(UserDict):
 
     def plot(self, *variables, plot_partial={}, **figures):
         if len(plot_partial) > 0:
-            kpartial = from_kamodo(self) # copy kamodo object
+            kpartial = from_kamodo(self)  # copy kamodo object
             for k, v in plot_partial.items():
                 regname = k
                 kpartial[regname] = partial(kpartial[k], **v)
             return kpartial.plot(*variables, **figures)
-        
+
         for k in variables:
             figures[k] = {}
         if len(figures) == 1:
@@ -1102,16 +1156,14 @@ class Kamodo(UserDict):
             # Todo: merge the layouts instead of selecting the last one
             return go.Figure(data=traces, layout=layouts[-1])
 
-
-
 class KamodoClient(Kamodo):
     def __init__(self, server=None, **kwargs):
         """CapnProto Kamodo client
         Abstracts a remote kamodo server using capn proto binary message types
         """
         super(KamodoClient, self).__init__(**kwargs)
-        self._expressions = {} # expressions for server-side pipelining
-        self._rpc_funcs = {} # rpc functions (may be served to downstream applications)
+        self._expressions = {}  # expressions for server-side pipelining
+        self._rpc_funcs = {}  # rpc functions (may be served to downstream applications)
 
         if server is not None:
             self.client(server)
@@ -1121,19 +1173,53 @@ class KamodoClient(Kamodo):
         super(KamodoClient, self).__setitem__(sym_name, input_expr)
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
-            
-    def client(self, read):
-        """register the client's remote functions"""
-        client = capnp.TwoPartyClient(read)
+
+    async def client_reader(self, client, reader):
+        """
+        Reader for the client side.
+        """
+        while True:
+            data = await reader.read(4096)
+            client.write(data)
+
+    async def client_writer(self, client, writer):
+        """
+        Writer for the client side.
+        """
+        while True:
+            data = await client.read(4096)
+            writer.write(data.tobytes())
+            await writer.drain()
+
+    async def client(self, host):
+        """
+        Method to start communication as asynchronous client.
+        """
+        addr = 'localhost'
+        port = '6000'
+
+        # Handle both IPv4 and IPv6 cases
+        try:
+            print("Try IPv4")
+            reader, writer = await asyncio.open_connection(
+                addr, port,
+                family=socket.AF_INET
+            )
+        except Exception:
+            print("Try IPv6")
+            reader, writer = await asyncio.open_connection(
+                addr, port,
+                family=socket.AF_INET6
+            )
+
+        # Start TwoPartyClient using TwoWayPipe (takes no arguments in this mode)
+        client = capnp.TwoPartyClient()
+
+        # Assemble reader and writer tasks, run in the background
+        coroutines = [self.client_reader(client, reader), self.client_writer(client, writer)]
+        asyncio.gather(*coroutines, return_exceptions=True)
 
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
-        self._remote_fields = self._client.getFields().wait().fields
-        self._remote_math = self._client.getMath().wait().math
-        
-        for entry in self._remote_fields.entries:
-            self.register_remote_field(entry)
-
-        return client
 
     def register_remote_field(self, entry):
         """resolve the remote signature
@@ -1141,20 +1227,20 @@ class KamodoClient(Kamodo):
         """
         symbol = entry.key
         field = entry.value
-        
+
         meta = field.meta
         arg_units = rpc_map_to_dict(meta.argUnits)
-        
+
         defaults_ = field.func.getKwargs().wait().kwargs
         func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
         func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
         func_args = [_ for _ in func_args_ if _ not in func_defaults]
-        
+
         if len(meta.equation) > 0:
             equation = meta.equation
         else:
             equation = None
-        
+
         hidden_args = list(meta.hiddenArgs)
 
         @kamodofy(units=meta.units,
@@ -1173,18 +1259,18 @@ class KamodoClient(Kamodo):
         self[symbol] = remote_func
         self._rpc_funcs[symbol] = field.func
 
-    
     def get_remote_composition(self, expr, **kwargs):
-        """Generate a callable function composition that is executed remotely"""        
+        """Generate a callable function composition that is executed remotely"""
+
         def remote_composition(**params):
             remote_expr = to_rpc_expr(expr, expressions=self._expressions, **params, **kwargs)
-            evaluate_expr = self._client.evaluate(remote_expr) #.wait()
+            evaluate_expr = self._client.evaluate(remote_expr)  # .wait()
             result_message = evaluate_expr.value.read().wait()
             return from_rpc_literal(result_message.value)
 
         remote_composition.__name__ = str(expr)
         return remote_composition
-    
+
     def vectorize_function(self, symbol, rhs_expr, composition):
         """lambdify the input expression using server-side promises"""
         if self.verbose:
@@ -1199,6 +1285,7 @@ class KamodoClient(Kamodo):
 
 class KamodoAPI(Kamodo):
     """JSON api wrapper for kamodo services"""
+
     def __init__(self, url_path, **kwargs):
         self._url_path = url_path
         super(KamodoAPI, self).__init__(**kwargs)
@@ -1229,12 +1316,12 @@ class KamodoAPI(Kamodo):
                 func,
                 data=self._data[k],
                 units=v['units'],
-                )
+            )
 
     def _get(self, url_path):
         req_result = requests.get(url_path)
         try:
-            result = req_result.json() # returns a dictionary maybe
+            result = req_result.json()  # returns a dictionary maybe
         except json.JSONDecodeError as m:
             print('could not decode request {}'.format(req_result.text))
             raise json.JSONDecodeError(m)
@@ -1255,7 +1342,7 @@ class KamodoAPI(Kamodo):
             params.append((k, json.dumps(v, default=serialize)))
         result = requests.get(
             url=url_path,
-            params=params).json() #returns a dictionary
+            params=params).json()  # returns a dictionary
 
         if isinstance(result, str):
             if self.verbose:
@@ -1280,6 +1367,7 @@ class KamodoAPI(Kamodo):
         api_func.__doc__ = "{}/{}".format(self._url_path, func_name)
         return api_func
 
+
 def compose(**kamodos):
     """Kamposes multiple kamodo instances into one"""
     kamodo = Kamodo()
@@ -1297,6 +1385,7 @@ def compose(**kamodos):
                 kamodo[registry_name] = str(rhs)
 
     return kamodo
+
 
 def copy_func(f):
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)
@@ -1324,6 +1413,7 @@ def from_kamodo(kobj, **funcs):
         knew[symbol] = func
     return knew
 
+
 def get_figures(func, iterator, verbose=False):
     plots = []
     for a in func(iterator):
@@ -1341,6 +1431,7 @@ def get_figures(func, iterator, verbose=False):
             print('appending {}'.format(a.__name__))
         plots.append(full_fig)
     return plots
+
 
 # +
 def animate(func_, iterator=None, verbose=False):
@@ -1370,7 +1461,6 @@ def animate(func_, iterator=None, verbose=False):
         "layout": layout,
         "frames": []
     }
-
 
     fig_dict["layout"]["updatemenus"] = [
         {
@@ -1423,7 +1513,7 @@ def animate(func_, iterator=None, verbose=False):
     for p, figure in zip(iterator, figures):
         frame = {"data": figure['data'],
                  "name": str(p)}
-#         print(figure['layout']['xaxis']['range'])
+        #         print(figure['layout']['xaxis']['range'])
 
         fig_dict["frames"].append(frame)
         slider_step = {"args": [
@@ -1434,25 +1524,28 @@ def animate(func_, iterator=None, verbose=False):
             "label": '{:.2f}'.format(p),
             "method": "animate"}
         sliders_dict["steps"].append(slider_step)
-#     print(len(fig_dict['frames']), ' frames')
+    #     print(len(fig_dict['frames']), ' frames')
 
-#     fig_dict["data"] = fig_dict["data"] + fig_dict["frames"][0]["data"]
+    #     fig_dict["data"] = fig_dict["data"] + fig_dict["frames"][0]["data"]
     fig_dict["layout"]["sliders"] = [sliders_dict]
 
     fig = go.Figure(fig_dict)
     return fig
 
+
 def kamodo_constructor(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode) -> Kamodo:
-  """Construct a kamodo object from yaml."""
-  return Kamodo(**loader.construct_mapping(node))
+    """Construct a kamodo object from yaml."""
+    return Kamodo(**loader.construct_mapping(node))
+
 
 def kamodo_client_constructor(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode) -> KamodoClient:
-  """Construct an kamodo."""
-  return KamodoClient(**loader.construct_mapping(node))
+    """Construct an kamodo."""
+    return KamodoClient(**loader.construct_mapping(node))
+
 
 def yaml_loader():
-      """Add Kamodo constructors to PyYAML loader."""
-      loader = yaml.SafeLoader
-      loader.add_constructor("!Kamodo", kamodo_constructor)
-      loader.add_constructor("!KamodoClient", kamodo_client_constructor)
-      return loader
+    """Add Kamodo constructors to PyYAML loader."""
+    loader = yaml.SafeLoader
+    loader.add_constructor("!Kamodo", kamodo_constructor)
+    loader.add_constructor("!KamodoClient", kamodo_client_constructor)
+    return loader

@@ -24,6 +24,8 @@ RUN pip install plotly==4.7.1
 # kaleido for generating static plots
 RUN pip install kaleido
 
+RUN pip install pycapnp
+
 # jupyter
 RUN conda install -c conda-forge jupyter
 RUN pip install jupytext

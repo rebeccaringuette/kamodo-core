@@ -29,6 +29,8 @@ RUN pip install -e kamodo
 
 RUN conda install jupyter
 
+RUN pip install pycapnp
+
 WORKDIR kamodo
 
 # CMD ["kamodo-serve"]

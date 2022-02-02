@@ -186,7 +186,7 @@ def default_inheritance_check(rhs_expr, lhs_expr):
     than 1, 1st and 2nd argument of rhs_expr will be sympy Symbol and
     sympy function data type.If condition satisfies, then checking if the
     first argument for both rhs_expr and lhs_expr is same or not.If not same
-    then raise syntax error.Same chek will happen in case more than 1 default
+    then raise syntax error.Same check will happen in case more than 1 default
     value, additionally it will discard few cases to pass all the other
     functionalities
     """
@@ -537,7 +537,7 @@ class Kamodo(UserDict):
         self.unit_registry[func_units] = get_unit(output_units)
         return lhs
 
-    def register_signature(self, symbol, units, lhs_expr, rhs_expr):
+    def register_signature(self, symbol, units, lhs_expr, rhs_expr, arg_units):
         # if isinstance(units, str):
         unit_str = units
         if self.verbose:
@@ -548,6 +548,7 @@ class Kamodo(UserDict):
             units=unit_str,
             lhs=lhs_expr,
             rhs=rhs_expr,
+            arg_units=arg_units
             # update = getattr(self[lhs_expr],'update', None),
         )
 
@@ -597,7 +598,7 @@ class Kamodo(UserDict):
             self.unit_registry[unit_expr] = get_unit(units)
         else:
             self.unit_registry[lhs_symbol] = get_unit(units)
-        self.register_signature(lhs_symbol, units, lhs_expr, rhs)
+        self.register_signature(lhs_symbol, units, lhs_expr, rhs, arg_units)
         try:
             func._repr_latex_ = lambda: self.func_latex(str(type(lhs_symbol)),
                                                         mode='inline')
@@ -746,12 +747,12 @@ class Kamodo(UserDict):
                             arg_units[str(arg)] = str(get_abbrev(unit))
             func, default_non_default_parameter, defaults = \
                 self.vectorize_function(symbol, rhs_expr, composition)
-            symbol = reorder_symbol(defaults,default_non_default_parameter,
+            symbol = reorder_symbol(defaults, default_non_default_parameter,
                                     symbol)
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None
-            self.register_signature(symbol, units, lhs_expr, rhs_expr)
+            self.register_signature(symbol, units, lhs_expr, rhs_expr, arg_units)
             func._repr_latex_ = lambda: self.func_latex(str(type(symbol)),
                                                         mode='inline')
             super(Kamodo, self).__setitem__(symbol, func)
@@ -1084,6 +1085,25 @@ class Kamodo(UserDict):
                      t=40,
                      pad=0),
                  ))
+        try:
+            args_unit = signature['arg_units']
+            x_axis_unit = [args_unit[i][0] for i in sorted(args_unit.keys())][0]
+            y_axis_unit = signature['units']
+            x_last_index = layout.xaxis.title.text.rindex('$')
+            y_last_index = layout.yaxis.title.text.rindex('$')
+            new_xaxis_label = layout.xaxis.title.text[
+                              :x_last_index] + ' ' + f'[{x_axis_unit}]' + \
+                              layout.xaxis.title.text[x_last_index:]
+            new_yaxis_label = layout.yaxis.title.text[y_last_index] + str(
+                signature['lhs']) + ' ' + f'[{y_axis_unit}]' + \
+                              layout.yaxis.title.text[y_last_index]
+
+            layout['xaxis']['title']['text'] = new_xaxis_label
+            layout['yaxis']['title']['text'] = new_yaxis_label
+        except AttributeError:
+            pass
+        except IndexError:
+            pass
 
         fig['data'] = traces
         fig['layout'] = layout

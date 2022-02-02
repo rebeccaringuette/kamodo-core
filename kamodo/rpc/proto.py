@@ -19,6 +19,11 @@ import asyncio
 import socket
 from functools import reduce
 
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
 def rpc_map_to_dict(rpc_map, callback = None):
     if callback is not None:
         return {_.key: callback(_.value) for _ in rpc_map.entries}
@@ -60,7 +65,7 @@ def array_to_param(arr):
 def from_rpc_literal(literal):
     """unwrap a literal"""
     which = literal.which()
-    # print('unwrapping literal {}'.format(which))
+    # logger.info('unwrapping literal {}'.format(which))
     if which == 'void':
         return None
     elif which == 'bool':
@@ -182,7 +187,7 @@ def test_rpc_literal():
     lit = kamodo_capnp.Kamodo.Literal(list = [{k: v} for k,v in lit_check.items()])
 
     for _ in from_rpc_literal(lit):
-        print('{}: {}'.format(type(_).__name__, _))
+        logger.info('{}: {}'.format(type(_).__name__, _))
 
 
 class Value(kamodo_capnp.Kamodo.Value.Server):
@@ -243,11 +248,13 @@ class KamodoRPC(kamodo_capnp.Kamodo.Server):
 
     def getFields(self, **kwargs):
         # getFields @0 () -> (fields :Map(Text, Field));
+        logger.info('request for fields received')
         return rpc_dict_to_map(self.fields)
 
 
     def getMath(self, **kwargs):
         # getMath @1 () -> (math :Map(Text, Function));
+        logger.info('request for math received')
         return rpc_dict_to_map(self.math)
 
 
@@ -287,7 +294,7 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
     def getKwargs(self, **rpc_kwargs):
         """getKwargs @2 () -> (kwargs: List(Argument));"""
         if self.verbose:
-            print('retrieving kwargs')
+            logger.info('retrieving kwargs')
         return [dict(name=k, value=to_rpc_literal(v)) for k,v in self.kwargs.items()]
         
     def call(self, args, kwargs, **rpc_kwargs):
@@ -310,7 +317,7 @@ class FunctionRPC(kamodo_capnp.Kamodo.Function.Server):
                 raise TypeError('multiple values for argument {}, len(args)={}'.format(kwarg.name, len(args)))
             param_dict.update({kwarg.name: from_rpc_literal(kwarg.value)})
         if self.verbose:
-            print('serverside function called with {} params'.format(len(param_dict)))
+            logger.info('serverside function called with {} params'.format(len(param_dict)))
         result = self._func(**param_dict)
         result_param = to_rpc_literal(result)
         return result_param
@@ -415,13 +422,13 @@ class Server():
                     timeout=0.1
                 )
             except asyncio.TimeoutError:
-                print("reader timeout.")
+                logger.info("reader timeout.")
                 continue
             except Exception as err:
-                print("Unknown reader err: %s", err)
+                logger.info("Unknown reader err: %s", err)
                 return False
             await self.server.write(data)
-        print("reader done.")
+        logger.info("reader done.")
         return True
 
     async def server_writer(self):
@@ -437,12 +444,12 @@ class Server():
                 )
                 self.writer.write(data.tobytes())
             except asyncio.TimeoutError:
-                print("writer timeout.")
+                logger.debug("writer timeout.")
                 continue
             except Exception as err:
-                print("Unknown writer err: %s", err)
+                logger.debug("Unknown writer err: %s", err)
                 return False
-        print("writer done.")
+        logger.debug("writer done.")
         return True
 
     async def kamodo_server(self, reader, writer):
@@ -480,7 +487,7 @@ class Server():
 
         ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         this_dir = os.path.dirname(os.path.abspath(__file__))
-        print(f"THIS DIR : {this_dir}")
+        logger.debug(f"THIS DIR : {this_dir}")
         ctx.load_cert_chain(
             os.path.join(this_dir, "selfsigned.cert"),
             os.path.join(this_dir, "selfsigned.key"),
@@ -488,14 +495,14 @@ class Server():
 
         # Handle both IPv4 and IPv6 cases
         try:
-            print("Try IPv4")
+            logger.debug("Try IPv4")
             server = await asyncio.start_server(
                 self.new_connection,
                 addr, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
-            print("Try IPv6")
+            logger.debug("Try IPv6")
             server = await asyncio.start_server(
                 self.new_connection,
                 addr, port, ssl=ctx,

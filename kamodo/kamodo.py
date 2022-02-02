@@ -4,6 +4,8 @@ Copyright © 2017 United States Government as represented by the Administrator, 
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 import asyncio
+import os
+import ssl
 
 from util import np
 from sympy import Integral, Symbol, symbols, Function
@@ -776,6 +778,7 @@ class Kamodo(UserDict):
                                            root_notation=False,
                                            ))
 
+
         latex_eq = ''
         latex_eq_rhs = ''
 
@@ -927,7 +930,7 @@ class Kamodo(UserDict):
         arg_unit_entries = []
         arg_units = meta.get('arg_units')  # may be None
         if arg_units is not None:
-            for k, v in arg_units.items():
+            for k,v in arg_units.items():
                 arg_unit_entries.append({'key': k, 'value': v})
 
         citation = meta.get('citation')
@@ -961,6 +964,22 @@ class Kamodo(UserDict):
             meta=self.to_rpc_meta(key),
         )
         self._server[key] = field
+
+    # def serve(self, socket_='*:60000'):
+    #     self._server = KamodoRPC()
+    #
+    #     for key in self.signatures:
+    #         if self.verbose:
+    #             print('serving {}'.format(key))
+    #         self.register_rpc_field(key)
+    #
+    #     # server = capnp.TwoPartyServer('*:60000', bootstrap=CalculatorImpl())
+    #     # server.run_forever()
+    #     if isinstance(socket_, socket.socket):
+    #         server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
+    #     else:
+    #         server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
+    #         server.run_forever()
 
     class Server():
         async def server_reader(self):
@@ -1031,26 +1050,41 @@ class Kamodo(UserDict):
         server = self.Server()
         await server.kamodo_server(reader, writer)
 
-    async def server(self):
+    async def serve(self):
+
         """
         Method to start communication as asynchronous server.
         """
         addr = 'localhost'
         port = '60000'
 
+        self._server = KamodoRPC()
+        for key in self.signatures:
+            if self.verbose:
+                print('serving {}'.format(key))
+            self.register_rpc_field(key)
+
+        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        print(f"THIS DIR : {this_dir}")
+        ctx.load_cert_chain(
+            os.path.join(this_dir, "selfsigned.cert"),
+            os.path.join(this_dir, "selfsigned.key"),
+        )
+
         # Handle both IPv4 and IPv6 cases
         try:
             print("Try IPv4")
             server = await asyncio.start_server(
                 self.new_connection,
-                addr, port,
+                addr, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
             print("Try IPv6")
             server = await asyncio.start_server(
                 self.new_connection,
-                addr, port,
+                addr, port, ssl=ctx,
                 family=socket.AF_INET6
             )
 
@@ -1156,14 +1190,15 @@ class Kamodo(UserDict):
             # Todo: merge the layouts instead of selecting the last one
             return go.Figure(data=traces, layout=layouts[-1])
 
+
 class KamodoClient(Kamodo):
     def __init__(self, server=None, **kwargs):
         """CapnProto Kamodo client
         Abstracts a remote kamodo server using capn proto binary message types
         """
         super(KamodoClient, self).__init__(**kwargs)
-        self._expressions = {}  # expressions for server-side pipelining
-        self._rpc_funcs = {}  # rpc functions (may be served to downstream applications)
+        self._expressions = {} # expressions for server-side pipelining
+        self._rpc_funcs = {} # rpc functions (may be served to downstream applications)
 
         if server is not None:
             self.client(server)
@@ -1173,6 +1208,19 @@ class KamodoClient(Kamodo):
         super(KamodoClient, self).__setitem__(sym_name, input_expr)
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
+
+    # def client(self, read):
+    #     """register the client's remote functions"""
+    #     client = capnp.TwoPartyClient(read)
+    #
+    #     self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+    #     self._remote_fields = self._client.getFields().wait().fields
+    #     self._remote_math = self._client.getMath().wait().math
+    #
+    #     for entry in self._remote_fields.entries:
+    #         self.register_remote_field(entry)
+    #
+    #     return client
 
     async def client_reader(self, client, reader):
         """
@@ -1198,6 +1246,11 @@ class KamodoClient(Kamodo):
         addr = 'localhost'
         port = '6000'
 
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        ctx = ssl.create_default_context(
+            ssl.Purpose.SERVER_AUTH, cafile=os.path.join(this_dir, "selfsigned.cert")
+        )
+
         # Handle both IPv4 and IPv6 cases
         try:
             print("Try IPv4")
@@ -1220,6 +1273,11 @@ class KamodoClient(Kamodo):
         asyncio.gather(*coroutines, return_exceptions=True)
 
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+        self._remote_fields = self._client.getFields().wait().fields
+        self._remote_math = self._client.getMath().wait().math
+
+        for entry in self._remote_fields.entries:
+            self.register_remote_field(entry)
 
     def register_remote_field(self, entry):
         """resolve the remote signature

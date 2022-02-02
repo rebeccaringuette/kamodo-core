@@ -13,7 +13,10 @@ import numpy as np
 from sympy import Function, Symbol
 from sympy import Add, Mul, Pow
 from sympy.core.numbers import Float, Integer, Rational
-
+import ssl
+import os
+import asyncio
+import socket
 from functools import reduce
 
 def rpc_map_to_dict(rpc_map, callback = None):
@@ -392,3 +395,112 @@ def to_rpc_expr(expr, math_rpc=math_rpc, expressions={}, **kwargs):
     return kamodo_capnp.Kamodo.Expression(**message)
 
 
+
+class Server():
+    def __init__(self, kamodo_rpc):
+        super(Server, self).__init__()
+        # store instance of KamodoRPC class to be served on demand
+        self._kamodo_rpc = kamodo_rpc
+
+
+    async def server_reader(self):
+        """
+        Reader for the server side.
+        """
+        while self.retry:
+            try:
+                # Must be a wait_for so we don't block on read()
+                data = await asyncio.wait_for(
+                    self.reader.read(4096),
+                    timeout=0.1
+                )
+            except asyncio.TimeoutError:
+                print("reader timeout.")
+                continue
+            except Exception as err:
+                print("Unknown reader err: %s", err)
+                return False
+            await self.server.write(data)
+        print("reader done.")
+        return True
+
+    async def server_writer(self):
+        """
+        Writer for the server side.
+        """
+        while self.retry:
+            try:
+                # Must be a wait_for so we don't block on read()
+                data = await asyncio.wait_for(
+                    self.server.read(4096),
+                    timeout=0.1
+                )
+                self.writer.write(data.tobytes())
+            except asyncio.TimeoutError:
+                print("writer timeout.")
+                continue
+            except Exception as err:
+                print("Unknown writer err: %s", err)
+                return False
+        print("writer done.")
+        return True
+
+    async def kamodo_server(self, reader, writer):
+        # Start TwoPartyServer using TwoWayPipe (only requires bootstrap)
+        self.server = capnp.TwoPartyServer(bootstrap=self.kamodo_rpc)
+        self.reader = reader
+        self.writer = writer
+        self.retry = True
+
+        # Assemble reader and writer tasks, run in the background
+        coroutines = [self.server_reader(), self.server_writer()]
+        tasks = asyncio.gather(*coroutines, return_exceptions=True)
+
+        while True:
+            self.server.poll_once()
+            # Check to see if reader has been sent an eof (disconnect)
+            if self.reader.at_eof():
+                self.retry = False
+                break
+            await asyncio.sleep(0.01)
+
+        # Make wait for reader/writer to finish (prevent possible resource leaks)
+        await tasks
+
+    async def new_connection(self, reader, writer):
+        await self.kamodo_server(reader, writer)
+
+    async def serve(self):
+
+        """
+        Method to start communication as asynchronous server.
+        """
+        addr = 'localhost'
+        port = '60000'
+
+        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        print(f"THIS DIR : {this_dir}")
+        ctx.load_cert_chain(
+            os.path.join(this_dir, "selfsigned.cert"),
+            os.path.join(this_dir, "selfsigned.key"),
+        )
+
+        # Handle both IPv4 and IPv6 cases
+        try:
+            print("Try IPv4")
+            server = await asyncio.start_server(
+                self.new_connection,
+                addr, port, ssl=ctx,
+                family=socket.AF_INET
+            )
+        except Exception:
+            print("Try IPv6")
+            server = await asyncio.start_server(
+                self.new_connection,
+                addr, port, ssl=ctx,
+                family=socket.AF_INET6
+            )
+
+        async with server:
+            await server.serve_forever()

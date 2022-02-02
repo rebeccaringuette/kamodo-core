@@ -1,3 +1,4 @@
+* refactored to match calculator example
 ### 2022-01-18 19:28:25.752122: clock-out
 
 * added kamodo-rpc cli to serve

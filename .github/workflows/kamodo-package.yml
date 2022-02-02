@@ -1,13 +1,17 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python package
+name: Python test
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - rpc
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - rpc
 
 jobs:
   build:
@@ -34,7 +38,7 @@ jobs:
         pip install .
     - name: Test with pytest and generate coverage
       run: |
-        pytest --cov kamodo.kamodo --cov kamodo.util --cov plotting kamodo/test_plotting.py kamodo/test_kamodo.py kamodo/test_utils.py
+        pytest --cov kamodo.kamodo --cov kamodo.util --cov plotting kamodo/test_plotting.py kamodo/test_kamodo.py kamodo/test_utils.py kamodo/test_rpc.py
         jupyter nbconvert --to=html --ExecutePreprocessor.enabled=True --config docs/notebooks/run_notebooks.py
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v1

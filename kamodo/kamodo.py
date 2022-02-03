@@ -5,7 +5,7 @@ No Copyright is claimed in the United States under Title 17, U.S. Code.  All Oth
 """
 import asyncio
 import os
-import ssl
+
 
 from util import np
 from sympy import Integral, Symbol, symbols, Function
@@ -78,6 +78,7 @@ import sympy
 
 from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
 from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
+from rpc.proto import Server, ssl
 import socket
 from util import construct_signature
 
@@ -963,7 +964,7 @@ class Kamodo(UserDict):
             func=FunctionRPC(func),
             meta=self.to_rpc_meta(key),
         )
-        self._server[key] = field
+        self._kamodo_rpc[key] = field
 
     # def serve(self, socket_='*:60000'):
     #     self._server = KamodoRPC()
@@ -981,115 +982,16 @@ class Kamodo(UserDict):
     #         server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
     #         server.run_forever()
 
-    class Server():
-        async def server_reader(self):
-            """
-            Reader for the server side.
-            """
-            while self.retry:
-                try:
-                    # Must be a wait_for so we don't block on read()
-                    data = await asyncio.wait_for(
-                        self.reader.read(4096),
-                        timeout=0.1
-                    )
-                except asyncio.TimeoutError:
-                    print("reader timeout.")
-                    continue
-                except Exception as err:
-                    print("Unknown reader err: %s", err)
-                    return False
-                await self.server.write(data)
-            print("reader done.")
-            return True
-
-        async def server_writer(self):
-            """
-            Writer for the server side.
-            """
-            while self.retry:
-                try:
-                    # Must be a wait_for so we don't block on read()
-                    data = await asyncio.wait_for(
-                        self.server.read(4096),
-                        timeout=0.1
-                    )
-                    self.writer.write(data.tobytes())
-                except asyncio.TimeoutError:
-                    print("writer timeout.")
-                    continue
-                except Exception as err:
-                    print("Unknown writer err: %s", err)
-                    return False
-            print("writer done.")
-            return True
-
-        async def kamodo_server(self, reader, writer):
-            # Start TwoPartyServer using TwoWayPipe (only requires bootstrap)
-            self.server = capnp.TwoPartyServer(bootstrap=KamodoRPC())
-            self.reader = reader
-            self.writer = writer
-            self.retry = True
-
-            # Assemble reader and writer tasks, run in the background
-            coroutines = [self.server_reader(), self.server_writer()]
-            tasks = asyncio.gather(*coroutines, return_exceptions=True)
-
-            while True:
-                self.server.poll_once()
-                # Check to see if reader has been sent an eof (disconnect)
-                if self.reader.at_eof():
-                    self.retry = False
-                    break
-                await asyncio.sleep(0.01)
-
-            # Make wait for reader/writer to finish (prevent possible resource leaks)
-            await tasks
-
-    async def new_connection(self, reader, writer):
-        server = self.Server()
-        await server.kamodo_server(reader, writer)
-
-    async def serve(self):
-
-        """
-        Method to start communication as asynchronous server.
-        """
-        addr = 'localhost'
-        port = '60000'
-
-        self._server = KamodoRPC()
+    def serve(self):
+        # Register rpc fields
+        self._kamodo_rpc = KamodoRPC()
         for key in self.signatures:
             if self.verbose:
                 print('serving {}'.format(key))
             self.register_rpc_field(key)
 
-        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        print(f"THIS DIR : {this_dir}")
-        ctx.load_cert_chain(
-            os.path.join(this_dir, "selfsigned.cert"),
-            os.path.join(this_dir, "selfsigned.key"),
-        )
-
-        # Handle both IPv4 and IPv6 cases
-        try:
-            print("Try IPv4")
-            server = await asyncio.start_server(
-                self.new_connection,
-                addr, port, ssl=ctx,
-                family=socket.AF_INET
-            )
-        except Exception:
-            print("Try IPv6")
-            server = await asyncio.start_server(
-                self.new_connection,
-                addr, port, ssl=ctx,
-                family=socket.AF_INET6
-            )
-
-        async with server:
-            await server.serve_forever()
+        self.async_server = Server(self._kamodo_rpc)
+        asyncio.run(self.async_server.serve())
 
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a given variable and keyword arguments"""
@@ -1192,7 +1094,7 @@ class Kamodo(UserDict):
 
 
 class KamodoClient(Kamodo):
-    def __init__(self, server=None, **kwargs):
+    def __init__(self, host='localhost:60000', **kwargs):
         """CapnProto Kamodo client
         Abstracts a remote kamodo server using capn proto binary message types
         """
@@ -1200,8 +1102,8 @@ class KamodoClient(Kamodo):
         self._expressions = {} # expressions for server-side pipelining
         self._rpc_funcs = {} # rpc functions (may be served to downstream applications)
 
-        if server is not None:
-            self.client(server)
+        if host is not None:
+            self.connect(host)
 
     def __setitem__(self, sym_name, input_expr):
         """register function symbol with implementation"""
@@ -1243,13 +1145,16 @@ class KamodoClient(Kamodo):
         """
         Method to start communication as asynchronous client.
         """
-        addr = 'localhost'
-        port = '6000'
+        addr, port = host.split(':')
 
         this_dir = os.path.dirname(os.path.abspath(__file__))
-        ctx = ssl.create_default_context(
-            ssl.Purpose.SERVER_AUTH, cafile=os.path.join(this_dir, "selfsigned.cert")
-        )
+        try:
+            cert = os.path.join(this_dir, "selfsigned.cert")
+            ctx = ssl.create_default_context(
+                ssl.Purpose.SERVER_AUTH, cafile=cert
+            )
+        except FileNotFoundError:
+            raise FileNotFoundError(cert)
 
         # Handle both IPv4 and IPv6 cases
         try:
@@ -1265,21 +1170,31 @@ class KamodoClient(Kamodo):
                 family=socket.AF_INET6
             )
 
+        print('connection open, starting TwoPartyClient')
+
         # Start TwoPartyClient using TwoWayPipe (takes no arguments in this mode)
         client = capnp.TwoPartyClient()
 
         # Assemble reader and writer tasks, run in the background
         coroutines = [self.client_reader(client, reader), self.client_writer(client, writer)]
         asyncio.gather(*coroutines, return_exceptions=True)
+        print('bootstrapping Kamodo RPC')
 
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
-        self._remote_fields = self._client.getFields().wait().fields
-        self._remote_math = self._client.getMath().wait().math
+        print('retrieving fields')
+        self._remote_fields = (await self._client.getFields().a_wait()).fields
+        print('getting remote math')
+        self._remote_math = (await self._client.getMath().a_wait()).math
 
         for entry in self._remote_fields.entries:
+            print('registering {}'.format(entry.key))
             self.register_remote_field(entry)
 
-    def register_remote_field(self, entry):
+    def connect(self, host):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.client(host))
+
+    async def register_remote_field(self, entry):
         """resolve the remote signature
         f(*args, **kwargs) -> f(x,y,z=value)
         """
@@ -1289,9 +1204,9 @@ class KamodoClient(Kamodo):
         meta = field.meta
         arg_units = rpc_map_to_dict(meta.argUnits)
 
-        defaults_ = field.func.getKwargs().wait().kwargs
+        defaults_ = await field.func.getKwargs().a_wait().kwargs
         func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
-        func_args_ = [str(_) for _ in field.func.getArgs().wait().args]
+        func_args_ = [str(_) for _ in await field.func.getArgs().a_wait().args]
         func_args = [_ for _ in func_args_ if _ not in func_defaults]
 
         if len(meta.equation) > 0:
@@ -1307,23 +1222,23 @@ class KamodoClient(Kamodo):
                   equation=equation,
                   hidden_args=hidden_args)
         @forge.sign(*construct_signature(*func_args, **func_defaults))
-        def remote_func(*args, **kwargs):
+        async def remote_func(*args, **kwargs):
             # params must be List(Variable) for now
             args_ = [to_rpc_literal(arg) for arg in args]
             kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
-            result = field.func.call(args=args_, kwargs=kwargs_).wait().result
+            result = await field.func.call(args=args_, kwargs=kwargs_).a_wait().result
             return from_rpc_literal(result)
 
         self[symbol] = remote_func
         self._rpc_funcs[symbol] = field.func
 
-    def get_remote_composition(self, expr, **kwargs):
+    async def get_remote_composition(self, expr, **kwargs):
         """Generate a callable function composition that is executed remotely"""
 
-        def remote_composition(**params):
+        async def remote_composition(**params):
             remote_expr = to_rpc_expr(expr, expressions=self._expressions, **params, **kwargs)
             evaluate_expr = self._client.evaluate(remote_expr)  # .wait()
-            result_message = evaluate_expr.value.read().wait()
+            result_message = await evaluate_expr.value.read().a_wait()
             return from_rpc_literal(result_message.value)
 
         remote_composition.__name__ = str(expr)

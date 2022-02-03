@@ -1,3 +1,10 @@
+### 2022-02-02 17:02:37.481225: clock-out
+
+* troubleshooting client/server ssl communication
+
+### 2022-02-02 15:28:07.635430: clock-in
+
+* refactored to match calculator example
 ### 2022-01-18 19:28:25.752122: clock-out
 
 * added kamodo-rpc cli to serve

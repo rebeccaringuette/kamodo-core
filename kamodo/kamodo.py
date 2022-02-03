@@ -6,7 +6,6 @@ No Copyright is claimed in the United States under Title 17, U.S. Code.  All Oth
 import asyncio
 import os
 
-
 from util import np
 from sympy import Integral, Symbol, symbols, Function
 
@@ -81,7 +80,7 @@ from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
 from rpc.proto import Server, ssl
 import socket
 from util import construct_signature
-from util import lambda_
+
 import yaml
 
 _clash['rad'] = Symbol('rad')
@@ -91,8 +90,6 @@ _clash['deg'] = Symbol('deg')
 def parse_expr(*args, **kwargs):
     try:
         return sympy.sympify(*args, **kwargs)
-    except TypeError as m:
-        raise
     except:
         raise NameError('cannot parse {}, {}'.format(args, kwargs))
 
@@ -457,10 +454,10 @@ class Kamodo(UserDict):
         # if isinstance(units, str):
         unit_str = units
         if self.verbose:
-            print('unit str: {}, rhs_expr: {}'.format(unit_str, rhs_expr))
+            print('unit str {}'.format(unit_str))
 
         if rhs_expr is None:
-            # lambda_ = symbols('lambda', cls=UndefinedFunction)
+            lambda_ = symbols('lambda', cls=UndefinedFunction)
             rhs_expr = lambda_(*symbol.args)
 
         self.signatures[str(type(symbol))] = dict(
@@ -781,14 +778,13 @@ class Kamodo(UserDict):
                                            root_notation=False,
                                            ))
 
-
         latex_eq = ''
         latex_eq_rhs = ''
 
         if isinstance(rhs, str):
             latex_eq_rhs = rhs
         elif hasattr(rhs, '__call__') | (rhs is None):
-            # lambda_ = symbols('lambda', cls=UndefinedFunction)
+            lambda_ = symbols('lambda', cls=UndefinedFunction)
             # latex_eq = latex(Eq(lhs, lambda_(*lhs.args)), mode=mode)
             latex_eq_rhs = latex(lambda_(*lhs.args))  # no $$
         else:
@@ -933,7 +929,7 @@ class Kamodo(UserDict):
         arg_unit_entries = []
         arg_units = meta.get('arg_units')  # may be None
         if arg_units is not None:
-            for k,v in arg_units.items():
+            for k, v in arg_units.items():
                 arg_unit_entries.append({'key': k, 'value': v})
 
         citation = meta.get('citation')
@@ -967,22 +963,6 @@ class Kamodo(UserDict):
             meta=self.to_rpc_meta(key),
         )
         self._kamodo_rpc[key] = field
-
-    # def serve(self, socket_='*:60000'):
-    #     self._server = KamodoRPC()
-    #
-    #     for key in self.signatures:
-    #         if self.verbose:
-    #             print('serving {}'.format(key))
-    #         self.register_rpc_field(key)
-    #
-    #     # server = capnp.TwoPartyServer('*:60000', bootstrap=CalculatorImpl())
-    #     # server.run_forever()
-    #     if isinstance(socket_, socket.socket):
-    #         server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
-    #     else:
-    #         server = capnp.TwoPartyServer(socket_, bootstrap=self._server)
-    #         server.run_forever()
 
     def serve(self):
         # Register rpc fields
@@ -1101,8 +1081,8 @@ class KamodoClient(Kamodo):
         Abstracts a remote kamodo server using capn proto binary message types
         """
         super(KamodoClient, self).__init__(**kwargs)
-        self._expressions = {} # expressions for server-side pipelining
-        self._rpc_funcs = {} # rpc functions (may be served to downstream applications)
+        self._expressions = {}  # expressions for server-side pipelining
+        self._rpc_funcs = {}  # rpc functions (may be served to downstream applications)
 
         if host is not None:
             self.connect(host)
@@ -1112,19 +1092,6 @@ class KamodoClient(Kamodo):
         super(KamodoClient, self).__setitem__(sym_name, input_expr)
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
-
-    # def client(self, read):
-    #     """register the client's remote functions"""
-    #     client = capnp.TwoPartyClient(read)
-    #
-    #     self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
-    #     self._remote_fields = self._client.getFields().wait().fields
-    #     self._remote_math = self._client.getMath().wait().math
-    #
-    #     for entry in self._remote_fields.entries:
-    #         self.register_remote_field(entry)
-    #
-    #     return client
 
     async def client_reader(self, client, reader):
         """
@@ -1350,13 +1317,11 @@ def compose(**kamodos):
         for name, symbol in k.symbol_registry.items():
             signature = k.signatures[name]
             meta = k[symbol].meta
-            data = getattr(k[symbol], 'data', {})
+            data = getattr(k[symbol], 'data', None)
 
             rhs = signature['rhs']
             registry_name = '{}_{}'.format(name, kname)
             if (rhs is None) | hasattr(rhs, '__call__'):
-                kamodo[registry_name] = kamodofy(k[symbol], data=data, **meta)
-            elif getattr(rhs, 'func') == lambda_:
                 kamodo[registry_name] = kamodofy(k[symbol], data=data, **meta)
             else:
                 kamodo[registry_name] = str(rhs)

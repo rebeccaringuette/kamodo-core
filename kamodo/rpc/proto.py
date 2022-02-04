@@ -454,7 +454,7 @@ class Server():
 
     async def kamodo_server(self, reader, writer):
         # Start TwoPartyServer using TwoWayPipe (only requires bootstrap)
-        self.server = capnp.TwoPartyServer(bootstrap=self.kamodo_rpc)
+        self.server = capnp.TwoPartyServer(bootstrap=self._kamodo_rpc)
         self.reader = reader
         self.writer = writer
         self.retry = True
@@ -489,8 +489,8 @@ class Server():
         this_dir = os.path.dirname(os.path.abspath(__file__))
         logger.debug(f"THIS DIR : {this_dir}")
         ctx.load_cert_chain(
-            os.path.join(this_dir, "selfsigned.cert"),
-            os.path.join(this_dir, "selfsigned.key"),
+            os.path.join(this_dir, "cert.pem"),
+            os.path.join(this_dir, "key.pem"),
         )
 
         # Handle both IPv4 and IPv6 cases

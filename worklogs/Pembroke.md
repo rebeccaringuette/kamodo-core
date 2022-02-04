@@ -1,3 +1,4 @@
+* added kamodo function async test
 * fixed bug in compose with lambdas
 * rpc tests
 ### 2022-01-18 19:28:25.752122: clock-out

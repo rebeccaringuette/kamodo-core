@@ -1118,7 +1118,7 @@ class KamodoClient(Kamodo):
 
         this_dir = os.path.dirname(os.path.abspath(__file__))
         try:
-            cert = os.path.join(this_dir, "selfsigned.cert")
+            cert = os.path.join(this_dir, "cert.pem")
             ctx = ssl.create_default_context(
                 ssl.Purpose.SERVER_AUTH, cafile=cert
             )
@@ -1129,13 +1129,13 @@ class KamodoClient(Kamodo):
         try:
             print("Try IPv4")
             reader, writer = await asyncio.open_connection(
-                addr, port,
+                addr, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
             print("Try IPv6")
             reader, writer = await asyncio.open_connection(
-                addr, port,
+                addr, port, ssl=ctx,
                 family=socket.AF_INET6
             )
 

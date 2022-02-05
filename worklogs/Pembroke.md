@@ -1,3 +1,4 @@
+* added api documentation
 * executing notebooks on deploy
 * fixed field line plotting, added mkdocs preamble so notebooks run from correct directory
 

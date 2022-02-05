@@ -17,6 +17,7 @@ theme: readthedocs
 plugins:
   - mknotebooks:
       execute: true
+      preamble: mkdocs_preamble.py
   - search
 markdown_extensions:
   - admonition

@@ -1,3 +1,4 @@
+* fixed field line plotting, added mkdocs preamble so notebooks run from correct directory
 
 ### 2022-02-04 17:29:50.152266: clock-in
 

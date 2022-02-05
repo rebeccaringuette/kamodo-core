@@ -140,12 +140,13 @@ def line_plot(result, titles, verbose=False, **kwargs):
                 x = f.values[:, 0]
                 y = f.values[:, 1]
                 z = f.values[:, 2]
+
                 layout = go.Layout(
                     title=titles['title'],
                     scene=dict(
-                        xaxis=dict(title=f.columns[0] + titles['units']),
-                        yaxis=dict(title=f.columns[1] + titles['units']),
-                        zaxis=dict(title=f.columns[2] + titles['units']),
+                        xaxis=dict(title=str(f.columns[0]) + titles['units']),
+                        yaxis=dict(title=str(f.columns[1]) + titles['units']),
+                        zaxis=dict(title=str(f.columns[2]) + titles['units']),
                         ))
             else:
                 x = f[:, 0]

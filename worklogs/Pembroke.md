@@ -1,3 +1,5 @@
+### 2022-02-04 19:25:01.075400: clock-out
+
 * added api documentation
 * executing notebooks on deploy
 * fixed field line plotting, added mkdocs preamble so notebooks run from correct directory

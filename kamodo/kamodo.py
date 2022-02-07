@@ -1118,7 +1118,7 @@ class KamodoClient(Kamodo):
 
         this_dir = os.path.dirname(os.path.abspath(__file__))
         try:
-            cert = os.path.join(this_dir, "cert.pem")
+            cert = os.path.join(this_dir, "selfsigned.cert")
             ctx = ssl.create_default_context(
                 ssl.Purpose.SERVER_AUTH, cafile=cert
             )

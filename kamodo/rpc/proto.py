@@ -7,7 +7,7 @@ import capnp
 
 kamodo_capnp = capnp.load('{}/kamodo.capnp'.format(current_dir))
 
-from util import get_args, get_defaults
+from kamodo.util import get_args, get_defaults
 import numpy as np
 
 from sympy import Function, Symbol
@@ -489,8 +489,8 @@ class Server():
         this_dir = os.path.dirname(os.path.abspath(__file__))
         logger.debug(f"THIS DIR : {this_dir}")
         ctx.load_cert_chain(
-            os.path.join(this_dir, "cert.pem"),
-            os.path.join(this_dir, "key.pem"),
+            os.path.join(this_dir, "selfsigned.cert"),
+            os.path.join(this_dir, "selfsigned.key"),
         )
 
         # Handle both IPv4 and IPv6 cases

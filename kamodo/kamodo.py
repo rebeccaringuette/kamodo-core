@@ -1157,7 +1157,7 @@ class KamodoClient(Kamodo):
 
         for entry in self._remote_fields.entries:
             print('registering {}'.format(entry.key))
-            self.register_remote_field(entry)
+            await self.register_remote_field(entry)
 
     def connect(self, host):
         loop = asyncio.get_event_loop()

@@ -1173,9 +1173,9 @@ class KamodoClient(Kamodo):
         meta = field.meta
         arg_units = rpc_map_to_dict(meta.argUnits)
 
-        defaults_ = await field.func.getKwargs().a_wait().kwargs
+        defaults_ = (await field.func.getKwargs().a_wait()).kwargs
         func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
-        func_args_ = [str(_) for _ in await field.func.getArgs().a_wait().args]
+        func_args_ = [str(_) for _ in (await field.func.getArgs().a_wait()).args]
         func_args = [_ for _ in func_args_ if _ not in func_defaults]
 
         if len(meta.equation) > 0:

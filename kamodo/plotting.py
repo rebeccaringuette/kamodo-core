@@ -319,7 +319,12 @@ def vector_plot(result, titles, verbose = False, **kwargs):
 
     return [trace], chart_type, layout
 
+
 def contour_plot(result, titles, indexing, verbose = False, **kwargs):
+    try:
+        colorbar_title = dict(title=titles['title_short'], titleside='bottom')
+    except KeyError:
+        pass
     variable = titles['variable']
     if verbose:
         print('\t2-d output', result[variable].shape)
@@ -338,22 +343,37 @@ def contour_plot(result, titles, indexing, verbose = False, **kwargs):
             if indexing == 'ij':
                 if verbose:
                     print('{} indexing'.format(indexing))
-                trace = go.Contour(x = val0,
-                                   y = val1,
-                                   z = z.T)
+                try:
+                    trace = go.Contour(x = val0,
+                                       y = val1,
+                                       z = z.T,
+                                       colorbar=colorbar_title)
+                except UnboundLocalError:
+                    trace = go.Contour(x=val0,
+                                       y=val1,
+                                       z=z.T)
             else:
                 if verbose:
                     print('{} indexing'.format(indexing))
-                trace = go.Contour(x = val0,
-                                   y = val1,
-                                   z = z)
-
+                try:
+                    trace = go.Contour(x = val0,
+                                       y = val1,
+                                       z = z, colorbar=colorbar_title)
+                except UnboundLocalError:
+                    trace = go.Contour(x=val0,
+                                       y=val1,
+                                       z=z)
         else:
             if verbose:
                 print('xy indexing')
-            trace = go.Contour(x = val0,
-                               y = val1,
-                               z = z)
+            try:
+                trace = go.Contour(x = val0,
+                                   y = val1,
+                                   z = z, colorbar=colorbar_title)
+            except UnboundLocalError:
+                trace = go.Contour(x=val0,
+                                   y=val1)
+
         layout = go.Layout(
             title = title,
             xaxis = dict(title = '${}$'.format(arg0)),

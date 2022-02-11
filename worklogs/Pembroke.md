@@ -1,5 +1,7 @@
+
 * fixed bug in compose with lambdas
 * rpc tests
+
 ### 2022-01-18 19:28:25.752122: clock-out
 
 * added kamodo-rpc cli to serve
@@ -573,6 +575,20 @@ pip install pycapnp
 * consider capn proto https://capnproto.org/
 
 ### 2021-10-21 10:17:26.721944: clock-in
+
+* test for two defaults, one arg
+* test default inheritance for more than two arguments
+* str format
+* integrating comments from rringuette
+
+### 2021-10-29 12:29:28.465940: clock-out
+
+* linking to correct weirstrass image
+* adding Weierstrass notebook and example image
+* added weierstrass example
+
+### 2021-10-29 11:01:19.323873: clock-in
+
 
 ### 2021-10-18 12:25:10.516747: clock-out
 

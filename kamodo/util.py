@@ -1305,11 +1305,13 @@ def partial(_func=None, **partial_kwargs):
                                   lambda: '\\lambda ({})'.format(
                                       ','.join(orig_args)))
         orig_meta = getattr(f, 'meta', {}).copy()
+        orig_equation = orig_meta.get('equation')
+        if orig_equation is None:
+            orig_equation = orig_latex_func()
+        orig_meta['equation'] = orig_equation.strip("$")
 
-        orig_meta['equation'] = orig_meta.get('equation',
-                                              orig_latex_func()).strip("$")
         if len(orig_defaults) > 0:
-            orig_meta['equation'] += ', ' + latex_repr_values(orig_defaults)
+            orig_meta['equation'] += ', ' + latex_repr_values(partial_kwargs)
         new_latex_func = lambda: '${}$'.format(orig_meta['equation'])
         if verbose:
             print('partial kwargs', partial_kwargs)

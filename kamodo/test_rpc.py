@@ -34,7 +34,7 @@ def test_remote_composition():
 	    print('remote g called')
 	    return y - 1
 	    
-	kserver = Kamodo(f=myf, g=myg)
+	kserver = Kamodo(f=myf, g=myg, verbose=True)
 
 	read, write = socket.socketpair()
 	server = kserver.serve(write)

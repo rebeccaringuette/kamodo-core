@@ -1298,7 +1298,7 @@ class KamodoClient(Kamodo):
         func = self.get_remote_composition(rhs_expr, **self._rpc_funcs)
         self._expressions[str(type(symbol))] = rhs_expr
 
-        signature = sign_defaults(symbol, rhs_expr, composition)
+        signature, defaults = sign_defaults(symbol, rhs_expr, composition)
         return signature(func)
 
 

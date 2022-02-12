@@ -24,6 +24,11 @@ from kamodo.util import get_args
 import warnings
 
 
+def test_order_override():
+    k = Kamodo(verbose=True)
+    k['x(r,theta,phi)'] = 'r*sin(theta)*cos(phi)'
+
+
 def test_Kamodo_expr():
     a, b, c, x, y, z = symbols('a b c x y z')
     kamodo = Kamodo(a=x ** 2, verbose=True)
@@ -589,7 +594,7 @@ def test_jit_evaluate():
         kamodo.evaluate('f**2', x = 3)['x'] == 3
 
 def test_default_inheritance_order():
-    kamodo = Kamodo(f=lambda x=2: x ** 2, verbose=True)
+    kamodo = Kamodo(f=lambda x=2: x ** 2)
     kamodo['h'] = 'y*f'
     assert kamodo['h'](2) == 2*2**2
     with pytest.raises(SyntaxError):

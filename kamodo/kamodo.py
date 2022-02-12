@@ -193,10 +193,19 @@ def default_inheritance_check(rhs_expr, lhs_expr):
     functionalities
     """
     try:
+        print('=======')
+        print(type(rhs_expr))
+        print(type(lhs_expr))
+
+        print(rhs_expr)
+        print(rhs_expr.args)
+        print(lhs_expr)
+        print(lhs_expr.args)
         if isinstance(rhs_expr.args[0], Symbol):
             if len(rhs_expr.args) == 2:
                 if type(rhs_expr.args[1]) != rhs_expr.args[1].name:
                     if rhs_expr.args[0] != lhs_expr.args[0]:
+                        print("@@@@@")
                         raise SyntaxError('Ordering error')
             elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args:
                 for each in rhs_expr.args:
@@ -204,7 +213,7 @@ def default_inheritance_check(rhs_expr, lhs_expr):
                         pass
                     else:
                         if rhs_expr.args[0] != lhs_expr.args[-1]:
-                            print('2')
+                            print("@@@@@123")
                             raise SyntaxError('Ordering error')
     except IndexError:
         pass
@@ -637,8 +646,8 @@ class Kamodo(UserDict):
             rhs_expr = self.parse_value(input_expr, self.symbol_registry)
             if self.verbose:
                 print('parsed rhs_expr', rhs_expr)
-
-            default_inheritance_check(rhs_expr, lhs_expr)
+            if not self.verbose:
+                default_inheritance_check(rhs_expr, lhs_expr)
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(alphabetize(
@@ -749,8 +758,10 @@ class Kamodo(UserDict):
                             arg_units[str(arg)] = str(get_abbrev(unit))
             func, default_non_default_parameter, defaults = \
                 self.vectorize_function(symbol, rhs_expr, composition)
-            symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                    symbol)
+            if not self.verbose:
+                symbol = reorder_symbol(defaults, default_non_default_parameter,
+                                        symbol)
+
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None

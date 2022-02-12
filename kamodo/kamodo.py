@@ -193,19 +193,10 @@ def default_inheritance_check(rhs_expr, lhs_expr):
     functionalities
     """
     try:
-        print('=======')
-        print(type(rhs_expr))
-        print(type(lhs_expr))
-
-        print(rhs_expr)
-        print(rhs_expr.args)
-        print(lhs_expr)
-        print(lhs_expr.args)
         if isinstance(rhs_expr.args[0], Symbol):
             if len(rhs_expr.args) == 2:
                 if type(rhs_expr.args[1]) != rhs_expr.args[1].name:
                     if rhs_expr.args[0] != lhs_expr.args[0]:
-                        print("@@@@@")
                         raise SyntaxError('Ordering error')
             elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args:
                 for each in rhs_expr.args:
@@ -213,7 +204,6 @@ def default_inheritance_check(rhs_expr, lhs_expr):
                         pass
                     else:
                         if rhs_expr.args[0] != lhs_expr.args[-1]:
-                            print("@@@@@123")
                             raise SyntaxError('Ordering error')
     except IndexError:
         pass

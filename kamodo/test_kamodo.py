@@ -25,8 +25,11 @@ import warnings
 
 
 def test_order_override():
-    k = Kamodo(verbose=True)
-    k['x(r,theta,phi)'] = 'r*sin(theta)*cos(phi)'
+    k = Kamodo(f=lambda x,y: y*x**2)
+    k['g(y,x)'] = 'f' # should register g(y,x)
+    assert k.g(3,4) == k.f(4,3)
+    k['x(r,theta,phi)'] = 'r*sin(theta)*cos(phi)' # should register x(r, theta, phi)
+    assert k.x(1, np.pi/2, 0) == 1.0
 
 
 def test_Kamodo_expr():

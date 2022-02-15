@@ -196,9 +196,11 @@ def default_inheritance_check(rhs_expr, lhs_expr):
         if isinstance(rhs_expr.args[0], Symbol):
             if len(rhs_expr.args) == 2:
                 if type(rhs_expr.args[1]) != rhs_expr.args[1].name:
-                    if rhs_expr.args[0] != lhs_expr.args[0]:
+                    if rhs_expr.args[0] != lhs_expr.args[0] and not \
+                            isinstance(rhs_expr.args[1], Symbol):
                         raise SyntaxError('Ordering error')
-            elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args:
+            elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args \
+                    and not len(rhs_expr.args[1].args) > 0:
                 for each in rhs_expr.args:
                     if isinstance(each, Symbol):
                         pass
@@ -514,13 +516,7 @@ class Kamodo(UserDict):
                 for k, v in composition.items():
                     print('\t', k, v)
         signature, defaults = sign_defaults(symbol, rhs_expr, composition)
-        default_non_default_parameter = []
-        try:
-            for parm in signature.parameters:
-                default_non_default_parameter.append(parm.name)
-        except KeyError:
-            pass
-        return signature(func), default_non_default_parameter, defaults
+        return signature(func)
 
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
@@ -636,8 +632,8 @@ class Kamodo(UserDict):
             rhs_expr = self.parse_value(input_expr, self.symbol_registry)
             if self.verbose:
                 print('parsed rhs_expr', rhs_expr)
-            if not self.verbose:
-                default_inheritance_check(rhs_expr, lhs_expr)
+
+            default_inheritance_check(rhs_expr, lhs_expr)
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(alphabetize(
@@ -746,11 +742,19 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-            func, default_non_default_parameter, defaults = \
-                self.vectorize_function(symbol, rhs_expr, composition)
-            if not self.verbose:
-                symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                        symbol)
+
+            func = self.vectorize_function(symbol, rhs_expr, composition)
+
+            signature, defaults = sign_defaults(symbol, rhs_expr, composition)
+            default_non_default_parameter = []
+            try:
+                for parm in signature.parameters:
+                    default_non_default_parameter.append(parm.name)
+            except KeyError:
+                pass
+
+            symbol = reorder_symbol(defaults, default_non_default_parameter,
+                                                symbol)
 
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
@@ -763,6 +767,8 @@ class Kamodo(UserDict):
             self.register_symbol(symbol)
 
     def __getitem__(self, key):
+        print(f"============:{key}")
+        print(self.symbol_registry)
         try:
             return super(Kamodo, self).__getitem__(key)
         except KeyError:
@@ -781,6 +787,7 @@ class Kamodo(UserDict):
         return False
 
     def __getattr__(self, name):
+        print(name)
         try:
             return self[name]
         except KeyError:

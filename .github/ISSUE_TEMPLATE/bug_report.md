@@ -51,5 +51,10 @@ There is [a trick for getting github's markdown to render latex](https://gist.gi
 <img src="https://render.githubusercontent.com/render/math?math=e^{i \pi} = -1">
 ```
 
+The above line will render like this:
+
+<img src="https://render.githubusercontent.com/render/math?math=e^{i \pi} = -1">
+
+
 **Additional context**
 Add any other context about the problem here.

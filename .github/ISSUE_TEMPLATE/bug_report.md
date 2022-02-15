@@ -45,5 +45,11 @@ k.to_latex(mode='inline') # copy the output
 paste the latex output here
 ```
 
+There is [a trick for getting github's markdown to render latex](https://gist.github.com/a-rodin/fef3f543412d6e1ec5b6cf55bf197d7b#solution):
+
+```console
+<img src="https://render.githubusercontent.com/render/math?math=e^{i \pi} = -1">
+```
+
 **Additional context**
 Add any other context about the problem here.

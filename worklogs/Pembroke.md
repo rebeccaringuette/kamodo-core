@@ -1,3 +1,4 @@
+* removing print statements
 * test for two defaults, one arg
 * test default inheritance for more than two arguments
 * str format

@@ -766,8 +766,6 @@ class Kamodo(UserDict):
             self.register_symbol(symbol)
 
     def __getitem__(self, key):
-        print(f"============:{key}")
-        print(self.symbol_registry)
         try:
             return super(Kamodo, self).__getitem__(key)
         except KeyError:
@@ -786,7 +784,6 @@ class Kamodo(UserDict):
         return False
 
     def __getattr__(self, name):
-        print(name)
         try:
             return self[name]
         except KeyError:

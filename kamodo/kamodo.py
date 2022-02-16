@@ -514,13 +514,8 @@ class Kamodo(UserDict):
                 for k, v in composition.items():
                     print('\t', k, v)
         signature, defaults = sign_defaults(symbol, rhs_expr, composition)
-        default_non_default_parameter = []
-        try:
-            for parm in signature.parameters:
-                default_non_default_parameter.append(parm.name)
-        except KeyError:
-            pass
-        return signature(func), default_non_default_parameter, defaults
+
+        return signature(func)
 
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
@@ -746,8 +741,15 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-            func, default_non_default_parameter, defaults = \
-                self.vectorize_function(symbol, rhs_expr, composition)
+            func = self.vectorize_function(symbol, rhs_expr, composition)
+            signature, defaults = sign_defaults(symbol, rhs_expr, composition)
+            default_non_default_parameter = []
+            try:
+                for parm in signature.parameters:
+                    default_non_default_parameter.append(parm.name)
+            except KeyError:
+                pass
+
             symbol = reorder_symbol(defaults, default_non_default_parameter,
                                     symbol)
             meta = dict(units=units, arg_units=arg_units)

@@ -841,12 +841,11 @@ def unify(expr, unit_registry, to_symbol=None, verbose=False):
                     print('unify:\t{} -> {}'.format(k, v))
                 print(
                     'compare:{}'.format(expr_dimensions.compare(to_dimensions)))
-                error_msg = 'cannot convert {} [{}] {} to {}[{}] {}'.format(
-                    expr, expr_unit, expr_dimensions,
-                    to_symbol, to_unit, to_dimensions)
-                print(error_msg)
-            raise NameError(error_msg)
 
+            error_msg = 'cannot convert {} [{}] {} to {}[{}] {}'.format(
+                expr, expr_unit, expr_dimensions,
+                to_symbol, to_unit, to_dimensions)
+            raise NameError(error_msg)
     return expr
 
 

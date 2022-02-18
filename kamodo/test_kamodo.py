@@ -32,6 +32,18 @@ def test_order_override():
     assert k.x(1, np.pi/2, 0) == 1.0
 
 
+def test_symbol_order():
+    k = Kamodo()
+    k['x(r,theta,phi)'] = 'r*sin(theta)*cos(phi)'
+    assert k.x(1, np.pi / 2, 0) == 1.0
+    print(k.to_latex())
+
+    xsymbol = k.signatures['x']['symbol']
+    from sympy import Symbol
+    for i, _ in enumerate(['r', 'theta', 'phi']):
+        assert xsymbol.args[i] == Symbol(_)
+
+
 def test_Kamodo_expr():
     a, b, c, x, y, z = symbols('a b c x y z')
     kamodo = Kamodo(a=x ** 2, verbose=True)

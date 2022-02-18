@@ -752,8 +752,9 @@ class Kamodo(UserDict):
             except KeyError:
                 pass
 
-            symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                                symbol)
+            if len(defaults) > 0:
+                symbol = reorder_symbol(defaults, default_non_default_parameter,
+                                                    symbol)
 
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta

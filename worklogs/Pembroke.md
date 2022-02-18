@@ -1,3 +1,12 @@
+
+### 2022-02-15 15:27:12.479478: clock-out
+
+* bug reports
+
+### 2022-02-15 15:17:52.867347: clock-in
+
+* removing print statements
+
 ### 2022-02-04 19:25:01.075400: clock-out
 
 * added api documentation
@@ -141,7 +150,7 @@ pio.write_image(fig, "cnofs_B_up.svg", engine="kaleido")
 ### 2021-10-08 12:36:27.275094: clock-in
 
 * check for div output_type
->>>>>>> master
+
 * remoded ccmc dockerfiles
 
 ### 2021-09-24 14:12:46.469270: clock-out

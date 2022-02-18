@@ -3,6 +3,7 @@
 Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
+
 from util import np
 from sympy import Integral, Symbol, symbols, Function
 
@@ -194,15 +195,16 @@ def default_inheritance_check(rhs_expr, lhs_expr):
         if isinstance(rhs_expr.args[0], Symbol):
             if len(rhs_expr.args) == 2:
                 if type(rhs_expr.args[1]) != rhs_expr.args[1].name:
-                    if rhs_expr.args[0] != lhs_expr.args[0]:
+                    if rhs_expr.args[0] != lhs_expr.args[0] and not \
+                            isinstance(rhs_expr.args[1], Symbol):
                         raise SyntaxError('Ordering error')
-            elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args:
+            elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args \
+                    and not len(rhs_expr.args[1].args) > 0:
                 for each in rhs_expr.args:
                     if isinstance(each, Symbol):
                         pass
                     else:
                         if rhs_expr.args[0] != lhs_expr.args[-1]:
-                            print('2')
                             raise SyntaxError('Ordering error')
     except IndexError:
         pass
@@ -513,13 +515,7 @@ class Kamodo(UserDict):
                 for k, v in composition.items():
                     print('\t', k, v)
         signature, defaults = sign_defaults(symbol, rhs_expr, composition)
-        default_non_default_parameter = []
-        try:
-            for parm in signature.parameters:
-                default_non_default_parameter.append(parm.name)
-        except KeyError:
-            pass
-        return signature(func), default_non_default_parameter, defaults
+        return signature(func)
 
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
@@ -745,10 +741,20 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-            func, default_non_default_parameter, defaults = \
-                self.vectorize_function(symbol, rhs_expr, composition)
+
+            func = self.vectorize_function(symbol, rhs_expr, composition)
+
+            signature, defaults = sign_defaults(symbol, rhs_expr, composition)
+            default_non_default_parameter = []
+            try:
+                for parm in signature.parameters:
+                    default_non_default_parameter.append(parm.name)
+            except KeyError:
+                pass
+
             symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                    symbol)
+                                                symbol)
+
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None
@@ -1086,23 +1092,48 @@ class Kamodo(UserDict):
                      pad=0),
                  ))
         try:
-            args_unit = signature['arg_units']
-            x_axis_unit = [args_unit[i][0] for i in sorted(args_unit.keys())][0]
-            y_axis_unit = signature['units']
-            x_last_index = layout.xaxis.title.text.rindex('$')
-            y_last_index = layout.yaxis.title.text.rindex('$')
-            new_xaxis_label = layout.xaxis.title.text[
-                              :x_last_index] + ' ' + f'[{x_axis_unit}]' + \
-                              layout.xaxis.title.text[x_last_index:]
-            new_yaxis_label = layout.yaxis.title.text[y_last_index] + str(
-                signature['lhs']) + ' ' + f'[{y_axis_unit}]' + \
-                              layout.yaxis.title.text[y_last_index]
+            if len(signature['arg_units']) == 1:
+                try:
+                    args_unit = signature['arg_units']
+                    x_axis_unit = [args_unit[i][0] for i in sorted(args_unit.keys())][0]
+                    y_axis_unit = signature['units']
+                    x_last_index = layout.xaxis.title.text.rindex('$')
+                    y_last_index = layout.yaxis.title.text.rindex('$')
+                    new_xaxis_label = layout.xaxis.title.text[
+                                      :x_last_index] + ' ' + f'[{x_axis_unit}]' + \
+                                      layout.xaxis.title.text[x_last_index:]
+                    new_yaxis_label = layout.yaxis.title.text[y_last_index] + str(
+                        signature['symbol'].name) + ' ' + f'[{y_axis_unit}]' + \
+                                      layout.yaxis.title.text[y_last_index]
 
-            layout['xaxis']['title']['text'] = new_xaxis_label
-            layout['yaxis']['title']['text'] = new_yaxis_label
-        except AttributeError:
-            pass
-        except IndexError:
+                    layout['xaxis']['title']['text'] = new_xaxis_label
+                    layout['yaxis']['title']['text'] = new_yaxis_label
+                except AttributeError:
+                    pass
+                except IndexError:
+                    pass
+            elif len(signature['arg_units']) == 2:
+                try:
+                    arg_units = signature['arg_units'].values()
+                    arg_keys = list(signature['arg_units'].keys())
+                    x_ax_unit = f" [{list(arg_units)[0]}]"
+                    y_ax_unit = f" [{list(arg_units)[1]}]"
+                    dolr_char = layout.xaxis.title.text.rindex('$')
+                    new_xaxis_label = layout.xaxis.title.text[dolr_char] + ' ' + \
+                                      arg_keys[0] + " " + f"{x_ax_unit}" + \
+                                      layout.xaxis.title.text[dolr_char]
+                    new_yaxis_label = layout.xaxis.title.text[dolr_char] + ' ' + \
+                                      arg_keys[1] + " " + f"{y_ax_unit}" + \
+                                      layout.xaxis.title.text[dolr_char]
+
+                    layout['xaxis']['title']['text'] = new_xaxis_label
+                    layout['yaxis']['title']['text'] = new_yaxis_label
+
+                except AttributeError:
+                    pass
+                except IndexError:
+                    pass
+        except TypeError:
             pass
 
         fig['data'] = traces
@@ -1390,6 +1421,5 @@ def animate(func_, iterator=None, verbose=False):
 
     #     fig_dict["data"] = fig_dict["data"] + fig_dict["frames"][0]["data"]
     fig_dict["layout"]["sliders"] = [sliders_dict]
-
     fig = go.Figure(fig_dict)
     return fig

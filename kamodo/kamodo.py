@@ -215,6 +215,37 @@ def default_inheritance_check(rhs_expr, lhs_expr):
         pass
 
 
+def dimensionless_unit_check(sym_name, arg_units):
+    """
+    Check if args_units has dimensionless item using regex,
+    if it has then 'ordered_unit' will return blank item  for the
+    corresponding key and will update 'arg_units' with blank-""
+    """
+    try:
+        sym_name_split = sym_name.split(')')
+        sym_name_split.pop(-1)
+        for i in sym_name_split:
+            if '(' in i and '[' in i:
+                flag = True
+            else:
+                flag = False
+        if flag:
+            lhs_args_temp = re.findall(r"\((.+)\)", sym_name)[0]
+            ordered_unit = re.findall(
+                r"((?<!\])|(?<=\[)[^\[\],]*)\]?(?:,|\)|$)",
+                lhs_args_temp)
+            if "" in ordered_unit:
+                counter = 0
+                for k, v in arg_units.items():
+                    arg_units[k] = ordered_unit[counter]
+                    counter = counter + 1
+
+        return arg_units
+
+    except KeyError:
+        pass
+
+
 def get_str_units(bracketed_str):
     """finds all bracketed units in a string
     supports functions like
@@ -654,7 +685,9 @@ class Kamodo(UserDict):
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
                 if self.verbose:
                     print(arg_units)
-                sym_name_temp = sym_name
+
+                sym_name_bkup = sym_name
+
                 sym_name = self.update_unit_registry(sym_name, arg_units)
                 if self.verbose:
                     print('unit registry update returned', sym_name,
@@ -752,28 +785,10 @@ class Kamodo(UserDict):
                                                     symbol)
 
             try:
-                temp = sym_name_temp.split(')')
-                temp.pop(-1)
-                for i in temp:
-                    if '(' in i and '[' in i:
-                        flag = True
-                    else:
-                        flag = False
-                if flag:
-                    lhs_args_temp = re.findall(r"\((.+)\)", sym_name_temp)[0]
-                    ordered_unit = re.findall(
-                        r"((?<!\])|(?<=\[)[^\[\],]*)\]?(?:,|\)|$)",
-                        lhs_args_temp)
-                    if "" in ordered_unit:
-                        counter = 0
-                        for k, v in arg_units.items():
-                            arg_units[k] = ordered_unit[counter]
-                            counter = counter + 1
-
-            except KeyError:
-                pass
+                arg_units = dimensionless_unit_check(sym_name_bkup, arg_units)
             except UnboundLocalError:
                 pass
+
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None

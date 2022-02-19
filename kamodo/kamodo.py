@@ -269,7 +269,6 @@ def extract_units(func_str):
         # 'x[cm],y[km]' -> ['cm', 'km']
         arg_units = get_str_units(lhs_args)
         args = lhs_args.split(',')
-
         for arg, unit in zip(args, arg_units):
             unit_dict[arg.replace('[{}]'.format(unit), '')] = unit
 
@@ -655,6 +654,7 @@ class Kamodo(UserDict):
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
                 if self.verbose:
                     print(arg_units)
+                sym_name_temp = sym_name
                 sym_name = self.update_unit_registry(sym_name, arg_units)
                 if self.verbose:
                     print('unit registry update returned', sym_name,
@@ -666,11 +666,9 @@ class Kamodo(UserDict):
                           symbol,
                           'had no units. Getting units from {}'.format(
                               rhs_expr))
-
                 expr_unit = get_expr_unit(rhs_expr, self.unit_registry,
                                           self.verbose)
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
-
                 if self.verbose:
                     print('registering {} with {} {}'.format(symbol, expr_unit,
                                                              arg_units))
@@ -695,7 +693,6 @@ class Kamodo(UserDict):
 
                 rhs = rhs_expr
                 sym_name = str(sym_name)
-
             if len(lhs_units) > 0:
                 if self.verbose:
                     print('about to unify lhs_units {} {} with {}'.format(
@@ -707,7 +704,6 @@ class Kamodo(UserDict):
                     # to_symbol = symbol,
                     verbose=self.verbose)
                 rhs_expr = expr.rhs
-
             if self.verbose:
                 print('symbol after unify', symbol, type(symbol), rhs_expr)
                 print('unit registry to resolve units:')
@@ -723,7 +719,6 @@ class Kamodo(UserDict):
                     units = ''
             else:
                 units = ''
-
             if self.verbose:
                 print('units after resolve', symbol, units)
                 for k, v in self.unit_registry.items():
@@ -742,7 +737,6 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-
             func = self.vectorize_function(symbol, rhs_expr, composition)
 
             signature, defaults = sign_defaults(symbol, rhs_expr, composition)
@@ -757,6 +751,29 @@ class Kamodo(UserDict):
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
                                                     symbol)
 
+            try:
+                temp = sym_name_temp.split(')')
+                temp.pop(-1)
+                for i in temp:
+                    if '(' in i and '[' in i:
+                        flag = True
+                    else:
+                        flag = False
+                if flag:
+                    lhs_args_temp = re.findall(r"\((.+)\)", sym_name_temp)[0]
+                    ordered_unit = re.findall(
+                        r"((?<!\])|(?<=\[)[^\[\],]*)\]?(?:,|\)|$)",
+                        lhs_args_temp)
+                    if "" in ordered_unit:
+                        counter = 0
+                        for k, v in arg_units.items():
+                            arg_units[k] = ordered_unit[counter]
+                            counter = counter + 1
+
+            except KeyError:
+                pass
+            except UnboundLocalError:
+                pass
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None

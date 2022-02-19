@@ -24,6 +24,28 @@ from kamodo.util import get_args
 import warnings
 
 
+def test_mixed_arg_dimensionless():
+    @kamodofy(units='kg', arg_units=dict(z='cm'))
+    def g(z):
+        return z**2
+
+    @kamodofy(units='g', arg_units=dict(x='kg'))
+    def f(x):
+        return x**2
+
+    @kamodofy(units='g')
+    def h(y):
+        return y**2
+
+    k = Kamodo(f=f, g=g, h=h)
+
+    k['T(x[g], y, z[m])[kg]'] = 'f+g+h'
+
+    assert k.T.meta['arg_units']['x'] == 'g'
+    assert k.T.meta['arg_units']['y'] == ''
+    assert k.T.meta['arg_units']['z'] == 'm'
+
+
 def test_order_override():
     k = Kamodo(f=lambda x,y: y*x**2)
     k['g(y,x)'] = 'f' # should register g(y,x)

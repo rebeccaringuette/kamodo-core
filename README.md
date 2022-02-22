@@ -90,14 +90,11 @@ Kamodo may be installed from pip
 pip install kamodo
 ```
 
-To get the latest version, install from Asher's fork:
+Kamodo is now maintained by Ensemble Government Services. To get the latest version, install from the Ensemble git repo:
 
 ```console
-pip install git+https://github.com/asherp/Kamodo.git
+pip install git+https://github.com/EnsembleGovServices/kamodo-core.git
 ```
-
-!!! note
-    Asher's fork is periodically merged into the CCMC's official NASA version.
 
 ### Kamodo Environment
 
@@ -110,7 +107,7 @@ Download and install miniconda from [here](https://conda.io/miniconda.html). The
 Create a new environment for kamodo
 
 ```console
-conda create -n kamodo python==3.7
+conda create -n kamodo python=3.7
 conda activate kamodo
 (kamodo) pip install kamodo
 ```

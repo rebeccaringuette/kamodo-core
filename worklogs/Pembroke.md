@@ -1,3 +1,4 @@
+* removing commandline interface from docs for now
 * cleaning up install instructions
 * removing extraneous notebooks
 

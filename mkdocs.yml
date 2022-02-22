@@ -10,7 +10,7 @@ nav:
 - Field Integration: notebooks/FieldIntegration.ipynb
 - Kameleon: notebooks/kameleon-kamodo.ipynb
 - TIEGCM: notebooks/TIEGCM.ipynb
-- CommandLine: notebooks/CommandLineInterface.ipynb
+# - CommandLine: notebooks/CommandLineInterface.ipynb
 - API: API.md
 - Additional Resources: additional_resources.md
 

@@ -1,3 +1,4 @@
+* removing extraneous notebooks
 
 ### 2022-02-15 15:27:12.479478: clock-out
 

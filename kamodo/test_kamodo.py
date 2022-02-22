@@ -45,6 +45,20 @@ def test_mixed_arg_dimensionless():
     assert k.T.meta['arg_units']['y'] == ''
     assert k.T.meta['arg_units']['z'] == 'm'
 
+    def T(x, y, z):
+        """assumes input is (x[g], y, z[m])"""
+        x_ = x/1000 # g->kg
+        y_ = y # no units
+        z_ = 100*z # m->cm
+        return x**2 + y**2 + z**2
+    
+    expected = T(3.,4.,5.)
+    actual = k.T(3.,4.,5.)
+    
+    
+    if expected != actual:
+        raise AssertionError('{}(expected) != {} (actual)'.format(expected, actual))
+
 
 def test_order_override():
     k = Kamodo(f=lambda x,y: y*x**2)

@@ -77,9 +77,9 @@ import plotly.io as pio
 fig = kamodo.plot('fvec')
 pio.write_image(fig, 'images/fig2d-usage.svg')
 ```
-![usage](notebooks/images/fig2d-usage.svg)
+![usage](docs/notebooks/images/fig2d-usage.svg)
 
-Head over to the [Introduction](notebooks/Kamodo.ipynb) page for more details.
+Head over to the [Introduction](docs/notebooks/Kamodo.ipynb) page for more details.
 
 
 ## Getting started
@@ -99,7 +99,7 @@ pip install git+https://github.com/asherp/Kamodo.git
 !!! note
     Asher's fork is periodically merged into the CCMC's official NASA version.
 
-### Kamodo Environment 
+### Kamodo Environment
 
 We strongly recommend using the conda environment system to avoid library conflicts with your host machine's python.
 
@@ -140,7 +140,7 @@ The following requirements are obtained by running `pip install kamodo`
 * scipy
 * sympy
 * pandas
-* plotly==3.3 
+* plotly==3.3
 * pytest
 * psutil
 * conda install antlr-python-runtime (rendering latex)
@@ -175,4 +175,3 @@ To deploy your own documentation on github-pages:
 `mkdocs gh-deploy`
 
 This generates a gh-pages branch with the static site files and pushes it to github. Github automatically creates a website url based on that branch.
-

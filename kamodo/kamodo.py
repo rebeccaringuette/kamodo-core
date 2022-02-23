@@ -643,10 +643,23 @@ class Kamodo(UserDict):
         """
         if not isinstance(sym_name, str):
             sym_name = str(sym_name)
-
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         if hasattr(input_expr, '__call__'):
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
+            try:
+                func_doc = input_expr.__doc__
+                expression = func_doc.split('evaluate')[1]
+                expression = expression.split(',')[0]
+                expression = expression.replace('(', '')
+                expression = expression.replace(',', '')
+                expression = expression.replace("'", '')
+                expression = self.parse_value(expression, self.symbol_registry)
+                self.signatures[str(lhs_expr)]['rhs'] = expression
+
+            except AttributeError:
+                pass
+            except IndexError:
+                pass
 
         else:
             if self.verbose:
@@ -889,7 +902,6 @@ class Kamodo(UserDict):
         rhs = self.signatures[key]['rhs']
         units = self.signatures[key]['units']
         arg_units = get_arg_units(lhs, self.unit_registry)
-
         if len(units) > 0:
             units = '{}'.format(get_abbrev(units))
         else:
@@ -921,7 +933,6 @@ class Kamodo(UserDict):
 
         latex_eq = ''
         latex_eq_rhs = ''
-
         if isinstance(rhs, str):
             latex_eq_rhs = rhs
         elif hasattr(rhs, '__call__') | (rhs is None):
@@ -943,7 +954,6 @@ class Kamodo(UserDict):
             repr_latex += r"$"
             repr_latex += "{} = {}".format(lhs_str, latex_eq_rhs)
             repr_latex += r"$"
-
         return repr_latex
 
     def to_latex(self, keys=None, mode='equation'):

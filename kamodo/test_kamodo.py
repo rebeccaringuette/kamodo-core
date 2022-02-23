@@ -24,6 +24,15 @@ from kamodo.util import get_args
 import warnings
 
 
+def test_preserve_repr_latex():
+    k = Kamodo(f='x**2-x-1')
+    k2 = Kamodo(f=k.f)
+    f_repr = k.f._repr_latex_()
+    f2_repr = k2.f._repr_latex_()
+    if f2_repr != f_repr:
+        raise AssertionError('{} != {}'.format(f2_repr, f_repr))
+
+
 def test_mixed_arg_dimensionless():
     @kamodofy(units='kg', arg_units=dict(z='cm'))
     def g(z):

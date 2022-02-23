@@ -239,7 +239,6 @@ def dimensionless_unit_check(sym_name, arg_units):
                 for k, v in arg_units.items():
                     arg_units[k] = ordered_unit[counter]
                     counter = counter + 1
-
         return arg_units
 
     except KeyError:
@@ -792,15 +791,22 @@ class Kamodo(UserDict):
                     default_non_default_parameter.append(parm.name)
             except KeyError:
                 pass
-
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                                    symbol)
-
+                                                  symbol)
             try:
-                arg_units = dimensionless_unit_check(sym_name_bkup, arg_units)
+                arg_units = dimensionless_unit_check(sym_name_bkup,
+                                                     arg_units)
             except UnboundLocalError:
-                pass
+                if len(rhs.args) > 0:
+                    try:
+                        split_rhs_args = str(rhs.args).split(',')[0]
+                        if ('(' in split_rhs_args) and (')' not in
+                                split_rhs_args):
+                            arg_units = {}
+                            units = ""
+                    except IndexError:
+                        pass
 
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta

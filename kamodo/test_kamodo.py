@@ -24,6 +24,28 @@ from kamodo.util import get_args
 import warnings
 
 
+def test_unit_reassignment():
+    k = Kamodo()
+
+    #  initialze a function with units
+    k['f(x[cm])[cm]'] = 'x**2-x-1'
+
+    # update the function so it has units
+    k['f(x[m])[m]'] = 'x**2-x-1'
+
+    assert k.f.meta['units'] == 'm'
+    assert k.f.meta['arg_units']['x'] == 'm'
+    assert k.signatures['f']['units'] == 'm'
+    assert k.signatures['f']['arg_units']['x'] == 'm'
+
+    # update function to remove units
+    k['f'] = 'x**2-x-1'
+    assert k.f.meta['units'] == ''
+    assert len(k.f.meta['arg_units']) == 0
+    assert k.signatures['f']['units'] == ''
+    assert len(k.signatures['f']['arg_units']) == 0
+
+
 def test_preserve_repr_latex():
     k = Kamodo(f='x**2-x-1')
     k2 = Kamodo(f=k.f)
@@ -551,6 +573,7 @@ def test_multi_unit_composition():
     print(kamodo.c.meta)
     assert kamodo.c.meta['units'] == 'g'
     assert kamodo.c.meta['arg_units']['x'] == str(get_abbrev(get_unit('s')))
+
 
 def test_unit_composition_conversion():
     kamodo = Kamodo('a(x[kg])[m] = x', verbose=True)

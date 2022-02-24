@@ -214,6 +214,36 @@ def default_inheritance_check(rhs_expr, lhs_expr):
         pass
 
 
+def dimensionless_unit_check(sym_name, arg_units):
+    """
+    Check if args_units has dimensionless item using regex,
+    if it has then 'ordered_unit' will return blank item  for the
+    corresponding key and will update 'arg_units' with blank-""
+    """
+    try:
+        sym_name_split = sym_name.split(')')
+        sym_name_split.pop(-1)
+        for i in sym_name_split:
+            if '(' in i and '[' in i:
+                flag = True
+            else:
+                flag = False
+        if flag:
+            lhs_args_temp = re.findall(r"\((.+)\)", sym_name)[0]
+            ordered_unit = re.findall(
+                r"((?<!\])|(?<=\[)[^\[\],]*)\]?(?:,|\)|$)",
+                lhs_args_temp)
+            if "" in ordered_unit:
+                counter = 0
+                for k, v in arg_units.items():
+                    arg_units[k] = ordered_unit[counter]
+                    counter = counter + 1
+        return arg_units
+
+    except KeyError:
+        pass
+
+
 def get_str_units(bracketed_str):
     """finds all bracketed units in a string
     supports functions like
@@ -268,7 +298,6 @@ def extract_units(func_str):
         # 'x[cm],y[km]' -> ['cm', 'km']
         arg_units = get_str_units(lhs_args)
         args = lhs_args.split(',')
-
         for arg, unit in zip(args, arg_units):
             unit_dict[arg.replace('[{}]'.format(unit), '')] = unit
 
@@ -612,10 +641,23 @@ class Kamodo(UserDict):
         """
         if not isinstance(sym_name, str):
             sym_name = str(sym_name)
-
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         if hasattr(input_expr, '__call__'):
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
+            try:
+                func_doc = input_expr.__doc__
+                expression = func_doc.split('evaluate')[1]
+                expression = expression.split(',')[0]
+                expression = expression.replace('(', '')
+                expression = expression.replace(',', '')
+                expression = expression.replace("'", '')
+                expression = self.parse_value(expression, self.symbol_registry)
+                self.signatures[str(lhs_expr)]['rhs'] = expression
+
+            except AttributeError:
+                pass
+            except IndexError:
+                pass
 
         else:
             if self.verbose:
@@ -654,6 +696,9 @@ class Kamodo(UserDict):
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
                 if self.verbose:
                     print(arg_units)
+
+                sym_name_bkup = sym_name
+
                 sym_name = self.update_unit_registry(sym_name, arg_units)
                 if self.verbose:
                     print('unit registry update returned', sym_name,
@@ -665,11 +710,9 @@ class Kamodo(UserDict):
                           symbol,
                           'had no units. Getting units from {}'.format(
                               rhs_expr))
-
                 expr_unit = get_expr_unit(rhs_expr, self.unit_registry,
                                           self.verbose)
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
-
                 if self.verbose:
                     print('registering {} with {} {}'.format(symbol, expr_unit,
                                                              arg_units))
@@ -694,7 +737,6 @@ class Kamodo(UserDict):
 
                 rhs = rhs_expr
                 sym_name = str(sym_name)
-
             if len(lhs_units) > 0:
                 if self.verbose:
                     print('about to unify lhs_units {} {} with {}'.format(
@@ -706,7 +748,6 @@ class Kamodo(UserDict):
                     # to_symbol = symbol,
                     verbose=self.verbose)
                 rhs_expr = expr.rhs
-
             if self.verbose:
                 print('symbol after unify', symbol, type(symbol), rhs_expr)
                 print('unit registry to resolve units:')
@@ -722,7 +763,6 @@ class Kamodo(UserDict):
                     units = ''
             else:
                 units = ''
-
             if self.verbose:
                 print('units after resolve', symbol, units)
                 for k, v in self.unit_registry.items():
@@ -741,7 +781,6 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-
             func = self.vectorize_function(symbol, rhs_expr, composition)
 
             signature, defaults = sign_defaults(symbol, rhs_expr, composition)
@@ -751,10 +790,22 @@ class Kamodo(UserDict):
                     default_non_default_parameter.append(parm.name)
             except KeyError:
                 pass
-
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                                    symbol)
+                                                  symbol)
+            try:
+                arg_units = dimensionless_unit_check(sym_name_bkup,
+                                                     arg_units)
+            except UnboundLocalError:
+                if len(rhs.args) > 0:
+                    try:
+                        split_rhs_args = str(rhs.args).split(',')[0]
+                        if ('(' in split_rhs_args) and (')' not in
+                                split_rhs_args):
+                            arg_units = {}
+                            units = ""
+                    except IndexError:
+                        pass
 
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
@@ -856,7 +907,6 @@ class Kamodo(UserDict):
         rhs = self.signatures[key]['rhs']
         units = self.signatures[key]['units']
         arg_units = get_arg_units(lhs, self.unit_registry)
-
         if len(units) > 0:
             units = '{}'.format(get_abbrev(units))
         else:
@@ -888,7 +938,6 @@ class Kamodo(UserDict):
 
         latex_eq = ''
         latex_eq_rhs = ''
-
         if isinstance(rhs, str):
             latex_eq_rhs = rhs
         elif hasattr(rhs, '__call__') | (rhs is None):
@@ -910,7 +959,6 @@ class Kamodo(UserDict):
             repr_latex += r"$"
             repr_latex += "{} = {}".format(lhs_str, latex_eq_rhs)
             repr_latex += r"$"
-
         return repr_latex
 
     def to_latex(self, keys=None, mode='equation'):

@@ -285,6 +285,7 @@ def extract_units(func_str):
             extract_units('f[(cm)^2]')
             ('f', {'f': '(cm)^2'})
         no args named and no units named
+            extract_units('f')
             ('f', {'f': ''})
     """
     # remove any spaces
@@ -550,6 +551,10 @@ class Kamodo(UserDict):
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
         lhs, unit_dict = extract_units(func)
+        if self.verbose:
+            print('extracted lhs units: {}'.format(lhs))
+            for k, v in unit_dict.items():
+                print('  ', k, v)
         # if arg_units is None:
         #     arg_units = {}
         for key, value in unit_dict.items():

@@ -20,8 +20,48 @@ from kamodo import KamodoAPI
 from .util import serialize, NumpyArrayEncoder
 from .util import get_kamodo_unit_system
 from kamodo.util import get_args
+from kamodo import extract_units
 
 import warnings
+
+
+def test_extract_units():
+    """ Test the following combinations of units present in lhs expressions
+    1. args and output have units
+    2. some (but not all) args have units
+    3. args have parenthesis in units and output has no units
+    4. output has parenthesis in units
+    5. no args named and no units named
+    """
+    # case 1
+    lhs, unit_dict = extract_units('f(x[cm], y[km])[kg]')
+    assert lhs == 'f(x,y)'
+    assert unit_dict['x'] == 'cm'
+    assert unit_dict['y'] == 'km'
+    assert unit_dict[lhs] == 'kg'
+
+    # case 2
+    lhs, unit_dict = extract_units('T(x[g], y, z[m])[kg]')
+    assert lhs == 'T(x,y,z)'
+    assert unit_dict['x'] == 'g'
+    assert unit_dict['y'] == ''
+    assert unit_dict['z'] == 'm'
+    
+    # case 3
+    lhs, unit_dict = extract_units('f(x[(cm )^2])')
+    assert lhs == 'f(x)'
+    assert unit_dict['x'] == '(cm)^2'
+    assert unit_dict[lhs] == ''
+    
+    # case 4
+    lhs, unit_dict = extract_units('f[(cm)^2]')
+    assert lhs == 'f'
+    assert unit_dict[lhs] == '(cm)^2'
+    
+    # case 5
+    lhs, unit_dict = extract_units('f')
+    assert lhs == 'f'
+    assert unit_dict[lhs] == ''
 
 
 def test_mixed_arg_dimensionless():

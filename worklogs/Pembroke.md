@@ -1,3 +1,4 @@
+* fixing unit test for mixture of dimensionless args
 * added test for lhs unit parsing
 * refining test to validate lambdified function
 ### 2022-02-15 15:27:12.479478: clock-out

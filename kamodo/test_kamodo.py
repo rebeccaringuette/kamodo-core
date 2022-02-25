@@ -65,32 +65,37 @@ def test_extract_units():
 
 
 def test_mixed_arg_dimensionless():
-    @kamodofy(units='kg', arg_units=dict(z='cm'))
-    def g(z):
-        return z**2
-
     @kamodofy(units='g', arg_units=dict(x='kg'))
     def f(x):
         return x**2
+    
 
     @kamodofy(units='g')
     def h(y):
         return y**2
 
+    @kamodofy(units='kg', arg_units=dict(z='cm'))
+    def g(z):
+        return z**2
+
+    
     k = Kamodo(f=f, g=g, h=h)
 
-    k['T(x[g], y, z[m])[kg]'] = 'f+g+h'
+    k['T(x[g], y, z[m])[kg]'] = 'f+h+g'
 
     assert k.T.meta['arg_units']['x'] == 'g'
     assert k.T.meta['arg_units']['y'] == ''
     assert k.T.meta['arg_units']['z'] == 'm'
 
     def T(x, y, z):
-        """assumes input is (x[g], y, z[m])"""
-        x_ = x/1000 # g->kg
+        """assumes input is (x[g], y, z[m])
+        should get T=f(x/1000)/1000 + h(y)/1000 + g(100*z)
+        """
+        x_ = x/1000. # g->kg
         y_ = y # no units
-        z_ = 100*z # m->cm
-        return x**2 + y**2 + z**2
+        z_ = 100.*z # m->cm
+        return (x_**2)/1000. + (y_**2)/1000. + z_**2
+
     
     expected = T(3.,4.,5.)
     actual = k.T(3.,4.,5.)

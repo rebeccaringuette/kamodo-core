@@ -627,11 +627,17 @@ class Kamodo(UserDict):
             self.unit_registry[lhs_symbol] = get_unit(units)
         self.register_signature(lhs_symbol, units, lhs_expr, rhs, arg_units)
         try:
-            func._repr_latex_ = lambda: self.func_latex(str(type(lhs_symbol)),
-                                                        mode='inline')
+            if hasattr(func, '_repr_latex_'):
+                func._repr_latex_ = func.__preserved__
+            else:
+
+                func._repr_latex_ = lambda: self.func_latex(str(type(
+                    lhs_symbol)), mode='inline')
+
         except AttributeError:
             # happens with bound methods
             pass
+
         super(Kamodo, self).__setitem__(lhs_symbol, func)  # assign key 'f(x)'
         super(Kamodo, self).__setitem__(type(lhs_symbol),
                                         self[lhs_symbol])  # assign key 'f'
@@ -646,20 +652,6 @@ class Kamodo(UserDict):
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         if hasattr(input_expr, '__call__'):
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
-            try:
-                func_doc = input_expr.__doc__
-                expression = func_doc.split('evaluate')[1]
-                expression = expression.split(',')[0]
-                expression = expression.replace('(', '')
-                expression = expression.replace(',', '')
-                expression = expression.replace("'", '')
-                expression = self.parse_value(expression, self.symbol_registry)
-                self.signatures[str(lhs_expr)]['rhs'] = expression
-
-            except AttributeError:
-                pass
-            except IndexError:
-                pass
 
         else:
             if self.verbose:
@@ -808,9 +800,11 @@ class Kamodo(UserDict):
             self.register_signature(symbol, units, lhs_expr, rhs_expr, arg_units)
             func._repr_latex_ = lambda: self.func_latex(str(type(symbol)),
                                                         mode='inline')
+            self.register_symbol(symbol)
+            func._preserved_ = lambda: self.func_latex(str(type(symbol)),
+                                                       mode='inline')
             super(Kamodo, self).__setitem__(symbol, func)
             super(Kamodo, self).__setitem__(type(symbol), self[symbol])
-            self.register_symbol(symbol)
 
     def __getitem__(self, key):
         try:

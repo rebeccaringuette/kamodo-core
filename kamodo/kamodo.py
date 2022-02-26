@@ -214,37 +214,6 @@ def default_inheritance_check(rhs_expr, lhs_expr):
         pass
 
 
-def dimensionless_unit_check(sym_name, arg_units):
-    """
-    Check if args_units has dimensionless item using regex,
-    if it has then 'ordered_unit' will return blank item  for the
-    corresponding key and will update 'arg_units' with blank-""
-    """
-    try:
-        sym_name_split = sym_name.split(')')
-        sym_name_split.pop(-1)
-        for i in sym_name_split:
-            if '(' in i and '[' in i:
-                flag = True
-            else:
-                flag = False
-        if flag:
-            lhs_args_temp = re.findall(r"\((.+)\)", sym_name)[0]
-            ordered_unit = re.findall(
-                r"((?<!\])|(?<=\[)[^\[\],]*)\]?(?:,|\)|$)",
-                lhs_args_temp)
-            if "" in ordered_unit:
-                counter = 0
-                for k, v in arg_units.items():
-                    arg_units[k] = ordered_unit[counter]
-                    counter = counter + 1
-
-        return arg_units
-
-    except KeyError:
-        pass
-
-
 def get_str_units(bracketed_str):
     """finds all bracketed units in a string
     supports functions like
@@ -300,10 +269,20 @@ def extract_units(func_str):
         # 'x[cm],y[km]' -> ['cm', 'km']
         arg_units = get_str_units(lhs_args)
         args = lhs_args.split(',')
+
+        try:
+            if len(args) != len(arg_units) and len(arg_units)>0:
+                for i in range(len(args)):
+                    if '[' not in args[i]:
+                        arg_units.insert(i, "")
+        except IndexError:
+            pass
+        except NotImplementedError:
+            pass
+
         for arg, unit in zip(args, arg_units):
             unit_dict[arg.replace('[{}]'.format(unit), '')] = unit
-
-        if len(all_units) == len(arg_units):
+        if len(all_units) == len(arg_units) and "" not in arg_units:
             output_units = ''
         else:
             output_units = all_units[-1]
@@ -775,7 +754,9 @@ class Kamodo(UserDict):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
             func = self.vectorize_function(symbol, rhs_expr, composition)
-
+            for k, v in arg_units.items():
+                if str(v) == 'Dimension(1)':
+                    arg_units[k] = ''
             signature, defaults = sign_defaults(symbol, rhs_expr, composition)
             default_non_default_parameter = []
             try:
@@ -787,11 +768,6 @@ class Kamodo(UserDict):
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
                                                     symbol)
-
-            try:
-                arg_units = dimensionless_unit_check(sym_name_bkup, arg_units)
-            except UnboundLocalError:
-                pass
 
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta

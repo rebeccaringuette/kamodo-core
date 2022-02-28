@@ -117,3 +117,38 @@ myfunc.data
 
 ::: kamodo.util.partial
     :docstring:
+
+## Test Suite
+
+### Kamodo Tests
+
+::: kamodo.test_kamodo.test_Kamodo_expr
+    :docstring: 
+
+::: kamodo.test_kamodo.test_Kamodo_latex
+    :docstring: 
+
+::: kamodo.test_kamodo.test_Kamodo_mismatched_symbols
+    :docstring: 
+
+::: kamodo.test_kamodo.test_Kamodo_reassignment
+    :docstring: 
+
+::: kamodo.test_kamodo.test_function_registry
+    :docstring: 
+
+::: kamodo.test_kamodo.test_unit_registry
+    :docstring: 
+
+::: kamodo.test_kamodo.test_komodofy_decorator
+    :docstring: 
+
+::: kamodo.test_kamodo.test_vectorize
+    :docstring: 
+
+::: kamodo.test_kamodo.test_jit_evaluate
+    :docstring:  
+
+::: kamodo.test_kamodo.test_multiple_traces
+    :docstring:
+

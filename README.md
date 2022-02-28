@@ -147,6 +147,23 @@ The following requirements are obtained by running `pip install kamodo`
     plotly version in flux
 
 
+## Test Suite
+
+Kamodo's unit tests are run with [pytest](https://docs.pytest.org/en/7.0.x/). To install pytest with code coverage
+
+```sh
+python -m pip install flake8 pytest
+pip install pytest-cov
+```
+
+Then, from the base of the git repo:
+
+```sh
+pytest --cov kamodo.kamodo --cov kamodo.util --cov plotting kamodo/test_plotting.py kamodo/test_kamodo.py kamodo/test_utils.py
+```
+
+This will generate a test report and coverage of the `kamodo` module.
+
 ## Generating Docs
 
 Kamodo's documentation site is a good example of how to embed your own plots in your own website.

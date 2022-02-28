@@ -1,3 +1,4 @@
+* how to run unit tests
 * cleaning up missing docstrings for plot and figure, removed extraneous images
 * removing commandline interface from docs for now
 * cleaning up install instructions

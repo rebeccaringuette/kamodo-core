@@ -16,10 +16,10 @@ from util import get_bbox
 
 def scatter_plot(result, titles, verbose=False, **kwargs):
     """
-    - Generates a 3d scatter plot
-    Args:
-        result: a dictionary of parameters
-        titles: a dictionary of titles
+    - Generates a 3D scatter plot.
+
+    result: a dictionary of parameters
+    titles: a dictionary of titles
 
     Returns:
         [trace], chart_type, layout
@@ -73,10 +73,10 @@ def scatter_plot(result, titles, verbose=False, **kwargs):
 
 def line_plot(result, titles, verbose=False, **kwargs):
     """
-    - Generate 1d, 2d or 3d line plot
-    Args:
-        result: a dictionary of parameters
-        titles: a dictionary of titles
+    - Generates a 1D, 2D or 3D line plot.
+
+    result: a dictionary of parameters
+    titles: a dictionary of titles
 
     Returns:
         [trace], chart_type, layout
@@ -250,10 +250,10 @@ def line_plot(result, titles, verbose=False, **kwargs):
 
 def vector_plot(result, titles, verbose=False, **kwargs):
     """
-    - Generate 2d or 3d vector plot
-    Args:
-        result: a dictionary of parameters
-        titles: a dictionary of titles
+    - Generates a 2D or 3D vector plot.
+
+    result: a dictionary of parameters
+    titles: a dictionary of titles
 
     Returns:
         [trace], chart_type, layout
@@ -341,14 +341,13 @@ def vector_plot(result, titles, verbose=False, **kwargs):
 
 def contour_plot(result, titles, indexing, verbose=False, **kwargs):
     """
-    - Generates a 2d contour plot
+    - Generates a 2D contour plot.
 
     result: a dictionary of parameters
     titles: a dictionary of titles
 
     returns:
         [trace], chart_type, layout
-
     """
     try:
         colorbar_title = dict(title=titles['title_short'], titleside='bottom')
@@ -425,15 +424,14 @@ def contour_plot(result, titles, indexing, verbose=False, **kwargs):
 
 def carpet_plot(results, title, xaxis, yaxis, indexing='xy', **kwargs):
     """
-        -Generates a 2d skew (carpet) plot
-        Args:
-            result: a dictionary of parameters
-            titles: a dictionary of titles
+    - Generates a 2D skew (carpet) plot.
 
-        Returns:
-            [trace], layout
+    result: a dictionary of parameters
+    titles: a dictionary of titles
+
+    returns:
+        [trace], layout
     """
-    '''Assumes ordered dict where values have the same shape'''
 
     arg0, val0 = list(results.items())[0]
     arg1, val1 = list(results.items())[1]
@@ -488,13 +486,13 @@ def carpet_plot(results, title, xaxis, yaxis, indexing='xy', **kwargs):
 
 def plane(result, titles, indexing='xy', verbose=False, **kwargs):
     """
-        - Generates a 3d plane plot
-        Args:
-            result: a dictionary of parameters
-            titles: a dictionary of titles
+    - Generates a 3D plane plot.
 
-        Returns:
-            [trace], chart_type, layout
+    result: a dictionary of parameters
+    titles: a dictionary of titles
+
+    Returns:
+        [trace], chart_type, layout
     """
     variable = titles['variable']
     arg0, val0 = list(result.items())[0]
@@ -533,13 +531,13 @@ def plane(result, titles, indexing='xy', verbose=False, **kwargs):
 
 def surface(result, titles, verbose=False, **kwargs):
     """
-        - Generates a 3d surface-scalar or surface plot
-        Args:
-            result: a dictionary of parameters
-            titles: a dictionary of titles
+    - Generates a 3d surface-scalar or surface plot.
 
-        Returns:
-            [trace], chart_type, layout
+    result: a dictionary of parameters
+    titles: a dictionary of titles
+
+    Returns:
+        [trace], chart_type, layout
     """
     variable = titles['variable']
     title = titles['title']
@@ -618,15 +616,15 @@ def surface(result, titles, verbose=False, **kwargs):
 
 def tri_surface_plot(result, titles, verbose=False, **kwargs):
     """
-        - Generates a 3d mesh (tri-surface) plot
-        Args:
-            result: a dictionary of parameters
-            titles: a dictionary of titles
+    - Generates a 3D mesh (tri-surface) plot.
 
-        Returns:
-            [trace], chart_type, layout
+    result: a dictionary of parameters
+    titles: a dictionary of titles
+
+    Returns:
+        [trace], chart_type, layout
     """
-    # triangulated surface 
+    # triangulated surface
     variable = titles['variable']
     results = list(result.items())
     arg0, val0 = results[0]
@@ -662,13 +660,13 @@ def tri_surface_plot(result, titles, verbose=False, **kwargs):
 
 def image(result, titles, verbose=False, **kwargs):
     """
-        - Generates a 2d image plot
-        Args:
-            result: a dictionary of parameters
-            titles: a dictionary of titles
+    - Generates a 2D image plot
 
-        Returns:
-            [trace], chart_type, layout
+    result: a dictionary of parameters
+    titles: a dictionary of titles
+
+    Returns:
+        [trace], chart_type, layout
     """
     variable = titles['variable']
     if verbose:
@@ -762,7 +760,6 @@ def unordered_unique(a):
 
 def symbolic_shape(*shapes, sizes_available=sizes_available):
     """Convert input shapes to symbolic shapes
-
     Allow values of 1 to pass through
     Results should match input structure
     """

@@ -131,17 +131,36 @@ This should open a browser window that will allow you to load any of the example
 
 #### Requirements
 
-The following requirements are obtained by running `pip install kamodo`
+The following (minimum) requirements are obtained by running `pip install kamodo`
 
+* decorator>=4.4.2
 * numpy
 * scipy
-* sympy
+* sympy==1.5.1
 * pandas
-* plotly==3.3
+* plotly
 * pytest
-* psutil
-* conda install antlr-python-runtime (rendering latex)
-* conda install -c plotly plotly-orca (for writing images)
+* hydra-core==0.11.3
+* Flask==1.1.2
+* flask-cors
+* flask-restful==0.3.8
+* antlr4-python3-runtime==4.7
+* python-forge
+* requests
+* incremental
+
+
+The antlr package may be necessary for rendering latex rendering in a notebook
+
+```sh
+conda install antlr-python-runtime
+```
+
+Plotly-orca may be needed for proper image export
+
+```sh
+conda install -c plotly plotly-orca (for writing images)
+```
 
 !!! note
     plotly version in flux

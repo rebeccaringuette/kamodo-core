@@ -4,7 +4,7 @@
 
 ::: kamodo.Kamodo
     :docstring:
-    :members: __init__ __setitem__ __getitem__ plot figure to_latex _repr_latex_ detail evaluate
+    :members: __init__ __setitem__ __getitem__ __getattr__ plot figure to_latex _repr_latex_ detail evaluate
 
 ## Plotting
 
@@ -119,6 +119,8 @@ myfunc.data
     :docstring:
 
 ## Test Suite
+
+Kamodo features a full suite of tests run via pytest. We highlight a few of these tests below as further examples of Kamodo's expected use cases.
 
 ### Kamodo Tests
 

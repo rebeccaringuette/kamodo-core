@@ -187,16 +187,19 @@ def kamodofy(
     - meta is a dictionary containing {units: <str>}.
     - data if supplied, set f.data = data, if not supplied, set f.data = f(), assuming it can be called with no arguments.
       If f cannot be called with no arguments, set f.data = None
-    Args:
-        _func: kamodo function
-        units: units for function
-        arg_units: arguments units
-        data: data for function
-        update: updates in function
-        equation: equation of the function
-        citation: citation of function
-        hidden_args: hidden arguments of function
-        **kwargs: other key word arguments
+
+    _func: kamodo function
+    units: units for function
+    arg_units: arguments units
+    data: data for function
+    update: updates in function
+    equation: equation of the function
+    citation: citation of function
+    hidden_args: hidden arguments of function
+    **kwargs: other key word arguments
+
+    returns : decorator kamodofy
+
     """
 
     def decorator_kamodofy(f):
@@ -379,11 +382,13 @@ existing_plot_types.columns = ['Plot Type', 'notes']
 def gridify(_func=None, order='A', squeeze=True, **defaults):
     """
     - Given a function of shape (n,dim) and arguments of shape (L), (M), calls f with points L*M
-    Args:
-        _func: kamodo function
-        order: 'A' (default) uses indexing='xy' in meshgrid, 'C' uses indexing='ij' in meshgrid
-        squeeze: True (default) passed to reshape before returning
-        **defaults:
+
+    _func: kamodo function
+    order: 'A' (default) uses indexing='xy' in meshgrid, 'C' uses indexing='ij' in meshgrid
+    squeeze: True (default) passed to reshape before returning
+
+    returns: decorator gridify
+
     """
 
     def decorator_gridify(f):
@@ -428,11 +433,9 @@ def pointlike(_func=None, signature=None, otypes=[float], squeeze=None):
     """
     - Transforms a single-argument function to one that accepts m points of dimension n
 
-    Args:
-        _func: kamodo function
-        signature:
-        otypes:
-        squeeze:
+    _func: kamodo function
+
+    returns: decorator pointlike
     """
 
     def decorator_pointlike(func):
@@ -1296,10 +1299,12 @@ def latex_repr_values(values_dict):
 
 def partial(_func=None, **partial_kwargs):
     """
-    A partial function decorator, Reduces function signature to reflect partially assigned kwargs
-    Args:
-        _func: kamodo function object
-        **partial_kwargs:
+    - A partial function decorator, Reduces function signature to reflect partially assigned kwargs
+
+    _func: kamodo function object
+    **partial_kwargs:
+
+    returns: decorator partial
     """
     verbose = partial_kwargs.pop('verbose', False)
 

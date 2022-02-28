@@ -152,3 +152,50 @@ myfunc.data
 ::: kamodo.test_kamodo.test_multiple_traces
     :docstring:
 
+### Plotting Tests
+
+::: kamodo.test_plotting.test_scatter_plot
+    :docstring:
+
+::: kamodo.test_plotting.test_line_plot_line
+    :docstring:
+
+::: kamodo.test_plotting.test_line_plot_2d_line
+    :docstring:
+
+::: kamodo.test_plotting.test_line_plot_3d_line_pd
+    :docstring:
+
+::: kamodo.test_plotting.test_vector_plot_2d_vector
+    :docstring:
+
+::: kamodo.test_plotting.test_vector_plot_3d_vector
+    :docstring:
+
+::: kamodo.test_plotting.test_vector_plot_3d_vector
+    :docstring:
+
+::: kamodo.test_plotting.test_contour_plot_2d_grid
+    :docstring:
+
+::: kamodo.test_plotting.test_contour_plot_2d_skew
+    :docstring:
+
+::: kamodo.test_plotting.test_plane
+    :docstring:
+
+::: kamodo.test_plotting.test_surface_3d_surface
+    :docstring:
+
+::: kamodo.test_plotting.test_arg_shape_pd
+    :docstring:
+
+::: kamodo.test_plotting.test_image_plot
+    :docstring:
+
+
+
+
+
+
+

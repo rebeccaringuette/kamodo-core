@@ -31,7 +31,9 @@ docker compose up
 
 Want to contribute to Kamodo-core? Open a pull request!
 
-1. First create a branch off of `master`, named after the feature or issue you are targeting.
+### Branching
+
+First create a branch off of `master`, named after the feature or issue you are targeting.
 
 ```sh
 git checkout -b issue-999
@@ -40,7 +42,9 @@ git checkout -b issue-999
 You may start your PR when you prefer, depending on how much support you'll need to complete it, but remember it should be up-to-date with `master` before it can be merged.
 
 
-2. Run tests locally prior to pushing.
+### Testing
+
+Run tests locally prior to pushing.
 
 ```sh
 python -m pip install flake8 pytest
@@ -55,7 +59,10 @@ pytest --cov kamodo.kamodo --cov kamodo.util --cov plotting kamodo/test_plotting
 
 Try to at least maintain the current code coverage with your PR.
 
-3. Consider using [hourly](https://github.com/asherp/hourly) for time tracking your branch. This will allow future developers to see which parts of the code receive the most attention. 
+
+### Hourly (optional)
+
+Consider using [hourly](https://github.com/asherp/hourly) for time tracking your branch. This will allow future developers to see which parts of the code receive the most attention. 
 
 If you're using hourly, you'll want to configure `hourly.yaml` so that your worklog points to a file named after you:
 

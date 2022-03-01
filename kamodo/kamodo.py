@@ -818,6 +818,8 @@ class Kamodo(UserDict):
             self.register_symbol(symbol)
 
     def __getitem__(self, key):
+        """Given a symbol string, retrieves the corresponding function.
+        """
         try:
             return super(Kamodo, self).__getitem__(key)
         except KeyError:
@@ -836,6 +838,13 @@ class Kamodo(UserDict):
         return False
 
     def __getattr__(self, name):
+        """Retrieves a given function as an attribute.
+
+        Usage:
+        To evaluate function $f(x)$ at [1,2,3]:
+
+            k.f([1,2,3])
+        """
         try:
             return self[name]
         except KeyError:
@@ -963,7 +972,10 @@ class Kamodo(UserDict):
 
     def to_latex(self, keys=None, mode='equation'):
         """Generate list of LaTeX-formated formulas
-        Upon registeration, each function should have a _repr_latex_ method.
+
+        mode(optional): equation(default) wrap formulas in \begin{equation} ... \end{equation}. Use mode='inline' for $$ ... $$
+        
+        Note: Upon registeration, each function should have a _repr_latex_ method.
         """
         if keys is None:
             keys = list(self.signatures.keys())
@@ -982,7 +994,7 @@ class Kamodo(UserDict):
         return beautify_latex(repr_latex).encode('utf-8').decode()
 
     def _repr_latex_(self):
-        """Provide notebook rendering of formulas"""
+        """Provide notebook rendering of formulas (called automatically by jupyter notebooks"""
         return self.to_latex()
 
     def detail(self):
@@ -1000,8 +1012,9 @@ class Kamodo(UserDict):
         return simulate(OrderedDict(state_funcs), **kwargs)
 
     def evaluate(self, variable, *args, **kwargs):
-        """evaluates the variable
-        if the variable is not present, try to parse it as a semicolon-delimited list
+        """evaluates the variable.
+
+        If the variable is not present, try to parse it as a semicolon-delimited list
         """
         if not hasattr(self, variable):
             var_dict = {}
@@ -1078,7 +1091,13 @@ class Kamodo(UserDict):
         return scope['solution']
 
     def figure(self, variable, indexing='ij', **kwargs):
-        """Generates a plotly figure for a given variable and keyword arguments"""
+        """Generates a plotly figure for a single variable and keyword arguments
+
+        variable: the name of a previously registered function
+        kwargs: {arg: values} to pass to registered function
+        indexing: determines order by which 2d matrices are given
+
+        """
         result = self.evaluate(variable, **kwargs)
         signature = self.signatures[variable]
         units = signature['units']
@@ -1193,6 +1212,18 @@ class Kamodo(UserDict):
         # return fig
 
     def plot(self, *variables, plot_partial={}, **figures):
+        """Generates a plotly figure from multiple variables and keyword arguments
+
+        variable: the name of a previously registered function
+        figures: {variable: {arg: values}} to pass to registered function
+
+        Usage:
+
+            k.plot('f') # plots f using default arguments for f
+
+            k.plot(f={x:[3,4,5]}, g={x{-2, 3, 4}}) # plots f at x=[3,4,5] and g at [-2,3,4]
+
+        """
         if len(plot_partial) > 0:
             kpartial = from_kamodo(self)  # copy kamodo object
             for k, v in plot_partial.items():

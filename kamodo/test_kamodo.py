@@ -3,25 +3,24 @@ Tests for kamodo.py
 
 """
 
-import numpy as np
-from sympy import symbols, Symbol
-import pytest
-from sympy.core.function import UndefinedFunction
-import pandas as pd
-from kamodo import Kamodo, get_unit, kamodofy, Eq
 import functools
+import warnings
+
+import numpy as np
+import pandas as pd
+import pytest
+from kamodo.util import get_args
+from sympy import Function
 from sympy import lambdify, sympify
+from sympy import symbols, Symbol
+from sympy.core.function import UndefinedFunction
+
+from kamodo import Kamodo, get_unit, kamodofy
+from kamodo import from_kamodo, compose
 from kamodo import get_abbrev
 from .util import get_arg_units
-from .util import get_unit_quantity, convert_unit_to
-from kamodo import from_kamodo, compose
-from sympy import Function
-from kamodo import KamodoAPI
-from .util import serialize, NumpyArrayEncoder
 from .util import get_kamodo_unit_system
-from kamodo.util import get_args
-
-import warnings
+from .util import get_unit_quantity, convert_unit_to
 
 
 def test_unit_reassignment():
@@ -78,11 +77,11 @@ def test_mixed_arg_dimensionless():
 
 
 def test_order_override():
-    k = Kamodo(f=lambda x,y: y*x**2)
-    k['g(y,x)'] = 'f' # should register g(y,x)
-    assert k.g(3,4) == k.f(4,3)
-    k['x(r,theta,phi)'] = 'r*sin(theta)*cos(phi)' # should register x(r, theta, phi)
-    assert k.x(1, np.pi/2, 0) == 1.0
+    k = Kamodo(f=lambda x, y: y * x ** 2)
+    k['g(y,x)'] = 'f'  # should register g(y,x)
+    assert k.g(3, 4) == k.f(4, 3)
+    k['x(r,theta,phi)'] = 'r*sin(theta)*cos(phi)'  # should register x(r, theta, phi)
+    assert k.x(1, np.pi / 2, 0) == 1.0
 
 
 def test_symbol_order():
@@ -98,6 +97,9 @@ def test_symbol_order():
 
 
 def test_Kamodo_expr():
+    """
+    - Method for testing correctness of expression.
+    """
     a, b, c, x, y, z = symbols('a b c x y z')
     kamodo = Kamodo(a=x ** 2, verbose=True)
     try:
@@ -140,6 +142,9 @@ def test_Kamodo_str():
 
 
 def test_Kamodo_latex():
+    """
+    - Method for testing latex representation of expression.
+    """
     kamodo = Kamodo('$f(a,x,b) = a^x+b $')
     assert kamodo.f(3, 4, 5) == 3 ** 4 + 5
 
@@ -161,6 +166,9 @@ def test_Kamodo_set():
 
 
 def test_Kamodo_mismatched_symbols():
+    """
+    - Method for testing symobls in accroding expression.
+    """
     with pytest.raises(NameError):
         kamodo = Kamodo('$f(a,b) = a + b + c$', verbose=False)
         assert 'f' not in kamodo
@@ -193,7 +201,7 @@ def test_Kamodo_composition():
     kamodo = Kamodo(f="$x^2$", verbose=True)
     kamodo['g(x)'] = "$f(x) + x^2$"
     kamodo['h(x)'] = 'g**2 + x**2'
-    
+
     try:
         assert kamodo.f(3) == 3 ** 2
         assert kamodo.g(3) == 3 ** 2 + 3 ** 2
@@ -204,12 +212,16 @@ def test_Kamodo_composition():
 
 
 def test_Kamodo_reassignment():
+    """
+    - Method for testing reassignment of expression.
+    """
     a, b, c, x, y, z, r = symbols('a b c x y z r')
     kamodo = Kamodo('f(x) = 3*x+5', verbose=True)
     kamodo['r(x,y)'] = x + y
     kamodo['r(x,y)'] = "3*x + y"
     assert kamodo.r(1, 1) != 2
     assert kamodo.r(1, 1) == 4
+
 
 def test_Kamodo_reassignment_units():
     kamodo = Kamodo(verbose=True)
@@ -234,6 +246,9 @@ def test_special_numbers():
 
 
 def test_function_registry():
+    """
+    - Method for testing kamodo's function registry.
+    """
     kamodo = Kamodo("f(x) = x**2", "g(y) = y**3")
     kamodo['r(x,y)'] = "(x**2 + y**2)**(1/2)"
     kamodo['h(x,y)'] = 'f + g + r'
@@ -258,6 +273,9 @@ def test_compact_variable_syntax():
 
 
 def test_unit_registry():
+    """
+    - Method for testing kamodo function's unit registry
+    """
     def rho(x, y):
         return x * y
 
@@ -286,13 +304,14 @@ def test_to_latex():
     kamodo = Kamodo(g='x', verbose=True)
     assert str(kamodo.to_latex(mode='inline')) == r'$g{\left(x \right)} = x$'
     kamodo['f(x[cm])[kg]'] = 'x**2'
-    kamodo['g'] = kamodofy(lambda x: x**2, units='kg', arg_units=dict(x='cm'), equation='$x^2$')
-    kamodo['h'] = kamodofy(lambda x: x**2, units='kg', arg_units=dict(x='cm'))
-    
-    @kamodofy(units = 'kg/m^3', citation = 'Bob et. al, 2018')
-    def rho(x = np.array([3,4,5]), y = np.array([1,2,3])):
+    kamodo['g'] = kamodofy(lambda x: x ** 2, units='kg', arg_units=dict(x='cm'), equation='$x^2$')
+    kamodo['h'] = kamodofy(lambda x: x ** 2, units='kg', arg_units=dict(x='cm'))
+
+    @kamodofy(units='kg/m^3', citation='Bob et. al, 2018')
+    def rho(x=np.array([3, 4, 5]), y=np.array([1, 2, 3])):
         """A function that computes density"""
-        return x+y
+        return x + y
+
     kamodo['rho'] = rho
     kamodo.to_latex()
 
@@ -302,17 +321,20 @@ def test_expr_conversion():
     print(kamodo.items())
     kamodo.a
 
+
 def test_get_unit_fail():
     with pytest.raises(NameError):
         get_unit('unregistered units')
     with pytest.raises(NameError):
         get_unit('runregistered')
 
+
 def test_get_unit_quantity():
     mykm = get_unit_quantity('mykm', 'km', scale_factor=2)
     mygm = get_unit_quantity('mygm', 'gram', scale_factor=4)
     assert str(convert_unit_to(mykm, get_unit('m'))) == '2000*meter'
     assert str(convert_unit_to(mygm, get_unit('kg'))) == 'kilogram/250'
+
 
 # def test_validate_units():
 #     f, x = symbols('f x')
@@ -325,6 +347,9 @@ def test_get_unit_quantity():
 
 
 def test_unit_conversion():
+    """
+    - Method for testing unit conversion of a quantity.
+    """
     kamodo = Kamodo('$a(x[m])[km/s] = x$',
                     '$b(y[cm])[m/s] = y$', verbose=True)
     kamodo['c(x[m],y[m])[m/s]'] = '$a + b$'
@@ -361,7 +386,7 @@ def test_unit_composition_mixed():
 def test_unit_function_composition():
     kamodo = Kamodo('X[m] = x', verbose=True)
 
-    @kamodofy(units='km/s', arg_units=dict(x = 'm'))
+    @kamodofy(units='km/s', arg_units=dict(x='m'))
     def v(x):
         return x
 
@@ -393,6 +418,9 @@ def test_method_args():
 
 
 def test_komodofy_decorator():
+    """
+    - Method for testing kamodofy dcorator.
+    """
     @kamodofy(units='kg/cm^3')
     def my_density(x, y, z):
         return x + y + z
@@ -412,6 +440,7 @@ def test_alphabetize():
     except:
         print("{} != {}".format(args, answer))
         raise
+
 
 def test_komodofy_register():
     @kamodofy(units='kg/cm^3')
@@ -480,7 +509,7 @@ def test_komodofy_method():
 def test_kamodofy_update_attribute():
     @kamodofy(units='cm', update='y')
     def f(x):
-        return x # pragma: no cover
+        return x  # pragma: no cover
 
     kamodo = Kamodo(f=f)
     assert f.update == 'y'
@@ -536,6 +565,9 @@ def test_default_composition():
 
 
 def test_vectorize():
+    """
+    - Method for testing vetorization of expression.
+    """
     @np.vectorize
     @kamodofy(units='kg')
     def f(x, y):
@@ -543,7 +575,7 @@ def test_vectorize():
 
     kamodo = Kamodo(f=f)
     kamodo.f([3, 4, 5], 5)
-    kamodo.evaluate('f', x=3,y=2)
+    kamodo.evaluate('f', x=3, y=2)
 
 
 def test_redefine_variable():
@@ -551,13 +583,14 @@ def test_redefine_variable():
     kamodo['rho'] = 'a + b'
     kamodo['rho(a,b)'] = 'a*b'
 
+
 def test_unit_composition_registration():
     server = Kamodo(**{'M': kamodofy(lambda r=3: r, units='kg'),
-                       'V[m^3]': (lambda r: r**3)}, verbose=True)
+                       'V[m^3]': (lambda r: r ** 3)}, verbose=True)
     user = Kamodo(mass=server.M, vol=server.V,
-              **{'rho(r)[g/cm^3]':'mass/vol'}, verbose=True)
+                  **{'rho(r)[g/cm^3]': 'mass/vol'}, verbose=True)
 
-    result = (3/3**3)*(1000)*(1/10**6)
+    result = (3 / 3 ** 3) * (1000) * (1 / 10 ** 6)
     assert np.isclose(user.rho(3), result)
 
 
@@ -582,11 +615,10 @@ def test_unit_composition_conversion():
 
     assert kamodo.c.meta['units'] == 'g'
     assert kamodo.c.meta['arg_units']['x'] == 'kg'
-    assert kamodo.c(3) == kamodo.b(100*kamodo.a(3))
+    assert kamodo.c(3) == kamodo.b(100 * kamodo.a(3))
 
 
 def test_get_arg_units():
-
     def assign_unit(symbol, **units):
         if isinstance(symbol, str):
             symbol = sympify(symbol)
@@ -606,6 +638,7 @@ def test_get_arg_units():
     result = get_arg_units(sympify('f(x,y)*g(a,b,c)'), unit_registry)
     assert result[c] == get_unit('m')
 
+
 def test_compose_unit_multiply():
     kamodo = Kamodo('a(x[kg])[m] = x', verbose=True)
     kamodo['e'] = '2*a'
@@ -623,11 +656,11 @@ def test_compose_unit_add():
     kamodo['c(x,y)[km]'] = '2*a + 3*b'
     assert kamodo.c.meta['arg_units']['x'] == str(get_abbrev(get_unit('kg')))
     assert kamodo.c.meta['arg_units']['y'] == str(get_abbrev(get_unit('cm')))
-    result = 2*(3)/1000 + 3*(3)
+    result = 2 * (3) / 1000 + 3 * (3)
     assert kamodo.c(3, 3) == result
 
-def test_compose_unit_raises():
 
+def test_compose_unit_raises():
     with pytest.raises(NameError):
         kamodo = Kamodo('a(x[kg])[m] = x',
                         'b(y[cm])[km] = y', verbose=True)
@@ -639,7 +672,7 @@ def test_compose_unit_raises():
 def test_repr_latex():
     kamodo = Kamodo(f='x')
     assert kamodo._repr_latex_() == r'\begin{equation}f{\left(x \right)} = x\end{equation}'
-    kamodo = Kamodo(f=lambda x:x)
+    kamodo = Kamodo(f=lambda x: x)
     assert kamodo.f._repr_latex_() == '$f{\\left(x \\right)} = \\lambda{\\left(x \\right)}$'
 
 
@@ -649,6 +682,7 @@ def test_dataframe_detail():
     assert len(kamodo.detail()) == 1
     assert isinstance(kamodo.detail(), pd.DataFrame)
 
+
 def test_from_kamodo():
     kamodo = Kamodo(f='x')
     knew = from_kamodo(kamodo, g='f**2')
@@ -656,21 +690,25 @@ def test_from_kamodo():
 
 
 def test_jit_evaluate():
-    """Just-in-time evaluation"""
+    """
+    - Kamodo testing method for just-in time evaluation.
+    """
     kamodo = Kamodo(f='x')
-    assert kamodo.evaluate('g=f**2', x = 3)['x'] == 3
+    assert kamodo.evaluate('g=f**2', x=3)['x'] == 3
     with pytest.raises(SyntaxError):
-        kamodo.evaluate('f**2', x = 3)['x'] == 3
+        kamodo.evaluate('f**2', x=3)['x'] == 3
+
 
 def test_default_inheritance_order():
     kamodo = Kamodo(f=lambda x=2: x ** 2)
     kamodo['h'] = 'y*f'
-    assert kamodo['h'](2) == 2*2**2
+    assert kamodo['h'](2) == 2 * 2 ** 2
     with pytest.raises(SyntaxError):
         kamodo['g(x,y)'] = 'y*f'
 
+
 def test_greater_than_two_arg_defaults():
-    k = Kamodo(f=lambda x=3: x**2, f_2 = lambda x=2, y=3: x*y)
+    k = Kamodo(f=lambda x=3: x ** 2, f_2=lambda x=2, y=3: x * y)
 
     with pytest.raises(SyntaxError):
         k['g(x,z,y)'] = 'z*f_2'
@@ -681,34 +719,37 @@ def test_greater_than_two_arg_defaults():
     with pytest.raises(SyntaxError):
         k['g(x,z,y)'] = 'z*f_2'
 
-    k['h'] = 'a + y + f' # should have registered h(a,y,x)
+    k['h'] = 'a + y + f'  # should have registered h(a,y,x)
     # get_args will return a string list, which should match arguments of h
     for a, b in zip(k.signatures['h']['symbol'].args, get_args(k.h)):
         assert str(a) == b
 
+
 def test_eval_no_defaults():
     kamodo = Kamodo(f='x', verbose=True)
     kamodo['g'] = lambda x=3: x
-    kamodo['h'] = kamodofy(lambda x=[2,3,4]: (kamodofy(lambda x_=np.array([1]): x_**2) for x_ in x))
+    kamodo['h'] = kamodofy(lambda x=[2, 3, 4]: (kamodofy(lambda x_=np.array([1]): x_ ** 2) for x_ in x))
     assert kamodo.evaluate('f', x=3)['x'] == 3
     assert kamodo.evaluate('g')['x'] == 3
     assert kamodo.evaluate('h')['x_'][-2] == 1.
 
+
 def test_compose():
     k1 = Kamodo(f='x')
-    k2 = Kamodo(g='y**2', h = kamodofy(lambda x: x**3))
+    k2 = Kamodo(g='y**2', h=kamodofy(lambda x: x ** 3))
     k3 = compose(m1=k1, m2=k2)
     assert k3.f_m1(3) == 3
-    assert k3.g_m2(3) == 3**2
-    assert k3.h_m2(3) == 3**3
+    assert k3.g_m2(3) == 3 ** 2
+    assert k3.h_m2(3) == 3 ** 3
     k3['h(f_m1)'] = 'f_m1'
     assert k3.h(3) == 3
+
 
 def test_symbol_replace():
     k = Kamodo(f='x', verbose=True)
 
     f1, f2 = list(k.keys())
-    print('\n|||||',f1, f2, '||||||')
+    print('\n|||||', f1, f2, '||||||')
     k[f1] = 'x**2'
     assert k.f(3) == 9
     print('\n|||||', *list(k.keys()), '|||||')
@@ -716,16 +757,18 @@ def test_symbol_replace():
     print('\n|||||', *list(k.keys()), '|||||')
     assert k.f(3) == 27
 
+
 def test_contains():
     kamodo = Kamodo(f='x', verbose=True)
     assert 'f' in kamodo
     assert 'f( x )' in kamodo
     f, x = symbols('f x')
-    assert f in kamodo # f is a symbo
-    f = Function(f) # f is an Unefined Function
+    assert f in kamodo  # f is a symbo
+    f = Function(f)  # f is an Unefined Function
     assert f in kamodo
     assert f(x) in kamodo
     assert f('x') in kamodo
+
 
 def test_unusual_signature():
     with pytest.raises(NotImplementedError):
@@ -741,53 +784,60 @@ def test_unusual_signature():
 #     assert 'f' not in kamodo
 
 def test_method_registry():
-    
     class MyClass(Kamodo):
         @kamodofy
         def f(self, x):
-            return x**2
+            return x ** 2
 
     myclass = MyClass()
     myclass['f'] = myclass.f
 
+
 def test_del_function():
     kamodo = Kamodo(f='x', g='y', h='y', verbose=True)
-    del(kamodo.f)
+    del (kamodo.f)
     assert 'f' not in kamodo
     assert 'f' not in kamodo.signatures
-    del(kamodo['g'])
+    del (kamodo['g'])
     assert 'g' not in kamodo
-    del(kamodo['h(y)'])
+    del (kamodo['h(y)'])
     print(kamodo.keys())
     assert 'h(y)' not in kamodo
 
     with pytest.raises(AttributeError):
-        del(kamodo.y)
+        del (kamodo.y)
+
 
 def test_simple_figure():
     @kamodofy(units='kg', hidden_args=['ions'])
     def f_N(x_N):
-        return x_N**2
+        return x_N ** 2
 
-    kamodo = Kamodo(f_N=f_N,verbose=True)
+    kamodo = Kamodo(f_N=f_N, verbose=True)
     kamodo.plot(f_N=dict(x_N=np.linspace(-4, 3, 30)))
+
 
 def test_unavailable_4d_plot_type():
     def g(x=np.array([1]),
           y=np.array([1]),
           z=np.array([1]),
           t=np.array([1])):
-        return x**2 + y**2 + z**2 + t**2
+        return x ** 2 + y ** 2 + z ** 2 + t ** 2
 
     kamodo = Kamodo(g=g, verbose=True)
     with pytest.raises(KeyError):
         kamodo.plot('g')
 
+
 def test_multiple_traces():
+    """
+    - Method for testing multiple traces in a figure.
+    """
     kamodo = Kamodo(f='x', g='x**2')
     kamodo.plot(
         f=dict(x=np.linspace(-1, 1, 10)),
         g=dict(x=np.linspace(-5, 5, 10)))
+
 
 def test_unitless_composition():
     @kamodofy
@@ -798,17 +848,18 @@ def test_unitless_composition():
     def beta(y):
         return y
 
-
     kamodo = Kamodo(alpha=alpha, beta_=beta, verbose=True)
     kamodo['Gamma'] = 'alpha(beta_)'
     kamodo
 
+
 def test_reserved_name():
     kamodo = Kamodo(verbose=True)
-  
+
     @kamodofy
     def test(x, y):
-        return x+y
+        return x + y
+
     with pytest.raises(NotImplementedError):
         kamodo['test'] = test
 
@@ -817,13 +868,14 @@ class Ktest(Kamodo):
     def __init__(self, **kwargs):
         super(Ktest, self).__init__()
 
-        t_N = pd.date_range('Nov 9, 2018', 'Nov 20, 2018', freq = 'H')
+        t_N = pd.date_range('Nov 9, 2018', 'Nov 20, 2018', freq='H')
+
         @kamodofy(units='kg/m^3')
         def rho_N(t_N=t_N):
             t_N = pd.DatetimeIndex(t_N)
-            t_0 = pd.to_datetime('Nov 9, 2018') 
+            t_0 = pd.to_datetime('Nov 9, 2018')
             try:
-                dt_days = (t_N - t_0).total_seconds()/(24*3600)
+                dt_days = (t_N - t_0).total_seconds() / (24 * 3600)
             except TypeError as err_msg:
                 return 'cannot work with {} {}  {}'.format(type(t_N), type(t_N[0]), err_msg)
 
@@ -833,7 +885,7 @@ class Ktest(Kamodo):
         @kamodofy(units='nPa')
         def p(x=np.linspace(-5, 5, 30)):
             try:
-                return x**2
+                return x ** 2
             except TypeError as m:
                 print(m)
                 print(type(x), x[0])
@@ -842,8 +894,8 @@ class Ktest(Kamodo):
         @kamodofy(
             equation=r"\sum_{n=0}^{500} (1/2)^n cos(3^n \pi x)",
             citation='https://en.wikipedia.org/wiki/Weierstrass_function'
-            )
-        def weierstrass(x = np.linspace(-2, 2, 1000)):
+        )
+        def weierstrass(x=np.linspace(-2, 2, 1000)):
             '''
             Weierstrass  function
             A continuous non-differentiable 
@@ -853,9 +905,8 @@ class Ktest(Kamodo):
             n = np.arange(nmax)
 
             xx, nn = np.meshgrid(x, n)
-            ww = (.5)**nn * np.cos(3**nn*np.pi*xx)
+            ww = (.5) ** nn * np.cos(3 ** nn * np.pi * xx)
             return ww.sum(axis=0)
-                
 
         self['rho_N'] = rho_N
         self['p'] = p
@@ -864,23 +915,25 @@ class Ktest(Kamodo):
 
 def test_kamodo_inline_merge():
     k1 = Kamodo(f='x**2')
-    k2 = Kamodo(g=lambda y: y-1)
+    k2 = Kamodo(g=lambda y: y - 1)
 
     # create a local namespace holding both kamodo objects
-    ns = {'k1':k1, 'k2': k2}
-    k3 = Kamodo(myf = sympify('k1.f(x) + k2.g(y)', locals=ns))
-    assert k3.myf(x=3, y=4) == 3**2 + 4 - 1
+    ns = {'k1': k1, 'k2': k2}
+    k3 = Kamodo(myf=sympify('k1.f(x) + k2.g(y)', locals=ns))
+    assert k3.myf(x=3, y=4) == 3 ** 2 + 4 - 1
+
 
 def test_default_forwarding():
     x = np.linspace(-5, 5, 12)
-    
+
     def f(x=x):
-        return x**2
-    
+        return x ** 2
+
     k = Kamodo(f=f)
     k['g'] = 'f+2'
     assert len(k.g()) == 12
-    
+
+
 def test_multi_arg_units():
     kamodo = Kamodo(verbose=True)
 
@@ -894,6 +947,7 @@ def test_multi_arg_units():
     kamodo['c[ms]'] = 'z**2'
     kamodo['d(x,y,z)[cm]'] = 'f(a,b,c)'
 
+
 def test_broken_unit():
     k = Kamodo()
     k['f[N]'] = 'x'
@@ -901,28 +955,26 @@ def test_broken_unit():
     get_unit('newton')
     get_unit('N')
 
-def test_frequency_composition():
-    @kamodofy(units='rad/s', arg_units={'B':'T', 'n_e':'1/m**3'})
-    def omega_uh1(B, n_e):
-        return np.sqrt(B**2+n_e**2)
 
+def test_frequency_composition():
+    @kamodofy(units='rad/s', arg_units={'B': 'T', 'n_e': '1/m**3'})
+    def omega_uh1(B, n_e):
+        return np.sqrt(B ** 2 + n_e ** 2)
 
     kamodo_test = Kamodo(verbose=True)
-    kamodo_test['B_mag'] = kamodofy(lambda B=np.linspace(0.1,1.,10): B, units='nT', arg_units={'B':'nT'})
-    kamodo_test['n_e'] = kamodofy(lambda n=np.linspace(4.,13.,10)*10**19:n, units='1/m**3', arg_units={'n':'1/m**3'})
+    kamodo_test['B_mag'] = kamodofy(lambda B=np.linspace(0.1, 1., 10): B, units='nT', arg_units={'B': 'nT'})
+    kamodo_test['n_e'] = kamodofy(lambda n=np.linspace(4., 13., 10) * 10 ** 19: n, units='1/m**3',
+                                  arg_units={'n': '1/m**3'})
     kamodo_test['omega_uh1'] = omega_uh1
     print(kamodo_test.unit_registry)
 
-    #---------(input)--------
+    # ---------(input)--------
     kamodo_test['omega_uh1A'] = 'omega_uh1(B_mag, n_e)'
     kamodo_test.omega_uh1A
 
 
 def test_frequency_units():
-    omega = get_unit('rad')/get_unit('s')
-    freq = get_unit('deg')/get_unit('s')
+    omega = get_unit('rad') / get_unit('s')
+    freq = get_unit('deg') / get_unit('s')
     kamodo_units = get_kamodo_unit_system()
     convert_unit_to(omega, freq, kamodo_units)
-
-
-

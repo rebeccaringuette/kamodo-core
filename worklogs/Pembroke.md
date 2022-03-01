@@ -1,3 +1,4 @@
+* added contributing
 
 ### 2022-03-01 14:38:42.849325: clock-in
 

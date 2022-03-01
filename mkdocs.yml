@@ -12,6 +12,7 @@ nav:
 - TIEGCM: notebooks/TIEGCM.ipynb
 # - CommandLine: notebooks/CommandLineInterface.ipynb
 - API: API.md
+- Contributing: CONTRIBUTING.md
 - Additional Resources: additional_resources.md
 
 theme: readthedocs

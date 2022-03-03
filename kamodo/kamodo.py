@@ -4,84 +4,64 @@ Copyright © 2017 United States Government as represented by the Administrator, 
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 import asyncio
+# +
+import functools
+import inspect
+import json
 import os
+import re
+import socket
+import types
+from collections import OrderedDict
+from collections import UserDict
+from inspect import getfullargspec
+from types import GeneratorType
 
+import forge
+import pandas as pd
+import plotly.graph_objs as go
+import requests
+import sympy
+import yaml
+from sympy import Eq
+from sympy import Expr
+from sympy import Symbol, symbols, Function
+from sympy import lambdify
+from sympy import latex
+from sympy.abc import _clash
+from sympy.core.function import UndefinedFunction
+from sympy.parsing.latex import parse_latex
+from sympy.physics import units as sympy_units
+from sympy.physics.units import Dimension
+
+from plotting import get_ranges
+from plotting import plot_dict, get_arg_shapes, symbolic_shape
+from rpc.proto import Server, ssl
+from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
+from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
+# from util import to_arrays, cast_0_dim
+from util import beautify_latex
+from util import concat_solution
+from util import construct_signature
+from util import get_arg_units
+from util import get_defaults, valid_args, eval_func
+from util import get_dimensions
+from util import kamodofy
 from util import np
-from sympy import Integral, Symbol, symbols, Function
+from util import partial
+from util import reserved_names
+from util import serialize, deserialize
+from util import sign_defaults
+from util import simulate
+from util import unify, get_abbrev, get_expr_unit
+from util import unit_subs
 
 # try:
 #     from sympy.parsing.sympy_parser import parse_expr
 # except ImportError:  # may occur for certain versions of sympy
 #     from sympy import sympify as parse_expr
-
-from collections import OrderedDict
-from collections import UserDict
-import collections
-
-from sympy import lambdify
-from sympy.parsing.latex import parse_latex
-from sympy import latex
-from sympy.core.function import UndefinedFunction
-from inspect import getfullargspec
-from sympy import Eq
-import pandas as pd
 # from IPython.display import Latex
-
-
-from sympy.physics import units as sympy_units
-from sympy.physics.units import Quantity
-from sympy.physics.units import Dimension
-from sympy import Expr
-
-# +
-import functools
-import types
-
-from util import kamodofy
-from util import sort_symbols
-from util import simulate
-from util import unit_subs
-from util import get_defaults, valid_args, eval_func
-# from util import to_arrays, cast_0_dim
-from util import beautify_latex, arg_to_latex
-from util import concat_solution
-from util import convert_unit_to
-from util import unify, get_abbrev, get_expr_unit
-from util import is_function, get_arg_units
-from util import partial
 # -
-
-
-import plotly.graph_objs as go
-from plotly import figure_factory as ff
-
-from plotting import plot_dict, get_arg_shapes, symbolic_shape
-from plotting import get_ranges
-from util import existing_plot_types
-from util import get_dimensions
-from util import reserved_names
-
-from sympy import Wild
-from types import GeneratorType
-import inspect
-
-import re
-
-import urllib.request, json
-import requests
-from util import serialize, deserialize
-from util import sign_defaults
-import forge
-from sympy.abc import _clash
-import sympy
-
-from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
-from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
-from rpc.proto import Server, ssl
-import socket
-from util import construct_signature
-
-import yaml
 
 _clash['rad'] = Symbol('rad')
 _clash['deg'] = Symbol('deg')
@@ -553,6 +533,7 @@ class Kamodo(UserDict):
 
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
+                    print(f"LHS EXPR : {lhs_expr} RHS : {rhs_expr}")
                     symbol = Function(lhs_expr)(*tuple(rhs_expr.free_symbols))
                 else:  # lhs is already a function
                     symbol = lhs_expr
@@ -1082,10 +1063,18 @@ class KamodoClient(Kamodo):
         """
         super(KamodoClient, self).__init__(**kwargs)
         self._expressions = {}  # expressions for server-side pipelining
-        self._rpc_funcs = {}  # rpc functions (may be served to downstream applications)
-
+        self._rpc_funcs = {}
+        self.host = host  # rpc functions (may be served to downstream applications)
         if host is not None:
             self.connect(host)
+
+    # async def __aenter__(self):  # setting up a connection
+    #     self.conn = await self.client(self.host)
+    #     return self.conn
+    #
+    # async def __aexit__(self, exc_type, exc, tb):  # closing the connection
+    #     # await self.conn.close()
+    #     pass
 
     def __setitem__(self, sym_name, input_expr):
         """register function symbol with implementation"""
@@ -1161,7 +1150,9 @@ class KamodoClient(Kamodo):
 
     def connect(self, host):
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.client(host))
+        res = loop.run_until_complete(self.client(host))
+        print(f"RES : {res}")
+        return res
 
     async def register_remote_field(self, entry):
         """resolve the remote signature
@@ -1178,6 +1169,8 @@ class KamodoClient(Kamodo):
         func_args_ = [str(_) for _ in (await field.func.getArgs().a_wait()).args]
         func_args = [_ for _ in func_args_ if _ not in func_defaults]
 
+        print(f"FUNC ARGS, FUNC DEFAULTS : {func_args} {func_defaults}")
+
         if len(meta.equation) > 0:
             equation = meta.equation
         else:
@@ -1192,13 +1185,16 @@ class KamodoClient(Kamodo):
                   hidden_args=hidden_args)
         @forge.sign(*construct_signature(*func_args, **func_defaults))
         async def remote_func(*args, **kwargs):
-            # params must be List(Variable) for now
             args_ = [to_rpc_literal(arg) for arg in args]
             kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
-            result = await field.func.call(args=args_, kwargs=kwargs_).a_wait().result
+            result = (await field.func.call(args=args_, kwargs=kwargs_).a_wait()).result
+            print(f"RESULT : {result}")
             return from_rpc_literal(result)
 
-        self[symbol] = remote_func
+        print(f"TYPE REMOTE FUNC : {remote_func}")
+
+        self[symbol] = await remote_func(func_args)
+        # self[symbol] = remote_func
         self._rpc_funcs[symbol] = field.func
 
     async def get_remote_composition(self, expr, **kwargs):

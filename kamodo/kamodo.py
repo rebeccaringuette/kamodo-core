@@ -870,6 +870,9 @@ class Kamodo(UserDict):
         units = self.signatures[key]['units']
         arg_units = get_arg_units(lhs, self.unit_registry)
 
+        for k, v in arg_units.items():
+            if str(v) == 'Dimension(1)':
+                arg_units[k] = ''
         if len(units) > 0:
             units = '{}'.format(get_abbrev(units))
         else:
@@ -898,6 +901,9 @@ class Kamodo(UserDict):
                       fold_short_frac=True,
                       root_notation=False,
                       ))
+            dimension_less_args = lhs_str.find('[]')
+            if dimension_less_args != -1:
+                lhs_str = lhs_str.replace('[]', '')
 
         latex_eq = ''
         latex_eq_rhs = ''
@@ -923,7 +929,6 @@ class Kamodo(UserDict):
             repr_latex += r"$"
             repr_latex += "{} = {}".format(lhs_str, latex_eq_rhs)
             repr_latex += r"$"
-
         return repr_latex
 
     def to_latex(self, keys=None, mode='equation'):

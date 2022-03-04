@@ -20,8 +20,42 @@ from kamodo import from_kamodo, compose
 from kamodo import get_abbrev
 from .util import get_arg_units
 from .util import get_kamodo_unit_system
+
 from kamodo import extract_units
 from .util import get_unit_quantity, convert_unit_to
+
+from .util import get_unit_quantity, convert_unit_to
+
+
+def test_unit_reassignment():
+    k = Kamodo()
+
+    #  initialze a function with units
+    k['f(x[cm])[cm]'] = 'x**2-x-1'
+
+    # update the function so it has units
+    k['f(x[m])[m]'] = 'x**2-x-1'
+
+    assert k.f.meta['units'] == 'm'
+    assert k.f.meta['arg_units']['x'] == 'm'
+    assert k.signatures['f']['units'] == 'm'
+    assert k.signatures['f']['arg_units']['x'] == 'm'
+
+    # update function to remove units
+    k['f'] = 'x**2-x-1'
+    assert k.f.meta['units'] == ''
+    assert len(k.f.meta['arg_units']) == 0
+    assert k.signatures['f']['units'] == ''
+    assert len(k.signatures['f']['arg_units']) == 0
+
+
+def test_preserve_repr_latex():
+    k = Kamodo(f='x**2-x-1')
+    k2 = Kamodo(f=k.f)
+    f_repr = k.f._repr_latex_()
+    f2_repr = k2.f._repr_latex_()
+    if f2_repr != f_repr:
+        raise AssertionError('{} != {}'.format(f2_repr, f_repr))
 
 
 def test_unit_reassignment():

@@ -809,8 +809,7 @@ class Kamodo(UserDict):
                 pass
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                                    symbol)
-
+                                                  symbol)
             try:
                 arg_units = dimensionless_unit_check(sym_name_bkup,
                                                      arg_units)
@@ -999,9 +998,13 @@ class Kamodo(UserDict):
     def to_latex(self, keys=None, mode='equation'):
         """Generate list of LaTeX-formated formulas
 
-        mode(optional): equation(default) wrap formulas in
-        
-        \begin{equation} ... \end{equation}. Use mode='inline' for $$ ... $$
+
+        mode(optional): equation(default) how to wrap formulas:
+            mode = 'equation': wraps formulas in
+                begin{equation} ... end{equation}.
+
+            mode='inline': wraps formulas in
+                $$ ... $$
         
         Note: Upon registeration, each function should have a _repr_latex_ method.
         """

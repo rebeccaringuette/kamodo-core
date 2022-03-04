@@ -1,5 +1,6 @@
-* merged from master
+* merge fixes
 
+* merged from master
 * added latex check for dimensionless args
 * fixing unit test for mixture of dimensionless args
 * added test for lhs unit parsing

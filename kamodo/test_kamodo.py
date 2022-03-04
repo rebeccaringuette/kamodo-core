@@ -86,6 +86,7 @@ def test_mixed_arg_dimensionless():
     assert k.T.meta['arg_units']['x'] == 'g'
     assert k.T.meta['arg_units']['y'] == ''
     assert k.T.meta['arg_units']['z'] == 'm'
+    assert 'Dimension' not in k.to_latex()
 
     def T(x, y, z):
         """assumes input is (x[g], y, z[m])

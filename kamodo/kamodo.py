@@ -1164,10 +1164,26 @@ class Kamodo(UserDict):
         else:
             traces = []
             layouts = []
+            ctr = 0
             for variable, kwargs in list(figures.items()):
                 fig = self.figure(variable, **kwargs)
                 traces.extend(fig['data'])
                 layouts.append(fig['layout'])
+                if ctr > 0:
+                    ctr = ctr + 1
+                    fig['data'][0].yaxis = f'y{str(ctr)}'
+                    text = fig['layout']['yaxis']['title']['text']
+                    fig['layout'][f'yaxis{ctr}'] = {"title": {"text": str(
+                        text)}}
+                    fig['layout'][f'yaxis{ctr}']['overlaying'] = 'y'
+                    fig['layout'][f'yaxis{ctr}']['side'] = 'right'
+                    fig['layout']['yaxis']['title']['text'] = yaxis_text
+
+                else:
+                    yaxis_text = str(fig['layout']['yaxis']['title']['text'])
+                    fig['data'][0].yaxis = 'y'
+
+                ctr = ctr+1
             # Todo: merge the layouts instead of selecting the last one
             return go.Figure(data=traces, layout=layouts[-1])
 

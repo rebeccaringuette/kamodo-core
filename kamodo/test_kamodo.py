@@ -20,7 +20,10 @@ from kamodo import from_kamodo, compose
 from kamodo import get_abbrev
 from .util import get_arg_units
 from .util import get_kamodo_unit_system
+
+from kamodo import extract_units
 from .util import get_unit_quantity, convert_unit_to
+
 
 
 def test_unit_reassignment():
@@ -54,26 +57,149 @@ def test_preserve_repr_latex():
         raise AssertionError('{} != {}'.format(f2_repr, f_repr))
 
 
-def test_mixed_arg_dimensionless():
-    @kamodofy(units='kg', arg_units=dict(z='cm'))
-    def g(z):
-        return z**2
 
+
+def test_unit_reassignment():
+    k = Kamodo()
+
+    #  initialze a function with units
+    k['f(x[cm])[cm]'] = 'x**2-x-1'
+
+    # update the function so it has units
+    k['f(x[m])[m]'] = 'x**2-x-1'
+
+    assert k.f.meta['units'] == 'm'
+    assert k.f.meta['arg_units']['x'] == 'm'
+    assert k.signatures['f']['units'] == 'm'
+    assert k.signatures['f']['arg_units']['x'] == 'm'
+
+    # update function to remove units
+    k['f'] = 'x**2-x-1'
+    assert k.f.meta['units'] == ''
+    assert len(k.f.meta['arg_units']) == 0
+    assert k.signatures['f']['units'] == ''
+    assert len(k.signatures['f']['arg_units']) == 0
+
+
+def test_preserve_repr_latex():
+    k = Kamodo(f='x**2-x-1')
+    k2 = Kamodo(f=k.f)
+    f_repr = k.f._repr_latex_()
+    f2_repr = k2.f._repr_latex_()
+    if f2_repr != f_repr:
+        raise AssertionError('{} != {}'.format(f2_repr, f_repr))
+
+
+def test_unit_reassignment():
+    k = Kamodo()
+
+    #  initialze a function with units
+    k['f(x[cm])[cm]'] = 'x**2-x-1'
+
+    # update the function so it has units
+    k['f(x[m])[m]'] = 'x**2-x-1'
+
+    assert k.f.meta['units'] == 'm'
+    assert k.f.meta['arg_units']['x'] == 'm'
+    assert k.signatures['f']['units'] == 'm'
+    assert k.signatures['f']['arg_units']['x'] == 'm'
+
+    # update function to remove units
+    k['f'] = 'x**2-x-1'
+    assert k.f.meta['units'] == ''
+    assert len(k.f.meta['arg_units']) == 0
+    assert k.signatures['f']['units'] == ''
+    assert len(k.signatures['f']['arg_units']) == 0
+
+
+def test_preserve_repr_latex():
+    k = Kamodo(f='x**2-x-1')
+    k2 = Kamodo(f=k.f)
+    f_repr = k.f._repr_latex_()
+    f2_repr = k2.f._repr_latex_()
+    if f2_repr != f_repr:
+        raise AssertionError('{} != {}'.format(f2_repr, f_repr))
+
+
+def test_extract_units():
+    """ Test the following combinations of units present in lhs expressions
+    1. args and output have units
+    2. some (but not all) args have units
+    3. args have parenthesis in units and output has no units
+    4. output has parenthesis in units
+    5. no args named and no units named
+    """
+    # case 1
+    lhs, unit_dict = extract_units('f(x[cm], y[km])[kg]')
+    assert lhs == 'f(x,y)'
+    assert unit_dict['x'] == 'cm'
+    assert unit_dict['y'] == 'km'
+    assert unit_dict[lhs] == 'kg'
+
+    # case 2
+    lhs, unit_dict = extract_units('T(x[g], y, z[m])[kg]')
+    assert lhs == 'T(x,y,z)'
+    assert unit_dict['x'] == 'g'
+    assert unit_dict['y'] == ''
+    assert unit_dict['z'] == 'm'
+    
+    # case 3
+    lhs, unit_dict = extract_units('f(x[(cm )^2])')
+    assert lhs == 'f(x)'
+    assert unit_dict['x'] == '(cm)^2'
+    assert unit_dict[lhs] == ''
+    
+    # case 4
+    lhs, unit_dict = extract_units('f[(cm)^2]')
+    assert lhs == 'f'
+    assert unit_dict[lhs] == '(cm)^2'
+    
+    # case 5
+    lhs, unit_dict = extract_units('f')
+    assert lhs == 'f'
+    assert unit_dict[lhs] == ''
+
+
+def test_mixed_arg_dimensionless():
     @kamodofy(units='g', arg_units=dict(x='kg'))
     def f(x):
         return x**2
+    
 
     @kamodofy(units='g')
     def h(y):
         return y**2
 
+    @kamodofy(units='kg', arg_units=dict(z='cm'))
+    def g(z):
+        return z**2
+
+    
     k = Kamodo(f=f, g=g, h=h)
 
-    k['T(x[g], y, z[m])[kg]'] = 'f+g+h'
+    k['T(x[g], y, z[m])[kg]'] = 'f+h+g'
 
     assert k.T.meta['arg_units']['x'] == 'g'
     assert k.T.meta['arg_units']['y'] == ''
     assert k.T.meta['arg_units']['z'] == 'm'
+    assert 'Dimension' not in k.to_latex()
+
+    def T(x, y, z):
+        """assumes input is (x[g], y, z[m])
+        should get T=f(x/1000)/1000 + h(y)/1000 + g(100*z)
+        """
+        x_ = x/1000. # g->kg
+        y_ = y # no units
+        z_ = 100.*z # m->cm
+        return (x_**2)/1000. + (y_**2)/1000. + z_**2
+
+    
+    expected = T(3.,4.,5.)
+    actual = k.T(3.,4.,5.)
+    
+    
+    if expected != actual:
+        raise AssertionError('{}(expected) != {} (actual)'.format(expected, actual))
 
 
 def test_order_override():

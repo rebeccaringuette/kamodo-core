@@ -284,6 +284,7 @@ def extract_units(func_str):
             extract_units('f[(cm)^2]')
             ('f', {'f': '(cm)^2'})
         no args named and no units named
+            extract_units('f')
             ('f', {'f': ''})
     """
     # remove any spaces
@@ -298,10 +299,20 @@ def extract_units(func_str):
         # 'x[cm],y[km]' -> ['cm', 'km']
         arg_units = get_str_units(lhs_args)
         args = lhs_args.split(',')
+
+        try:
+            if len(args) != len(arg_units) and len(arg_units)>0:
+                for i in range(len(args)):
+                    if '[' not in args[i]:
+                        arg_units.insert(i, "")
+        except IndexError:
+            pass
+        except NotImplementedError:
+            pass
+
         for arg, unit in zip(args, arg_units):
             unit_dict[arg.replace('[{}]'.format(unit), '')] = unit
-
-        if len(all_units) == len(arg_units):
+        if len(all_units) == len(arg_units) and "" not in arg_units:
             output_units = ''
         else:
             output_units = all_units[-1]
@@ -549,6 +560,10 @@ class Kamodo(UserDict):
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
         lhs, unit_dict = extract_units(func)
+        if self.verbose:
+            print('extracted lhs units: {}'.format(lhs))
+            for k, v in unit_dict.items():
+                print('  ', k, v)
         # if arg_units is None:
         #     arg_units = {}
         for key, value in unit_dict.items():
@@ -782,7 +797,9 @@ class Kamodo(UserDict):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
             func = self.vectorize_function(symbol, rhs_expr, composition)
-
+            for k, v in arg_units.items():
+                if str(v) == 'Dimension(1)':
+                    arg_units[k] = ''
             signature, defaults = sign_defaults(symbol, rhs_expr, composition)
             default_non_default_parameter = []
             try:
@@ -916,6 +933,11 @@ class Kamodo(UserDict):
         rhs = self.signatures[key]['rhs']
         units = self.signatures[key]['units']
         arg_units = get_arg_units(lhs, self.unit_registry)
+
+        for k, v in arg_units.items():
+            if str(v) == 'Dimension(1)':
+                arg_units[k] = ''
+
         if len(units) > 0:
             units = '{}'.format(get_abbrev(units))
         else:
@@ -944,6 +966,9 @@ class Kamodo(UserDict):
                       fold_short_frac=True,
                       root_notation=False,
                       ))
+            dimension_less_args = lhs_str.find('[]')
+            if dimension_less_args != -1:
+                lhs_str = lhs_str.replace('[]', '')
 
         latex_eq = ''
         latex_eq_rhs = ''
@@ -973,7 +998,13 @@ class Kamodo(UserDict):
     def to_latex(self, keys=None, mode='equation'):
         """Generate list of LaTeX-formated formulas
 
-        mode(optional): equation(default) wrap formulas in \begin{equation} ... \end{equation}. Use mode='inline' for $$ ... $$
+
+        mode(optional): equation(default) how to wrap formulas:
+            mode = 'equation': wraps formulas in
+                begin{equation} ... end{equation}.
+
+            mode='inline': wraps formulas in
+                $$ ... $$
         
         Note: Upon registeration, each function should have a _repr_latex_ method.
         """

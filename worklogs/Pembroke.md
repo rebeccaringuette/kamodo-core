@@ -1,3 +1,11 @@
+* merging latest master
+* merge fixes
+* merged from master
+* added latex check for dimensionless args
+* fixing unit test for mixture of dimensionless args
+* added test for lhs unit parsing
+* refining test to validate lambdified function
+
 ### 2022-03-01 15:24:17.816542: clock-out
 
 * added contributing to documentation

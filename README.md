@@ -28,7 +28,7 @@ import numpy as np
 x = np.linspace(-np.pi, np.pi, 25)
 y = np.linspace(-np.pi, np.pi, 30)
 xx, yy = np.meshgrid(x,y)
-points = np.array(zip(xx.ravel(), yy.ravel()))
+points = np.array(list(zip(xx.ravel(), yy.ravel())))
 
 @kamodofy(units = 'km/s')
 def fvec(rvec = points):

@@ -1,3 +1,4 @@
+* clarifying use of lambda functions
 * fixed units in example
 * bugfix addressing
 * merging latest master

@@ -1,3 +1,4 @@
+* fixed units in example
 * bugfix addressing
 * merging latest master
 * merge fixes

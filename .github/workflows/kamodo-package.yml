@@ -35,6 +35,7 @@ jobs:
         pip install requests
         pip install sympy==1.5.1
         pip install notebook
+        pip install kaleido
         pip install .
     - name: Test with pytest and generate coverage
       run: |

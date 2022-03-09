@@ -1,3 +1,4 @@
+* install kaleido
 * addressing issue
 * fixed broken link, expanded syntax docs
 * clarifying use of lambda functions

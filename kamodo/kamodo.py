@@ -387,28 +387,32 @@ class Kamodo(UserDict):
 
     def __init__(self, *funcs, **kwargs):
         """Initialize Kamodo object
+        
+        ** Inputs **
 
-        ** funcs ** - *(optional)* list of expressions to register in f(x)=x format
+        * ** funcs ** - *(optional)* list of expressions to register in f(x)=x format
 
-        ** kwargs ** - *(optional)* key,value pairs of functions to register
+        * ** kwargs ** - *(optional)* key,value pairs of functions to register
+            * key - left-hand-side symbol
+            * value - can be one of:
+                * latex or python expression str e.g. "x^2-x-1"
+                * kamodofied function with appropriate .meta and .data attributers (see @kamodofy)
+                * lambda function (having no meta or data attributes)
 
-        * key - left-hand-side symbol
-        * value - either:
-            * 'right-hand-side expression'
-            * kamodofied function
+        * ** verbose ** - *(optional)* (`default=False`) flag to turn on all debugging print statements
 
-        ** verbose ** - *(optional)* (`default=False`) flag to turn on all debugging print statements
+
 
         ** returns ** - dictionary-like kamodo object of (symbol, function) pairs
 
         usage:
 
         ```python
-        kobj = Kamodo(
-            'f(x[cm])[kg/m^3]=x^2-x-1', # full expressions with units
-            area = kamodofy(lambda x: x*x, units='cm^2'), # kamodofied functions
-            h = 'sin(x)', # key-value expressions
-            )
+            kobj = Kamodo(
+                'f(x[cm])[kg/m^3]=x^2-x-1', # full expressions with units
+                area = kamodofy(lambda x: x*x, units='cm^2'), # kamodofied functions
+                h = 'sin(x)', # key-value expressions
+                )
         ```
         """
 
@@ -672,8 +676,41 @@ class Kamodo(UserDict):
         self.register_symbol(lhs_symbol)
 
     def __setitem__(self, sym_name, input_expr):
-        """Assigns a function or expression to a new symbol,
-        performs unit conversion where appropriate
+        """Assigns a function or expression to a new symbol, performing
+        automatic function composition and inserting unit conversions where appropriate.
+
+        * ** sym_name ** - function symbol to associate with right-hand-side in one of the following formats:
+            - f - a lone fuction symbol (alphabetic argument ordering)
+            - f(z,x,y) - explicit argument ordering
+            - f[kg] - output unit assignment
+            - f(x[cm])[kg] - output and input unit assignment
+
+        * ** input_expr ** - rhs string or kamodofied function, one of:
+            * right-hand-side expression: python or latex str (e.g.`x^2-x-1`)
+            * kamodofied function with appropriate .meta and .data attributers (see @kamodofy)
+            * lambda function (having no meta or data attributes)
+
+        Raises:
+            - NameError when left-hand-side units incompatible with right-hand-side expression
+        
+        returns: None
+
+        usage:
+
+        ```py
+        kobj = Kamodo()
+        kobj['area[cm^2]'] = 'x^2' # area has units of cm^2
+        try:
+            kobj['g(x)[kg]'] = 'area' # mass not compatible with square length
+        except NameError as m:
+            print(m)
+        ```
+        
+        output:
+        ```sh
+            cannot convert area(x) [centimeter**2] length**2 to g(x)[kilogram] mass
+        ```
+
         """
         if not isinstance(sym_name, str):
             sym_name = str(sym_name)
@@ -857,6 +894,33 @@ class Kamodo(UserDict):
 
     def __getitem__(self, key):
         """Given a symbol string, retrieves the corresponding function.
+
+        input: **key** - string or function symbol
+
+    
+        ** returns** the associated function
+
+        ** usage **:
+
+        Rretrieval by function name:
+
+        ```python
+            kobj['f'] = 'x^2-x-1'
+            f = kobj['f']
+            f(3) # returns 5
+        ```
+
+        It is also possible to use the function symbol directly:
+
+        ```python
+            from kamodo import sympify
+            fsymbol = sympify('f') # converts str to symbol
+
+            kobj['f'] = 'x^2-x-1'
+            f = kobj[fsymbol]
+            f(3) # returns 5
+        ```
+
         """
         try:
             return super(Kamodo, self).__getitem__(key)
@@ -876,9 +940,16 @@ class Kamodo(UserDict):
         return False
 
     def __getattr__(self, name):
-        """Retrieves a given function as an attribute.
+        """
+
+        Retrieves a given function as an attribute.
+        
+        **input** - **name** of function to retrieve
+
+        **returns** the associated function
 
         Usage:
+
         To evaluate function $f(x)$ at [1,2,3]:
 
             k.f([1,2,3])

@@ -1,3 +1,4 @@
+* docstrings
 * docstring improvements
 * install kaleido
 * addressing issue

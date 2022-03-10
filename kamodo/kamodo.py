@@ -386,9 +386,30 @@ class Kamodo(UserDict):
     """
 
     def __init__(self, *funcs, **kwargs):
-        """Base initialization method
-        Args:
-            param1 (str, optional): Filename of datafile to interpolate from
+        """Initialize Kamodo object
+
+        ** funcs ** - *(optional)* list of expressions to register in f(x)=x format
+
+        ** kwargs ** - *(optional)* key,value pairs of functions to register
+
+        * key - left-hand-side symbol
+        * value - either:
+            * 'right-hand-side expression'
+            * kamodofied function
+
+        ** verbose ** - *(optional)* (`default=False`) flag to turn on all debugging print statements
+
+        ** returns ** - dictionary-like kamodo object of (symbol, function) pairs
+
+        usage:
+
+        ```python
+        kobj = Kamodo(
+            'f(x[cm])[kg/m^3]=x^2-x-1', # full expressions with units
+            area = kamodofy(lambda x: x*x, units='cm^2'), # kamodofied functions
+            h = 'sin(x)', # key-value expressions
+            )
+        ```
         """
 
         super(Kamodo, self).__init__()

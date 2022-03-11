@@ -1,3 +1,4 @@
+* full docstrings for kamodo api, plotting, kamodofy
 * docstrings
 * docstring improvements
 * install kaleido

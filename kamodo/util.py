@@ -183,22 +183,56 @@ def kamodofy(
         hidden_args=[],
         **kwargs):
     """
-    - Adds meta and data attributes to functions for compatibility with Komodo.
-    - meta is a dictionary containing {units: <str>}.
-    - data if supplied, set f.data = data, if not supplied, set f.data = f(), assuming it can be called with no arguments.
-      If f cannot be called with no arguments, set f.data = None
+    Adds `meta` and `data` attributes to functions for registering with Komodo objects.
+    
+    ** inputs **:
 
-    _func: kamodo function
-    units: units for function
-    arg_units: arguments units
-    data: data for function
-    update: updates in function
-    equation: equation of the function
-    citation: citation of function
-    hidden_args: hidden arguments of function
-    **kwargs: other key word arguments
+    * _func: function to wrap
+    * units: (optional) physical output units
+    * arg_units: (optional) dictionary { arg : str unit} containing physical input units
+    * data: if supplied, set f.data = data, if not supplied, set f.data = f(), assuming it can be called with no arguments.
+      If f cannot be called with no arguments, will set f.data = None
+    * update: name of another function's argument to update (see [simulation api](../notebooks/Kamodo/#simulation-api))
+    * equation: str representing right-hand-side of the function
+    * citation: str reference for publication
+    * hidden_args: arguments of function to hide from latex rendering
+    * kwargs: other key word arguments
 
-    returns : decorator kamodofy
+    ** returns **: the decorated function with the following attributes
+
+    * meta is a dictionary containing
+        * units: physical output units (str)
+        * arg_units: dictionary { arg : str unit}
+        * equation: latex str representing right-hand-side of the function
+        * citation: str reference for publication
+        * hidden: str list of arguments to hide from latex rendering
+    * data: default data representing expected function output for default arguments
+    * update: name of another function's argument to update
+
+
+    ** usage **:
+
+    ```python
+    @kamodofy(units='kg/cm^2', arg_units=dict(x='cm'), citation='Pembroke et. al 2022', hidden_args=['verbose'])
+    def myfunc(x=30, verbose=True):
+        return x**2
+    myfunc.meta
+    ```
+    ```console
+    {'units': 'kg/cm^2',
+     'arg_units': {'x': 'cm'},
+     'citation': 'Pembroke et. al 2022',
+     'equation': None,
+     'hidden_args': ['verbose']}
+    ```
+    The above metadata is used by Kamodo objects for function registration. Similarly, a `data` attribute is attached which represents the output of the function when called with no arguments:
+
+    ```python
+    myfunc.data
+    ```
+    ```console
+    900
+    ```
 
     """
 

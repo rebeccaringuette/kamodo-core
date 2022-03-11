@@ -1,3 +1,4 @@
+* cleaned up expression for normalization operator
 * clearing cell output
 * full docstrings for kamodo api, plotting, kamodofy
 * docstrings

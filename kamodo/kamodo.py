@@ -151,7 +151,8 @@ def args_from_dict(expr, local_dict, verbose):
 def alphabetize(symbols):
     """alphabetical ordering for the input symbols"""
     # can't use > on symbols, so need to convert to str first
-    return tuple(Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
+    return tuple(
+        Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
 
 
 def reorder_symbol(defaults, default_non_default_parameter, symbol):
@@ -628,16 +629,19 @@ class Kamodo(UserDict):
         self.register_signature(lhs_symbol, units, lhs_expr, rhs, arg_units)
         try:
             if hasattr(func, '_repr_latex_'):
-                func._repr_latex_ = func.__preserved__
+                symbol = list(self.signatures.items())[0][1]['symbol']
+                func._repr_latex_ = lambda: self.func_latex(
+                    str(type(lhs_symbol)),
+                    mode='inline')
+                key = list(self.signatures.keys())[0]
+                self.signatures[key]['rhs']=func._rhs_
             else:
-
                 func._repr_latex_ = lambda: self.func_latex(str(type(
                     lhs_symbol)), mode='inline')
 
         except AttributeError:
             # happens with bound methods
             pass
-
         super(Kamodo, self).__setitem__(lhs_symbol, func)  # assign key 'f(x)'
         super(Kamodo, self).__setitem__(type(lhs_symbol),
                                         self[lhs_symbol])  # assign key 'f'
@@ -672,7 +676,7 @@ class Kamodo(UserDict):
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(alphabetize(
-                                    rhs_expr.free_symbols)))
+                        rhs_expr.free_symbols)))
                 else:  # lhs is already a function
                     symbol = lhs_expr
                 lhs_str = str(symbol)
@@ -787,7 +791,7 @@ class Kamodo(UserDict):
 
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                                    symbol)
+                                        symbol)
 
             try:
                 arg_units = dimensionless_unit_check(sym_name_bkup, arg_units)
@@ -797,12 +801,14 @@ class Kamodo(UserDict):
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None
-            self.register_signature(symbol, units, lhs_expr, rhs_expr, arg_units)
+            self.register_signature(symbol, units, lhs_expr, rhs_expr,
+                                    arg_units)
             func._repr_latex_ = lambda: self.func_latex(str(type(symbol)),
                                                         mode='inline')
             self.register_symbol(symbol)
             func._preserved_ = lambda: self.func_latex(str(type(symbol)),
                                                        mode='inline')
+            func._rhs_ = list(self.signatures.items())[0][1]['rhs']
             super(Kamodo, self).__setitem__(symbol, func)
             super(Kamodo, self).__setitem__(type(symbol), self[symbol])
 
@@ -1133,14 +1139,16 @@ class Kamodo(UserDict):
             if len(signature['arg_units']) == 1:
                 try:
                     args_unit = signature['arg_units']
-                    x_axis_unit = [args_unit[i][0] for i in sorted(args_unit.keys())][0]
+                    x_axis_unit = \
+                    [args_unit[i][0] for i in sorted(args_unit.keys())][0]
                     y_axis_unit = signature['units']
                     x_last_index = layout.xaxis.title.text.rindex('$')
                     y_last_index = layout.yaxis.title.text.rindex('$')
                     new_xaxis_label = layout.xaxis.title.text[
                                       :x_last_index] + ' ' + f'[{x_axis_unit}]' + \
                                       layout.xaxis.title.text[x_last_index:]
-                    new_yaxis_label = layout.yaxis.title.text[y_last_index] + str(
+                    new_yaxis_label = layout.yaxis.title.text[
+                                          y_last_index] + str(
                         signature['symbol'].name) + ' ' + f'[{y_axis_unit}]' + \
                                       layout.yaxis.title.text[y_last_index]
 

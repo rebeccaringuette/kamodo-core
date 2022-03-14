@@ -1,3 +1,4 @@
+* modified test slightly to validate preservation of latex repr
 * test for two defaults, one arg
 * test default inheritance for more than two arguments
 * str format

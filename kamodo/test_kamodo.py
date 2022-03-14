@@ -25,13 +25,12 @@ import warnings
 
 
 def test_preserve_repr_latex():
-    k = Kamodo(f='x**2-x-1')
     k2 = Kamodo(g=k.f)
-    f_repr = k.f._repr_latex_()
+    assert k.f._repr_latex_() == f_repr # check that f_repr was preserved
     g_repr = k2.g._repr_latex_()
     g_symbol_repr = 'g{\\left(x \\right)}'
-    assert 'x^{2} - x - 1' in g_repr
-    if g_symbol_repr not in k2.g._repr_latex_():
+    assert 'x^{2} - x - 1' in g_repr # check right-hand side matches f
+    if g_symbol_repr not in k2.g._repr_latex_(): # check left-hand side looks like g(x)
         raise AssertionError('{} not in {}'.format(g_symbol_repr, g_repr))
 
 

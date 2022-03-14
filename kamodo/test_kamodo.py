@@ -25,6 +25,8 @@ import warnings
 
 
 def test_preserve_repr_latex():
+    k = Kamodo(f='x**2-x-1')
+    f_repr = k.f._repr_latex_()
     k2 = Kamodo(g=k.f)
     assert k.f._repr_latex_() == f_repr # check that f_repr was preserved
     g_repr = k2.g._repr_latex_()

@@ -1,3 +1,4 @@
+* fixing test
 * corrected test_preserve_repr_latex
 * modified test slightly to validate preservation of latex repr
 * test for two defaults, one arg

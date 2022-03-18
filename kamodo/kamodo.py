@@ -1190,7 +1190,7 @@ class Kamodo(UserDict):
                                     if each in k2:
                                         trace_val = v2
 
-                partial_text_str = '|'.join(partial_text)
+                partial_text_str = ', '.join(partial_text)
                 partial_text_str = f"${partial_text_str}$"
                 layouts[temp1]['title']['text'] = partial_text_str
             return layouts, traces
@@ -1239,74 +1239,12 @@ class Kamodo(UserDict):
 
         layouts[-1]['width'] = 900
         layouts[-1]['xaxis']['domain'] = [0.3, .7]
-        plot_title = '|'.join(plot_title)
+        plot_title = ', '.join(plot_title)
         plot_title = plot_title.replace('$', '')
         plot_title = f"'${plot_title}$'"
         layouts[-1]['title'] = plot_title
         layout, traces = self.same_unit_check(layouts[-1], traces)
         return traces, layout
-
-    def subplot(self, figures):
-        traces = []
-        layouts = []
-        ctr = 0
-        length = len(figures)
-        specs = []
-        spec = [{"secondary_y": False}, {"secondary_y": False}]
-        for i in range((length + 1) // 2):
-            specs.append(spec)
-        fig1 = make_subplots(rows=(length + 1) // 2, cols=2,
-                             specs=specs, vertical_spacing=.15)
-
-        row_combination = [i for i in range(1, length)]
-        col = [1, 2]
-        combination = list(itertools.product(row_combination, col))
-        ctr_ = 0
-        for variable, kwargs in figures:
-            fig = self.figure(variable, **kwargs)
-            traces.extend(fig['data'])
-            layouts.append(fig['layout'])
-            row = list(combination[ctr_])[0]
-            col = list(combination[ctr_])[1]
-            fig1.add_trace(
-                traces[ctr_], row=row, col=col
-            )
-            ctr_ = ctr_ + 1
-        ax1 = fig1['layout']
-        xaxis = []
-        yaxis = []
-        for i in ax1:
-            if 'xaxis' in i:
-                if i == 'xaxis':
-                    xaxis.append(i)
-                elif int(i.replace('xaxis', '')) <= length:
-                    xaxis.append(i)
-            elif 'yaxis' in i:
-                if i == 'yaxis':
-                    yaxis.append(i)
-                elif int(i.replace('yaxis', '')) <= length:
-                    yaxis.append(i)
-        i = 1
-        temp1_x = {}
-        temp1_y = {}
-        for layout in layouts:
-            if i == 1:
-                temp1_x['xaxis'] = layout['xaxis']['title']['text']
-                temp1_y['yaxis'] = layout['yaxis']['title']['text']
-            elif i == 2:
-                temp1_x['xaxis2'] = layout['xaxis']['title']['text']
-                temp1_y['yaxis2'] = layout['yaxis']['title']['text']
-            else:
-                temp1_x[f'xaxis{str(i)}'] = layout['xaxis']['title']['text']
-                temp1_y[f'yaxis{str(i)}'] = layout['yaxis']['title']['text']
-            i = i + 1
-
-        for k, v in temp1_x.items():
-            fig1['layout'][k]['title']['text'] = v
-        for k, v in temp1_y.items():
-            fig1['layout'][k]['title']['text'] = v
-
-        return fig1
 
     def plot(self, *variables, plot_partial={}, **figures):
         if len(plot_partial) > 0:

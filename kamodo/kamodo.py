@@ -4,75 +4,59 @@ Copyright © 2017 United States Government as represented by the Administrator, 
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 
+# +
+import functools
+import inspect
+import itertools
+import json
+import re
+import types
+from collections import OrderedDict
+from collections import UserDict
+from inspect import getfullargspec
+from types import GeneratorType
+
+import forge
+import pandas as pd
+import plotly.graph_objs as go
+import requests
+import sympy
+from plotly.subplots import make_subplots
+from sympy import Eq
+from sympy import Expr
+from sympy import Symbol, symbols, Function
+from sympy import lambdify
+from sympy import latex
+from sympy.abc import _clash
+from sympy.core.function import UndefinedFunction
+from sympy.parsing.latex import parse_latex
+from sympy.physics import units as sympy_units
+from sympy.physics.units import Dimension
+
+from plotting import get_ranges
+from plotting import plot_dict, get_arg_shapes, symbolic_shape
+# from util import to_arrays, cast_0_dim
+from util import beautify_latex
+from util import concat_solution
+from util import get_arg_units
+from util import get_defaults, valid_args, eval_func
+from util import get_dimensions
+from util import kamodofy
 from util import np
-from sympy import Integral, Symbol, symbols, Function
+from util import partial
+from util import reserved_names
+from util import serialize, deserialize
+from util import sign_defaults
+from util import simulate
+from util import unify, get_abbrev, get_expr_unit
+from util import unit_subs
 
 # try:
 #     from sympy.parsing.sympy_parser import parse_expr
 # except ImportError:  # may occur for certain versions of sympy
 #     from sympy import sympify as parse_expr
-
-from collections import OrderedDict
-from collections import UserDict
-import collections
-
-from sympy import lambdify
-from sympy.parsing.latex import parse_latex
-from sympy import latex
-from sympy.core.function import UndefinedFunction
-from inspect import getfullargspec
-from sympy import Eq
-import pandas as pd
 # from IPython.display import Latex
-
-
-from sympy.physics import units as sympy_units
-from sympy.physics.units import Quantity
-from sympy.physics.units import Dimension
-from sympy import Expr
-
-# +
-import functools
-import types
-
-from util import kamodofy
-from util import sort_symbols
-from util import simulate
-from util import unit_subs
-from util import get_defaults, valid_args, eval_func
-# from util import to_arrays, cast_0_dim
-from util import beautify_latex, arg_to_latex
-from util import concat_solution
-from util import convert_unit_to
-from util import unify, get_abbrev, get_expr_unit
-from util import is_function, get_arg_units
-from util import partial
 # -
-
-
-import plotly.graph_objs as go
-from plotly import figure_factory as ff
-
-from plotting import plot_dict, get_arg_shapes, symbolic_shape
-from plotting import get_ranges
-from util import existing_plot_types
-from util import get_dimensions
-from util import reserved_names
-
-from sympy import Wild
-from types import GeneratorType
-import inspect
-
-import re
-
-import urllib.request
-import json
-import requests
-from util import serialize, deserialize
-from util import sign_defaults
-import forge
-from sympy.abc import _clash
-import sympy
 
 _clash['rad'] = Symbol('rad')
 _clash['deg'] = Symbol('deg')
@@ -111,7 +95,6 @@ def get_unit(unit_str, unit_subs=unit_subs):
 
     if len(unit_str) == 0:
         return Dimension(1)
-
     unit_expr = parse_expr(unit_str.replace('^', '**'), locals=_clash)
     try:
         unit = unit_expr.subs(units)
@@ -150,7 +133,8 @@ def args_from_dict(expr, local_dict, verbose):
 def alphabetize(symbols):
     """alphabetical ordering for the input symbols"""
     # can't use > on symbols, so need to convert to str first
-    return tuple(Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
+    return tuple(
+        Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
 
 
 def reorder_symbol(defaults, default_non_default_parameter, symbol):
@@ -514,13 +498,8 @@ class Kamodo(UserDict):
                 for k, v in composition.items():
                     print('\t', k, v)
         signature, defaults = sign_defaults(symbol, rhs_expr, composition)
-        default_non_default_parameter = []
-        try:
-            for parm in signature.parameters:
-                default_non_default_parameter.append(parm.name)
-        except KeyError:
-            pass
-        return signature(func), default_non_default_parameter, defaults
+
+        return signature(func)
 
     def update_unit_registry(self, func, arg_units):
         """Inserts unit functions into registry"""
@@ -641,7 +620,7 @@ class Kamodo(UserDict):
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(alphabetize(
-                                    rhs_expr.free_symbols)))
+                        rhs_expr.free_symbols)))
                 else:  # lhs is already a function
                     symbol = lhs_expr
                 lhs_str = str(symbol)
@@ -746,14 +725,22 @@ class Kamodo(UserDict):
                     if len(unit_args.args) == len(symbol.args):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
-            func, default_non_default_parameter, defaults = \
-                self.vectorize_function(symbol, rhs_expr, composition)
+            func = self.vectorize_function(symbol, rhs_expr, composition)
+            signature, defaults = sign_defaults(symbol, rhs_expr, composition)
+            default_non_default_parameter = []
+            try:
+                for parm in signature.parameters:
+                    default_non_default_parameter.append(parm.name)
+            except KeyError:
+                pass
+
             symbol = reorder_symbol(defaults, default_non_default_parameter,
                                     symbol)
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None
-            self.register_signature(symbol, units, lhs_expr, rhs_expr, arg_units)
+            self.register_signature(symbol, units, lhs_expr, rhs_expr,
+                                    arg_units)
             func._repr_latex_ = lambda: self.func_latex(str(type(symbol)),
                                                         mode='inline')
             super(Kamodo, self).__setitem__(symbol, func)
@@ -1090,14 +1077,16 @@ class Kamodo(UserDict):
             if len(signature['arg_units']) == 1:
                 try:
                     args_unit = signature['arg_units']
-                    x_axis_unit = [args_unit[i][0] for i in sorted(args_unit.keys())][0]
+                    x_axis_unit = \
+                        [args_unit[i][0] for i in sorted(args_unit.keys())][0]
                     y_axis_unit = signature['units']
                     x_last_index = layout.xaxis.title.text.rindex('$')
                     y_last_index = layout.yaxis.title.text.rindex('$')
                     new_xaxis_label = layout.xaxis.title.text[
                                       :x_last_index] + ' ' + f'[{x_axis_unit}]' + \
                                       layout.xaxis.title.text[x_last_index:]
-                    new_yaxis_label = layout.yaxis.title.text[y_last_index] + str(
+                    new_yaxis_label = layout.yaxis.title.text[
+                                          y_last_index] + str(
                         signature['symbol'].name) + ' ' + f'[{y_axis_unit}]' + \
                                       layout.yaxis.title.text[y_last_index]
 
@@ -1138,6 +1127,125 @@ class Kamodo(UserDict):
         #     fig['chart_type'] = chart_type
         # return fig
 
+    def same_unit_check(self, layouts, traces):
+        traces_attr={}
+        i = 0
+        for each in traces:
+            trace_name = each['name'].split('[')
+            trace_name = trace_name[0]
+            traces_attr[f'{trace_name}-{i}'] = each['yaxis']
+            i=i+1
+        units = {}
+        list_unit = []
+        dups = set()
+        y_axis_attr = {}
+        i = 0
+        for k, v in dict(self.unit_registry).items():
+            units[k.name] = v
+            list_unit.append(str(v))
+        dupes_unit = [x for x in list_unit if x in dups or dups.add(x)]
+        if len(dupes_unit) > 0:
+            unis_bkup = units.copy()
+            for k, v in unis_bkup.items():
+                if str(v) not in dupes_unit:
+                    units.pop(str(k))
+            for i in range(len(list_unit) + 1):
+                if i == 0:
+                    y_axis_attr['yaxis'] = layouts['yaxis']['title']['text']
+                    i = i + 1
+                elif i == 1:
+                    y_axis_attr['yaxis2'] = layouts['yaxis2']['title']['text']
+                    i = i + 1
+                else:
+                    y_axis_attr[f'yaxis{i}'] = layouts[f'yaxis{i}']['title'][
+                        'text']
+                    i = i + 1
+            for unit in dupes_unit:
+                same_unit = []
+                for k, v in units.items():
+                    if unit == str(v):
+                        same_unit.append(k)
+                text = ''
+                partial_text = []
+                temp1 = ''
+                j = 0
+                for each in same_unit:
+                    for k1, v1 in y_axis_attr.items():
+                        if f'${each}' in v1:
+                            v1_temp = v1.replace("$", '')
+                            partial_text.append(v1_temp)
+                            if j > 0:
+                                layouts.pop(k1)
+                                j = j + 1
+                                for k2, v2 in traces_attr.items():
+                                    if each in k2:
+                                        temp = k2.split('-')
+                                        idx = temp[-1]
+                                        traces[int(idx)]['yaxis'] = trace_val
+
+                            else:
+                                temp1 = k1
+                                j = j + 1
+                                for k2, v2 in traces_attr.items():
+                                    if each in k2:
+                                        trace_val = v2
+
+                partial_text_str = ', '.join(partial_text)
+                partial_text_str = f"${partial_text_str}$"
+                layouts[temp1]['title']['text'] = partial_text_str
+            return layouts, traces
+        else:
+            return layouts, traces
+
+    def multi_variable_plotting(self, figures):
+        traces = []
+        layouts = []
+        layout_details = []
+        plot_title = []
+        ctr = 0
+        for variable, kwargs in figures:
+            fig = self.figure(variable, **kwargs)
+            traces.extend(fig['data'])
+            layouts.append(fig['layout'])
+            if ctr > 0:
+                ctr = ctr + 1
+                fig['data'][0].yaxis = f'y{str(ctr)}'
+                fig['layout'][f'yaxis{ctr}'] = {"title": {"text": str(
+                    fig['layout']['yaxis']['title']['text'])}}
+                layout_details.append(fig['layout'][f'yaxis{ctr}'][
+                                          'title']['text'])
+            else:
+                yaxis_text = str(
+                    fig['layout']['yaxis']['title']['text'])
+                ctr = ctr + 1
+            i = 1
+            layouts[-1]['yaxis']['title']['text'] = yaxis_text
+            for layout in layout_details:
+                i = i + 1
+                if not layouts[-1].__contains__(f'yaxis{i}'):
+                    layouts[-1][f'yaxis{i}'] = {'title': {
+                        'text': layout_details[i - 2]}}
+                    layouts[-1][f'yaxis{i}']['overlaying'] = 'y'
+                    layouts[-1][f'yaxis{i}']['side'] = 'right'
+                    layouts[-1][f'yaxis{i}']['anchor'] = 'x'
+                    layouts[-1][f'yaxis{i}']['position'] = .10
+                    layouts[-1][f'yaxis{i}']['position'] = .10
+                else:
+                    layouts[-1][f'yaxis{i}']['side'] = 'right'
+                    layouts[-1][f'yaxis{i}']['anchor'] = 'free'
+                    layouts[-1][f'yaxis{i}']['position'] = .80
+                    layouts[-1][f'yaxis{i}']['overlaying'] = 'y'
+            plot_title.append(fig['layout']['title']['text'])
+
+        layouts[-1]['width'] = 900
+        layouts[-1]['xaxis']['domain'] = [0.3, .7]
+        plot_title = ', '.join(plot_title)
+        plot_title = plot_title.replace('$', '')
+        plot_title = f"'${plot_title}$'"
+        layouts[-1]['title'] = plot_title
+        layout, traces = self.same_unit_check(layouts[-1], traces)
+        return traces, layout
+
     def plot(self, *variables, plot_partial={}, **figures):
         if len(plot_partial) > 0:
             kpartial = from_kamodo(self)  # copy kamodo object
@@ -1160,14 +1268,9 @@ class Kamodo(UserDict):
                 data=fig['data'],
                 layout=fig['layout'])
         else:
-            traces = []
-            layouts = []
-            for variable, kwargs in list(figures.items()):
-                fig = self.figure(variable, **kwargs)
-                traces.extend(fig['data'])
-                layouts.append(fig['layout'])
-            # Todo: merge the layouts instead of selecting the last one
-            return go.Figure(data=traces, layout=layouts[-1])
+            traces, layout = self.multi_variable_plotting(list(
+                figures.items()))
+            return go.Figure(data=traces, layout=layout)
 
 
 class KamodoAPI(Kamodo):

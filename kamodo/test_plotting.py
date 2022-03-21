@@ -1,11 +1,16 @@
-from kamodo import Kamodo
-import pytest
 import numpy as np
 import pandas as pd
-from .plotting import scatter_plot, line_plot, vector_plot, contour_plot, surface, plane, tri_surface_plot, get_arg_shapes, plot_types, plot_dict, image, symbolic_shape
+import pytest
+
+from kamodo import Kamodo
+from .plotting import scatter_plot, line_plot, vector_plot, contour_plot, surface, plane, tri_surface_plot, \
+    get_arg_shapes, plot_types, plot_dict, image, symbolic_shape
 
 
 def test_scatter_plot():
+    """
+    Method for testing scatter plot's trace, layout and plot type.
+    """
     title = 'test plot title'
     kamodo_obj = Kamodo(f='x**3')
     result = kamodo_obj.evaluate('f', x=np.random.random((100, 3)))
@@ -19,6 +24,9 @@ def test_scatter_plot():
 
 
 def test_line_plot_line():
+    """
+    Method for testing line plot's trace, layout and plot type.
+    """
     kamodo = Kamodo(f='x**3')
     result = kamodo.evaluate('f', x=np.linspace(-1, 1, 100))
 
@@ -34,6 +42,10 @@ def test_line_plot_line():
 
 
 def test_line_plot_2d_line():
+    """
+    Method for testing 2D line plot's trace, layout and plot type.
+    """
+
     def fvec(t):
         x = t * np.sin(t) ** 3
         y = t * np.cos(t) * 2
@@ -57,6 +69,10 @@ def test_line_plot_2d_line():
 
 
 def test_line_plot_3d_line_pd():
+    """
+    Method for testing 3D line plot's trace, layout and plot type.
+    """
+
     def fvec(t):
         x = t * np.sin(t) ** 3
         y = t * np.cos(t) * 2
@@ -81,6 +97,9 @@ def test_line_plot_3d_line_pd():
 
 
 def test_vector_plot_2d_vector():
+    """
+    Method for testing 2D vector plot's trace, layout and plot type.
+    """
     x = np.linspace(-np.pi, np.pi, 25)
     y = np.linspace(-np.pi, np.pi, 30)
     xx, yy = np.meshgrid(x, y)
@@ -105,6 +124,9 @@ def test_vector_plot_2d_vector():
 
 
 def test_vector_plot_3d_vector():
+    """
+    Method for testing 3D vector plot's trace, layout and plot type.
+    """
     x, y, z = np.meshgrid(np.linspace(-2, 2, 4),
                           np.linspace(-3, 3, 6),
                           np.linspace(-5, 5, 10))
@@ -150,6 +172,10 @@ def test_vector_plot_3d_vector_pd():
 
 
 def test_contour_plot_2d_grid():
+    """
+    Method for testing 2D contour plot's trace, layout and plot type.
+    """
+
     def f_NcommaM(x_N=np.linspace(0, 8 * np.pi, 100), y_M=np.linspace(0, 5, 90)):
         x, y = np.meshgrid(x_N, y_M, indexing='xy')
         return np.sin(x) * y
@@ -201,6 +227,9 @@ def test_coutour_plot_xy_index_2d_grid():
 
 
 def test_contour_plot_2d_skew():
+    """
+    Method for testing 2D skew plot's trace, layout and plot type.
+    """
     r = np.linspace(1, 3, 20)
     theta = np.linspace(0, np.pi, 14)
     r_, theta_ = np.meshgrid(r, theta)
@@ -224,6 +253,10 @@ def test_contour_plot_2d_skew():
 
 
 def test_plane():
+    """
+    Method for testing plane plot's trace, layout and plot type.
+    """
+
     def f_LMN(
             x_L=np.linspace(-5, 5, 50),
             y_M=np.linspace(0, 10, 75),
@@ -261,6 +294,9 @@ def test_plane_meshgrid_false():
 
 
 def test_surface_3d_surface():
+    """
+    Method for testing 3D surface plot's trace, layout and plot type.
+    """
     u = np.linspace(-2, 2, 40)
     v = np.linspace(-2, 2, 50)
     uu, vv = np.meshgrid(u, v)
@@ -373,6 +409,10 @@ def test_arg_shape_np():
 
 
 def test_arg_shape_pd():
+    """
+    Method for testing argument shape.
+    """
+
     def fvec(t):
         x = t * np.sin(t) ** 3
         y = t * np.cos(t) * 2
@@ -477,9 +517,14 @@ def test_line_plot_3d_line():
     assert chart_type == '3d-line'
     assert layout['title']['text'] == title
 
+
 def test_image_plot():
-    def img(i=np.arange(33),j=np.arange(35)):
-        ii, jj, kk = np.meshgrid(i,j,[100, 200, 255], indexing='ij')
+    """
+    Method for testing image plot's trace, layout and plot type.
+    """
+
+    def img(i=np.arange(33), j=np.arange(35)):
+        ii, jj, kk = np.meshgrid(i, j, [100, 200, 255], indexing='ij')
         return kk
 
     kamodo = Kamodo(img=img)
@@ -489,7 +534,7 @@ def test_image_plot():
 
 
 def test_plot_keys():
-    for k in plot_types.to_dict(orient = 'index'):
+    for k in plot_types.to_dict(orient='index'):
         try:
             plot_dict[k[0]][k[1]]['name']
         except KeyError:
@@ -498,10 +543,9 @@ def test_plot_keys():
 
 
 def test_symbolic_shape():
-    assert symbolic_shape((3,1,3)) == ((3, 1, 3),)
-    assert symbolic_shape((4,4,4)) == (('N', 'N', 'N'),)
-    assert symbolic_shape((2,1,3)) == ((2, 1, 3),)
-    assert symbolic_shape((4,5,6)) == (('N', 'M', 'L'),)
-    assert symbolic_shape((4,5,1)) == (('N', 'M', 1),)
+    assert symbolic_shape((3, 1, 3)) == ((3, 1, 3),)
+    assert symbolic_shape((4, 4, 4)) == (('N', 'N', 'N'),)
+    assert symbolic_shape((2, 1, 3)) == ((2, 1, 3),)
+    assert symbolic_shape((4, 5, 6)) == (('N', 'M', 'L'),)
+    assert symbolic_shape((4, 5, 1)) == (('N', 'M', 1),)
     assert symbolic_shape((5, 6), (6, 5), (5, 4)) == (('N', 'M'), ('M', 'N'), ('N', 'L'))
-

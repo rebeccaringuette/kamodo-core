@@ -1,11 +1,26 @@
 
-### 2022-02-10 19:03:05.835344: clock-out
+* bugfix addressing
+* merging latest master
+* merge fixes
+* merged from master
+* added latex check for dimensionless args
+* fixing unit test for mixture of dimensionless args
+* added test for lhs unit parsing
+* refining test to validate lambdified function
 
-* removed partial keys from arg_units
-* cleaning up partial latex_repr
+### 2022-03-01 15:24:17.816542: clock-out
 
-### 2022-02-10 18:21:18.161891: clock-in: T-10m 
+* added contributing to documentation
+* added contributing
 
+### 2022-03-01 14:38:42.849325: clock-in
+
+* matching requirements for setup.cfg
+* how to run unit tests
+* cleaning up missing docstrings for plot and figure, removed extraneous images
+* removing commandline interface from docs for now
+* cleaning up install instructions
+* removing extraneous notebooks
 
 ### 2022-02-15 15:27:12.479478: clock-out
 
@@ -14,6 +29,24 @@
 ### 2022-02-15 15:17:52.867347: clock-in
 
 * removing print statements
+
+
+### 2022-02-10 19:03:05.835344: clock-out
+
+* removed partial keys from arg_units
+* cleaning up partial latex_repr
+
+### 2022-02-10 18:21:18.161891: clock-in: T-10m 
+
+
+### 2022-02-04 19:25:01.075400: clock-out
+
+* added api documentation
+* executing notebooks on deploy
+* fixed field line plotting, added mkdocs preamble so notebooks run from correct directory
+
+### 2022-02-04 17:29:50.152266: clock-in
+
 * test for two defaults, one arg
 * test default inheritance for more than two arguments
 * str format
@@ -149,7 +182,7 @@ pio.write_image(fig, "cnofs_B_up.svg", engine="kaleido")
 ### 2021-10-08 12:36:27.275094: clock-in
 
 * check for div output_type
->>>>>>> master
+
 * remoded ccmc dockerfiles
 
 ### 2021-09-24 14:12:46.469270: clock-out

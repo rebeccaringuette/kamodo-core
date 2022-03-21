@@ -3,51 +3,37 @@
 Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
-import logging
-import os
-import tempfile
-import sys
-import numpy.f2py  # just to check it presents
-from numpy.distutils.exec_command import exec_command
-
-import sympy
-from collections import OrderedDict, defaultdict
-import collections
-import functools
-from sympy import sympify as parse_expr
-from sympy.utilities.autowrap import ufuncify
-import functools
-from decorator import decorator, decorate
-from sympy import symbols, Symbol
-from sympy.core.function import UndefinedFunction
-from inspect import getargspec, getfullargspec
 import inspect
+import json
+import sys
+import tempfile
+import types
+from collections import OrderedDict, defaultdict
+from datetime import datetime
+from inspect import getfullargspec
+
+import forge
+import numpy as np
+import pandas as pd
+import sympy
+from decorator import decorate
+from numpy.distutils.exec_command import exec_command
+from scipy.integrate import solve_ivp
+from sympy import Add, Mul, Pow, Tuple, sympify
+from sympy import Function
+from sympy import latex, Eq
+from sympy import nsimplify
+from sympy import symbols, Symbol
+from sympy.core.compatibility import reduce, Iterable
+from sympy.core.function import UndefinedFunction
 from sympy.physics import units
 from sympy.physics import units as sympy_units
-from sympy.physics.units.systems.si import dimsys_SI
-import numpy as np
-from sympy import latex, Eq
-from sympy.parsing.latex import parse_latex
-import pandas as pd
-from datetime import datetime
-from scipy.integrate import solve_ivp
-from sympy.physics.units.util import _get_conversion_matrix_for_expr
-
-from sympy.core.compatibility import reduce, Iterable, ordered
-from sympy import Add, Mul, Pow, Tuple, sympify, default_sort_key
-from sympy.physics.units.quantities import Quantity
 from sympy.physics.units import Dimension
-from sympy import nsimplify
-from sympy import Function
-
-import urllib.request, json
-
-import base64
-import types
-import forge
-
 from sympy.physics.units import UnitSystem
-from sympy.physics.units import Dimension
+from sympy.physics.units.quantities import Quantity
+from sympy.physics.units.systems.si import dimsys_SI
+from sympy.physics.units.util import _get_conversion_matrix_for_expr
+from sympy.utilities.autowrap import ufuncify
 
 
 def get_unit_quantity(name, base, scale_factor, abbrev=None, unit_system='SI'):
@@ -196,12 +182,24 @@ def kamodofy(
         citation=None,
         hidden_args=[],
         **kwargs):
-    """Adds meta and data attributes to functions for compatibility with Komodo
-    meta: a dictionary containing {units: <str>}
-    data:
-        if supplied, set f.data = data
-        if not supplied, set f.data = f(), assuming it can be called with no arguments.
-            If f cannot be called with no arguments, set f.data = None
+    """
+    - Adds meta and data attributes to functions for compatibility with Komodo.
+    - meta is a dictionary containing {units: <str>}.
+    - data if supplied, set f.data = data, if not supplied, set f.data = f(), assuming it can be called with no arguments.
+      If f cannot be called with no arguments, set f.data = None
+
+    _func: kamodo function
+    units: units for function
+    arg_units: arguments units
+    data: data for function
+    update: updates in function
+    equation: equation of the function
+    citation: citation of function
+    hidden_args: hidden arguments of function
+    **kwargs: other key word arguments
+
+    returns : decorator kamodofy
+
     """
 
     def decorator_kamodofy(f):
@@ -382,11 +380,15 @@ existing_plot_types.columns = ['Plot Type', 'notes']
 
 
 def gridify(_func=None, order='A', squeeze=True, **defaults):
-    """Given a function of shape (n,dim) and arguments of shape (L), (M), calls f with points L*M
+    """
+    - Given a function of shape (n,dim) and arguments of shape (L), (M), calls f with points L*M
 
-    order: 'A' (default) uses indexing='xy' in meshgrid
-           'C' uses indexing='ij' in meshgrid
+    _func: kamodo function
+    order: 'A' (default) uses indexing='xy' in meshgrid, 'C' uses indexing='ij' in meshgrid
     squeeze: True (default) passed to reshape before returning
+
+    returns: decorator gridify
+
     """
 
     def decorator_gridify(f):
@@ -428,7 +430,13 @@ def gridify(_func=None, order='A', squeeze=True, **defaults):
 
 
 def pointlike(_func=None, signature=None, otypes=[float], squeeze=None):
-    """Transforms a single-argument function to one that accepts m points of dimension n"""
+    """
+    - Transforms a single-argument function to one that accepts m points of dimension n
+
+    _func: kamodo function
+
+    returns: decorator pointlike
+    """
 
     def decorator_pointlike(func):
         def argument_wrapper(f, *args, **kwargs):
@@ -522,7 +530,7 @@ def solve(fprime=None, seeds=None, varname=None, interval=None,
                 s = np.expand_dims(s, axis=0)
 
             isolution = np.floor(s.real).astype(int) * len(directions) + (
-                        s.imag > 0)
+                    s.imag > 0)
 
             results = []
             seed_number = []
@@ -841,12 +849,11 @@ def unify(expr, unit_registry, to_symbol=None, verbose=False):
                     print('unify:\t{} -> {}'.format(k, v))
                 print(
                     'compare:{}'.format(expr_dimensions.compare(to_dimensions)))
-                error_msg = 'cannot convert {} [{}] {} to {}[{}] {}'.format(
-                    expr, expr_unit, expr_dimensions,
-                    to_symbol, to_unit, to_dimensions)
-                print(error_msg)
-            raise NameError(error_msg)
 
+            error_msg = 'cannot convert {} [{}] {} to {}[{}] {}'.format(
+                expr, expr_unit, expr_dimensions,
+                to_symbol, to_unit, to_dimensions)
+            raise NameError(error_msg)
     return expr
 
 
@@ -1291,8 +1298,13 @@ def latex_repr_values(values_dict):
 
 
 def partial(_func=None, **partial_kwargs):
-    """A partial function decorator
-    Reduces function signature to reflect partially assigned kwargs
+    """
+    - A partial function decorator, Reduces function signature to reflect partially assigned kwargs
+
+    _func: kamodo function object
+    **partial_kwargs:
+
+    returns: decorator partial
     """
     verbose = partial_kwargs.pop('verbose', False)
 

@@ -1,3 +1,4 @@
+* fixing api doc spacing, added point testing in FieldIntegration notebook
 * improved documentation for gridify, partial
 * cleaned up expression for normalization operator
 * clearing cell output

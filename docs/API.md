@@ -145,8 +145,8 @@ from kamodo import kamodofy
 ::: kamodo.util.kamodofy
     :docstring:
 
-
 ### gridify
+
 ::: kamodo.util.gridify
     :docstring:
 

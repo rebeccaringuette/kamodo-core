@@ -393,13 +393,13 @@ class Kamodo(UserDict):
         
         ** Inputs **
 
-        * ** funcs ** - *(optional)* list of expressions to register in f(x)=x format
+        * ** funcs ** - *(optional)* list of (str) expressions to register in f(x)=x format
 
         * ** kwargs ** - *(optional)* key,value pairs of functions to register
-            * key - left-hand-side symbol
+            * key - left-hand-side symbol (str)
             * value - can be one of:
-                * latex or python expression str e.g. "x^2-x-1"
-                * kamodofied function with appropriate .meta and .data attributers (see @kamodofy)
+                * latex or python (str) expression e.g. "x^2-x-1"
+                * kamodofied function with appropriate .meta and .data attributers (see [@kamodofy](#kamodofy) decorator)
                 * lambda function (having no meta or data attributes)
 
         * ** verbose ** - *(optional)* (`default=False`) flag to turn on all debugging print statements
@@ -690,7 +690,7 @@ class Kamodo(UserDict):
 
         * ** input_expr ** - rhs string or kamodofied function, one of:
             * right-hand-side expression: python or latex str (e.g.`x^2-x-1`)
-            * kamodofied function with appropriate .meta and .data attributers (see @kamodofy)
+            * kamodofied function with appropriate .meta and .data attributers (see [@kamodofy](#kamodofy))
             * lambda function (having no meta or data attributes)
 
         Raises:

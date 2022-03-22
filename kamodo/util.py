@@ -414,14 +414,92 @@ existing_plot_types.columns = ['Plot Type', 'notes']
 
 
 def gridify(_func=None, order='A', squeeze=True, **defaults):
-    """
-    - Given a function of shape (n,dim) and arguments of shape (L), (M), calls f with points L*M
+    """Given a function _func(xvec) taking a single variable of shape (n,dim) and defaults
+    (e.g. x(L), y(M), z(N)) `gridify` returns a new function `_func(x,y,z)` that calls `_func` with points 
+    `n=LxMxN`, reshaping the result to `(M, L, N)` (`order='A'`, default) or `(L, M, N)` (`order='C'`).
+    See [np.meshgrid](https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html)
+    and [np.reshape](https://numpy.org/doc/stable/reference/generated/numpy.reshape.html).
 
-    _func: kamodo function
-    order: 'A' (default) uses indexing='xy' in meshgrid, 'C' uses indexing='ij' in meshgrid
-    squeeze: True (default) passed to reshape before returning
+    ** inputs **:
 
-    returns: decorator gridify
+    * _func: kamodo function
+    * order: 'A' str (default) passed to reshape.
+        * order = 'A': use indexing='xy' in meshgrid
+        * order = 'C': use indexing='ij' in meshgrid
+    * squeeze: True (default) passed to reshape before returning
+
+    ** returns **: mutated function
+
+    ** usage **:
+
+    Conceptually, `@gridify` converts point-like interpolators to grid-based interpolators.
+
+    Suppose we have a function `r(xvec)` that takes an array of shape `(n,2)` and returns the magnitude `r` of each point.
+    By applying `@gridify`, we convert `r(xvec)` to `r(x,y)`:
+
+    ```python
+    @gridify(x=np.linspace(-3,3,5), y=np.linspace(-5,5,11), order='A')
+    def r(xvec):
+        return np.linalg.norm(xvec, axis=-1)
+    ```
+
+    The result is automatically reshaped to match the input arrays for `x,y`:
+    
+    ```python
+    r(x=[2,3], y=[3,4,5]).shape # (3, 2)
+    ```
+    
+    In addition, `r` receives defaults for `x` and `y`:
+
+    ```python
+    r().shape # (11,5)
+    ```
+
+    To see the defaults, use the `get_defaults` function
+
+    ```py
+
+    from kamodo import get_defaults
+
+    defaults = get_defaults(r) 
+    defaults['x'] # (5,)
+    defaults['y'] # (11,)
+    ```
+    
+    We can generate "slices" for fixed values of `x` or `y`:
+
+    ```python
+    r(x=0) # array([5., 4., 3., 2., 1., 0., 1., 2., 3., 4., 5.])
+    r(y=0) # array([3. , 1.5, 0. , 1.5, 3. ])
+    ```
+
+    Use `order` to control the shapes of returned arrays (row vs column major).
+
+    ```python
+    @gridify(x=np.linspace(-3,3,5), y=np.linspace(-5,5,11), z=np.linspace(-1,1,13), order='A')
+    def r(xvec):
+        return np.linalg.norm(xvec, axis=-1)
+
+    r().shape # (11, 5, 13) corresponds to y, x, z
+
+    @gridify(x=np.linspace(-3,3,5), y=np.linspace(-5,5,11), z=np.linspace(-1,1,13), order='C')
+    def r(xvec):
+        return np.linalg.norm(xvec, axis=-1)
+
+    r().shape # (5, 11, 13) corresponds to x, y, z
+    ```
+
+    By default, the output array will be squeezed if a dimension has size 1.
+    Use `squeeze=False` to disable this behavior:
+
+    ```python
+    @gridify(x=np.linspace(-3,3,5), y=np.linspace(-5,5,11), squeeze=False)
+    def r(xvec):
+        return np.linalg.norm(xvec, axis=-1)
+
+    r(y=0).shape # (1, 5)
+    r(x=0).shape # (11, 1)
+    ```
 
     """
 
@@ -464,12 +542,18 @@ def gridify(_func=None, order='A', squeeze=True, **defaults):
 
 
 def pointlike(_func=None, signature=None, otypes=[float], squeeze=None):
-    """
-    - Transforms a single-argument function to one that accepts m points of dimension n
+    """Transforms a single-argument function to one that accepts m points of dimension n
+    pointlike wraps [np.vectorize](https://numpy.org/doc/stable/reference/generated/numpy.vectorize.html)
 
-    _func: kamodo function
+    ** inputs **:
 
-    returns: decorator pointlike
+    * _func: kamodo function
+    * signature: (optional) Generalized universal function signature, e.g., (m,n),(n)->(m) for vectorized matrix-vector multiplication. 
+    * otypes: list(types) default is [float] The output data type. It must be specified as either a string of typecode characters or a list of data type specifiers. There should be one data type specifier for each output.
+    * squeeze: axis on which to squeeze result 
+
+    ** returns **: modified function 
+
     """
 
     def decorator_pointlike(func):
@@ -1332,13 +1416,33 @@ def latex_repr_values(values_dict):
 
 
 def partial(_func=None, **partial_kwargs):
-    """
-    - A partial function decorator, Reduces function signature to reflect partially assigned kwargs
+    """A partial function decorator, reducing function signature to reflect partially assigned kwargs.
+    
+    ** inputs **:
 
-    _func: kamodo function object
-    **partial_kwargs:
+    * _func: kamodo function
 
-    returns: decorator partial
+    * partial_kwargs: (dict) _func arguments to set
+
+    ** returns **: updated function with reduced arguments
+
+    ** usage **:
+
+    ```python
+    @partial(z=1)
+    def f(x, y=2, z=5):
+        return x + y + z
+    assert f(2,3) == 2+3+1
+    try:
+        f(3,4,5)
+    except TypeError as m:
+        print(m) # wrapped() takes from 1 to 2 positional arguments but 3 were given
+    ```
+
+    Note: This decorator differs significantly from functools.partial in the following ways:
+
+    * functools.partial updates the function defaults without actually eliminating arguments.
+    * functools.partial raises TypeError when used as a @decorator
     """
     verbose = partial_kwargs.pop('verbose', False)
 

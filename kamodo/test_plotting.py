@@ -505,3 +505,11 @@ def test_symbolic_shape():
     assert symbolic_shape((4,5,1)) == (('N', 'M', 1),)
     assert symbolic_shape((5, 6), (6, 5), (5, 4)) == (('N', 'M'), ('M', 'N'), ('N', 'L'))
 
+def test_multi_1d_plot():
+    k = Kamodo()
+    x_ = np.linspace(-5,5,303)
+    k['f[kg/m^3]'] = lambda x=x_: x**2-x-1
+    k['g[g/cm^3]'] = lambda x=x_: np.sin(x)**2
+    k['h[kg/m^3]'] = lambda x=x_: np.sin(x)
+    k.plot('f', 'g') # raises PlotlyKeyError
+

@@ -1,3 +1,4 @@
+* adding test for multi 1d plotting
 * test for two defaults, one arg
 * test default inheritance for more than two arguments
 * str format

@@ -796,8 +796,8 @@ class Kamodo(UserDict):
                 pass
 
 
-            symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                    symbol)
+            # symbol = reorder_symbol(defaults, default_non_default_parameter,
+            #                         symbol)
 
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,

@@ -1,3 +1,4 @@
+* fixed reordering
 * adding test for multi 1d plotting
 * bugfix addressing
 * merging latest master

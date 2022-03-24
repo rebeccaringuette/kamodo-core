@@ -28,7 +28,7 @@ import numpy as np
 x = np.linspace(-np.pi, np.pi, 25)
 y = np.linspace(-np.pi, np.pi, 30)
 xx, yy = np.meshgrid(x,y)
-points = np.array(zip(xx.ravel(), yy.ravel()))
+points = np.array(list(zip(xx.ravel(), yy.ravel())))
 
 @kamodofy(units = 'km/s')
 def fvec(rvec = points):
@@ -77,9 +77,9 @@ import plotly.io as pio
 fig = kamodo.plot('fvec')
 pio.write_image(fig, 'images/fig2d-usage.svg')
 ```
-![usage](docs/notebooks/images/fig2d-usage.svg)
+![usage](https://raw.githubusercontent.com/EnsembleGovServices/kamodo-core/joss/docs/notebooks/images/fig2d-usage.svg)
 
-Head over to the [Introduction](docs/notebooks/Kamodo.ipynb) page for more details.
+Head over to the [Introduction](notebooks/Kamodo.ipynb) page for more details.
 
 
 ## Getting started
@@ -90,14 +90,11 @@ Kamodo may be installed from pip
 pip install kamodo
 ```
 
-To get the latest version, install from Asher's fork:
+Kamodo is now maintained by Ensemble Government Services. To get the latest version, install from the Ensemble git repo:
 
 ```console
-pip install git+https://github.com/asherp/Kamodo.git
+pip install git+https://github.com/EnsembleGovServices/kamodo-core.git
 ```
-
-!!! note
-    Asher's fork is periodically merged into the CCMC's official NASA version.
 
 ### Kamodo Environment
 
@@ -110,7 +107,7 @@ Download and install miniconda from [here](https://conda.io/miniconda.html). The
 Create a new environment for kamodo
 
 ```console
-conda create -n kamodo python==3.7
+conda create -n kamodo python=3.7
 conda activate kamodo
 (kamodo) pip install kamodo
 ```
@@ -134,21 +131,57 @@ This should open a browser window that will allow you to load any of the example
 
 #### Requirements
 
-The following requirements are obtained by running `pip install kamodo`
+The following (minimum) requirements are obtained by running `pip install kamodo`
 
+* decorator>=4.4.2
 * numpy
 * scipy
-* sympy
+* sympy==1.5.1
 * pandas
-* plotly==3.3
+* plotly
 * pytest
-* psutil
-* conda install antlr-python-runtime (rendering latex)
-* conda install -c plotly plotly-orca (for writing images)
+* hydra-core==0.11.3
+* Flask==1.1.2
+* flask-cors
+* flask-restful==0.3.8
+* antlr4-python3-runtime==4.7
+* python-forge
+* requests
+* incremental
+
+
+The antlr package may be necessary for rendering latex rendering in a notebook
+
+```sh
+conda install antlr-python-runtime
+```
+
+Plotly-orca may be needed for proper image export
+
+```sh
+conda install -c plotly plotly-orca (for writing images)
+```
 
 !!! note
     plotly version in flux
 
+
+## Test Suite
+
+Kamodo's unit tests are run with [pytest](https://docs.pytest.org/en/7.0.x/). To install pytest with code coverage
+
+```sh
+python -m pip install flake8 pytest
+pip install pytest-cov
+```
+
+Then, from the base of the git repo:
+
+```sh
+pytest --cov kamodo.kamodo --cov kamodo.util --cov plotting kamodo/test_plotting.py kamodo/test_kamodo.py kamodo/test_utils.py
+```
+
+This will generate a test report and coverage of the `kamodo` module.
 
 ## Generating Docs
 

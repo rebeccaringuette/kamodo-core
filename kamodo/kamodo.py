@@ -1238,17 +1238,17 @@ class Kamodo(UserDict):
         # return fig
 
     def same_unit_check(self, layouts, traces):
-        traces_attr={}
+        traces_attr = dict()
         i = 0
         for each in traces:
             trace_name = each['name'].split('[')
             trace_name = trace_name[0]
             traces_attr[f'{trace_name}-{i}'] = each['yaxis']
-            i=i+1
-        units = {}
+            i = i + 1
+        units = dict()
         list_unit = []
         dups = set()
-        y_axis_attr = {}
+        y_axis_attr = dict()
         i = 0
         for k, v in dict(self.unit_registry).items():
             units[k.name] = v
@@ -1259,23 +1259,18 @@ class Kamodo(UserDict):
             for k, v in unis_bkup.items():
                 if str(v) not in dupes_unit:
                     units.pop(str(k))
-            for i in range(len(list_unit) + 1):
+
+            for i in range(len(list_unit)):
                 if i == 0:
                     y_axis_attr['yaxis'] = layouts['yaxis']['title']['text']
-                    i = i + 1
-                elif i == 1:
-                    y_axis_attr['yaxis2'] = layouts['yaxis2']['title']['text']
-                    i = i + 1
                 else:
                     y_axis_attr[f'yaxis{i}'] = layouts[f'yaxis{i}']['title'][
                         'text']
-                    i = i + 1
             for unit in dupes_unit:
                 same_unit = []
                 for k, v in units.items():
                     if unit == str(v):
                         same_unit.append(k)
-                text = ''
                 partial_text = []
                 temp1 = ''
                 j = 0

@@ -1,3 +1,5 @@
+* kameleon
+* unable to find a doi for pint
 * kameleon citations
 * fixing api doc spacing, added point testing in FieldIntegration notebook
 * improved documentation for gridify, partial

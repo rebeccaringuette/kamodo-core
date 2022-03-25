@@ -56,16 +56,16 @@ This further complicates the transition from research to operations in space wea
 Such complexity represents a high barrier to entry when introducing the field of space weather to newcomers at space weather workshops, where much of the student's time is spent installing and learning how to use prerequisite software.
 Several attempts have been made to unify all existing space weather resources around common data standards, but have met with limited success.
 In particular, introducing and leveraging a common data standard for space weather models was the primary goal of the Kameleon software suite, a predecessor to Kamodo developed between 1999-2011 at the Community Coordinated Modeling Center, NASA GSFC [@kameleon].
-Kameleon consisted of a set of tools for converting raw simulation output into standardized HDF or CDF format with additional metadata for aspects specific to space weather modeling (scientific units, array structure, coordinate systems, and citation information) as well as interpolation APIs targeting several languages (C, C++, java, and python).
+Kameleon consisted of a set of tools for converting raw simulation output into standardized HDF or CDF format with additional metadata specific to space weather modeling (scientific units, array structure, coordinate systems, and citation information) as well as interpolation APIs targeting several languages (C, C++, java, and python).
 Due to the complexity of space weather modeling techniques, these interpolators were tailored for specific models and had to be written by the Kameleon developers themselves.
 This created a bottleneck in the time to onboard new simulations, and only a handful of models could be supported.
-In addition, interpolation of observational data fell outside the scope of Kameleon's design requirements, and additional tooling was required for metrics and validation. Furthermore, the difficulty in installing the prerequisite libraries meant that only a few users could take advantage of Kameleon's powerful interpolation techniques. Often, scientific users either developed their own pipelines for analysis or simply relied on CCMC's web-based services.
-Our experience with Kameleon and the limitations of its data-driven approach were a strong motivating factor for Kamodo's functional design.
+In addition, interpolation of observational data fell outside the scope of Kameleon's design requirements, and additional tooling was required for metrics and validation. Furthermore, the difficulty in installing the prerequisite libraries meant that only a few users could take advantage of Kameleon's powerful interpolation techniques. Often, scientific users either developed their own pipelines for analysis or simply relied on CCMC's static plots available over the web.
+Our experience with Kameleon and its limitations were a strong motivating factor for Kamodo's functional design.
 
 
-Kamodo all but eliminates the barrier to entry for space weather resources by exposing all scientifically relevant parameters in a functional manner.
+Kamodo all but eliminates the barrier to entry for accessing space weather resources by exposing all scientifically relevant parameters in a functional manner.
 Kamodo is an ideal tool in the scientist's workflow, because many problems in space weather analysis, such as field line tracing, coordinate transformation, and interpolation, may be posed in terms of function compositions.
-The underlying implementation of these functions are left to the model and data access libraries. This allows Kamodo to builds on existing standards and APIs without requiring programing expertise on the part of the end user.
+The underlying implementation of these functions are left to the model and data access libraries. This allows Kamodo to build on existing standards and APIs without requiring programing expertise on the part of the end user.
 Kamodo is expressive enough to meet the needs of most scientists, educators, and space weather forecasters, and Kamodo containers enable a rapidly growing ecosystem of interoperable space weather resources. 
 
 # Usage

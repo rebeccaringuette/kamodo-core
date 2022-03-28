@@ -625,8 +625,17 @@ class Kamodo(UserDict):
             self.unit_registry[lhs_symbol] = get_unit(units)
         self.register_signature(lhs_symbol, units, lhs_expr, rhs, arg_units)
         try:
-            func._repr_latex_ = lambda: self.func_latex(str(type(lhs_symbol)),
-                                                        mode='inline')
+            if hasattr(func, '_repr_latex_'):
+                symbol = list(self.signatures.items())[0][1]['symbol']
+                func._repr_latex_ = lambda: self.func_latex(
+                    str(type(lhs_symbol)),
+                    mode='inline')
+                key = list(self.signatures.keys())[0]
+                self.signatures[key]['rhs'] = func._rhs_
+            else:
+                func._repr_latex_ = lambda: self.func_latex(str(type(
+                    lhs_symbol)), mode='inline')
+
         except AttributeError:
             # happens with bound methods
             pass
@@ -644,20 +653,6 @@ class Kamodo(UserDict):
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         if hasattr(input_expr, '__call__'):
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
-            try:
-                func_doc = input_expr.__doc__
-                expression = func_doc.split('evaluate')[1]
-                expression = expression.split(',')[0]
-                expression = expression.replace('(', '')
-                expression = expression.replace(',', '')
-                expression = expression.replace("'", '')
-                expression = self.parse_value(expression, self.symbol_registry)
-                self.signatures[str(lhs_expr)]['rhs'] = expression
-
-            except AttributeError:
-                pass
-            except IndexError:
-                pass
 
         else:
             if self.verbose:
@@ -823,6 +818,12 @@ class Kamodo(UserDict):
                                     arg_units)
             func._repr_latex_ = lambda: self.func_latex(str(type(symbol)),
                                                         mode='inline')
+
+            self.register_symbol(symbol)
+            func._preserved_ = lambda: self.func_latex(str(type(symbol)),
+                                                       mode='inline')
+            func._rhs_ = list(self.signatures.items())[0][1]['rhs']
+
             super(Kamodo, self).__setitem__(symbol, func)
             super(Kamodo, self).__setitem__(type(symbol), self[symbol])
             self.register_symbol(symbol)
@@ -998,7 +999,7 @@ class Kamodo(UserDict):
 
             mode='inline': wraps formulas in
                 $$ ... $$
-        
+
         Note: Upon registeration, each function should have a _repr_latex_ method.
         """
         if keys is None:

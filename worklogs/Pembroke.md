@@ -1,3 +1,4 @@
+* updated code locations
 * kameleon
 * unable to find a doi for pint
 * kameleon citations

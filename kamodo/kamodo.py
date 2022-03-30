@@ -581,6 +581,7 @@ class Kamodo(UserDict):
         )
 
     def register_function(self, func, lhs_symbol, lhs_expr, lhs_units):
+        func = copy_func(func)
         hidden_args = []
         if hasattr(func, 'meta'):
             hidden_args = func.meta.get('hidden_args', [])
@@ -592,7 +593,6 @@ class Kamodo(UserDict):
         if str(rhs_args[0]) == 'self':  # in case function is a class method
             rhs_args.pop(0)
 
-        lhs_symbol_old = lhs_symbol
         lhs_symbol = self.check_or_replace_symbol(lhs_symbol, rhs_args)
         units = lhs_units
         if hasattr(func, 'meta'):

@@ -473,5 +473,14 @@ def test_partial_docs():
 
     assert 'Calling f(x, y, z) for fixed y, z' in f.__doc__
 
+def test_partial_meta_unmodified():
+    kamodo = Kamodo()
+    kamodo['f(x[cm],y[cm])[kg/m^3]'] = 'x**2 + y**2'
+    assert 'y' in kamodo.f.meta['arg_units']
+
+    g = partial(kamodo.f, y=3) # should have no affect on f
+
+    assert 'y' in kamodo.f.meta['arg_units']
+    assert 'y' not in g.meta['arg_units']
 
     

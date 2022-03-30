@@ -1,3 +1,4 @@
+* adding test for unmodified partial metadata
 
 * bugfix addressing
 * merging latest master

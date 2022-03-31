@@ -581,7 +581,6 @@ class Kamodo(UserDict):
         )
 
     def register_function(self, func, lhs_symbol, lhs_expr, lhs_units):
-        func = copy_func(func)
         hidden_args = []
         if hasattr(func, 'meta'):
             hidden_args = func.meta.get('hidden_args', [])
@@ -655,6 +654,7 @@ class Kamodo(UserDict):
             sym_name = str(sym_name)
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         if hasattr(input_expr, '__call__'):
+            input_expr = copy_func(input_expr)
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
 
         else:

@@ -1068,14 +1068,6 @@ class KamodoClient(Kamodo):
         if host is not None:
             self.connect(host)
 
-    # async def __aenter__(self):  # setting up a connection
-    #     self.conn = await self.client(self.host)
-    #     return self.conn
-    #
-    # async def __aexit__(self, exc_type, exc, tb):  # closing the connection
-    #     # await self.conn.close()
-    #     pass
-
     def __setitem__(self, sym_name, input_expr):
         """register function symbol with implementation"""
         super(KamodoClient, self).__setitem__(sym_name, input_expr)
@@ -1136,12 +1128,8 @@ class KamodoClient(Kamodo):
         # Assemble reader and writer tasks, run in the background
         coroutines = [self.client_reader(client, reader), self.client_writer(client, writer)]
         asyncio.gather(*coroutines, return_exceptions=True)
-        print('bootstrapping Kamodo RPC')
-
         self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
-        print('retrieving fields')
         self._remote_fields = (await self._client.getFields().a_wait()).fields
-        print('getting remote math')
         self._remote_math = (await self._client.getMath().a_wait()).math
 
         for entry in self._remote_fields.entries:
@@ -1150,9 +1138,7 @@ class KamodoClient(Kamodo):
 
     def connect(self, host):
         loop = asyncio.get_event_loop()
-        res = loop.run_until_complete(self.client(host))
-        print(f"RES : {res}")
-        return res
+        loop.run_until_complete(self.client(host))
 
     async def register_remote_field(self, entry):
         """resolve the remote signature
@@ -1168,8 +1154,6 @@ class KamodoClient(Kamodo):
         func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
         func_args_ = [str(_) for _ in (await field.func.getArgs().a_wait()).args]
         func_args = [_ for _ in func_args_ if _ not in func_defaults]
-
-        print(f"FUNC ARGS, FUNC DEFAULTS : {func_args} {func_defaults}")
 
         if len(meta.equation) > 0:
             equation = meta.equation
@@ -1188,13 +1172,9 @@ class KamodoClient(Kamodo):
             args_ = [to_rpc_literal(arg) for arg in args]
             kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
             result = (await field.func.call(args=args_, kwargs=kwargs_).a_wait()).result
-            print(f"RESULT : {result}")
             return from_rpc_literal(result)
 
-        print(f"TYPE REMOTE FUNC : {remote_func}")
-
-        self[symbol] = await remote_func(func_args)
-        # self[symbol] = remote_func
+        self[symbol] = remote_func
         self._rpc_funcs[symbol] = field.func
 
     async def get_remote_composition(self, expr, **kwargs):

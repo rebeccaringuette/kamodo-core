@@ -1,3 +1,4 @@
+* integrated comments from Lutz, Rebecca
 * updated code locations
 * kameleon
 * unable to find a doi for pint

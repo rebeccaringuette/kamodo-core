@@ -1,3 +1,4 @@
+* adding test for multi-variable 3d plotting
 * fixed reordering
 * adding test for multi 1d plotting
 * adding test for unmodified partial metadata

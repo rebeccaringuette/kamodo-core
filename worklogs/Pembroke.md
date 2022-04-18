@@ -1,5 +1,6 @@
 * fixed reordering
 * adding test for multi 1d plotting
+* adding test for unmodified partial metadata
 * bugfix addressing
 * merging latest master
 * merge fixes
@@ -30,6 +31,15 @@
 ### 2022-02-15 15:17:52.867347: clock-in
 
 * removing print statements
+
+
+### 2022-02-10 19:03:05.835344: clock-out
+
+* removed partial keys from arg_units
+* cleaning up partial latex_repr
+
+### 2022-02-10 18:21:18.161891: clock-in: T-10m 
+
 
 ### 2022-02-04 19:25:01.075400: clock-out
 

@@ -3,6 +3,7 @@
 Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
+import copy
 import inspect
 import json
 import sys
@@ -1316,12 +1317,21 @@ def partial(_func=None, **partial_kwargs):
                                   '_repr_latex_',
                                   lambda: '\\lambda ({})'.format(
                                       ','.join(orig_args)))
-        orig_meta = getattr(f, 'meta', {}).copy()
+        orig_meta = copy.deepcopy(getattr(f, 'meta', {}))
+        orig_equation = orig_meta.get('equation')
+        if orig_equation is None:
+            orig_equation = orig_latex_func()
+        orig_meta['equation'] = orig_equation.strip("$")
 
-        orig_meta['equation'] = orig_meta.get('equation',
-                                              orig_latex_func()).strip("$")
+        # remove partials from arg units dictionary
+        orig_arg_units = orig_meta.get('arg_units')
+        if orig_arg_units is not None:
+            for _ in partial_kwargs:
+                orig_arg_units.pop(_)
+        orig_meta['arg_units'] = orig_arg_units
+
         if len(orig_defaults) > 0:
-            orig_meta['equation'] += ', ' + latex_repr_values(orig_defaults)
+            orig_meta['equation'] += ', ' + latex_repr_values(partial_kwargs)
         new_latex_func = lambda: '${}$'.format(orig_meta['equation'])
         if verbose:
             print('partial kwargs', partial_kwargs)

@@ -1,3 +1,5 @@
+### 2022-04-19 18:12:41.693302: clock-out
+
 * created issue #79
 * got rpc kamodo client test to work
 * added async event loop wrapper

@@ -1,3 +1,4 @@
+* created issue #79
 * got rpc kamodo client test to work
 * added async event loop wrapper
 

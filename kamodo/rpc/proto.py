@@ -511,3 +511,14 @@ class Server():
 
         async with server:
             await server.serve_forever()
+
+def wrap_async(func):
+    '''Decorator that wraps async function in current event loop'''
+  
+    def wrap(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        task = loop.create_task(func(*args, **kwargs))
+        result = loop.run_until_complete(task)
+        return result
+    return wrap
+

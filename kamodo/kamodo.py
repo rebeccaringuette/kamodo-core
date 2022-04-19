@@ -1277,6 +1277,7 @@ class Kamodo(UserDict):
                 fig = self.figure(variable, **kwargs)
                 traces.extend(fig['data'])
                 layouts.append(fig['layout'])
+
             return go.Figure(data=traces, layout=layouts[-1])
 
 
@@ -1403,7 +1404,7 @@ def copy_func(f):
 def from_kamodo(kobj, **funcs):
     """copies a kamodo object, inserting additional functions"""
     knew = Kamodo()
-    for name, signature in kobj.signatTest files for server and client.ures.items():
+    for name, signature in kobj.signatures.items():
         symbol = signature['symbol']
         knew[symbol] = copy_func(kobj[symbol])
     for symbol, func in funcs.items():

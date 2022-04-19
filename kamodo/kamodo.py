@@ -285,7 +285,7 @@ def extract_units(func_str):
         args = lhs_args.split(',')
 
         try:
-            if len(args) != len(arg_units) and len(arg_units)>0:
+            if len(args) != len(arg_units) and len(arg_units) > 0:
                 for i in range(len(args)):
                     if '[' not in args[i]:
                         arg_units.insert(i, "")
@@ -790,13 +790,12 @@ class Kamodo(UserDict):
             except KeyError:
                 pass
 
-
             # symbol = reorder_symbol(defaults, default_non_default_parameter,
             #                         symbol)
 
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                                  symbol)
+                                        symbol)
             try:
                 arg_units = dimensionless_unit_check(sym_name_bkup,
                                                      arg_units)
@@ -805,7 +804,7 @@ class Kamodo(UserDict):
                     try:
                         split_rhs_args = str(rhs.args).split(',')[0]
                         if ('(' in split_rhs_args) and (')' not in
-                                split_rhs_args):
+                                                        split_rhs_args):
                             arg_units = {}
                             units = ""
                     except IndexError:
@@ -1238,120 +1237,6 @@ class Kamodo(UserDict):
         #     fig['chart_type'] = chart_type
         # return fig
 
-    def same_unit_check(self, layouts, traces):
-        traces_attr = dict()
-        i = 0
-        for each in traces:
-            trace_name = each['name'].split('[')
-            trace_name = trace_name[0]
-            traces_attr[f'{trace_name}-{i}'] = each['yaxis']
-            i = i + 1
-        units = dict()
-        list_unit = []
-        dups = set()
-        y_axis_attr = dict()
-        i = 0
-        for k, v in dict(self.unit_registry).items():
-            units[k.name] = v
-            list_unit.append(str(v))
-        dupes_unit = [x for x in list_unit if x in dups or dups.add(x)]
-        if len(dupes_unit) > 0:
-            unis_bkup = units.copy()
-            for k, v in unis_bkup.items():
-                if str(v) not in dupes_unit:
-                    units.pop(str(k))
-
-            for i in range(len(list_unit)):
-                if i == 0:
-                    y_axis_attr['yaxis'] = layouts['yaxis']['title']['text']
-                else:
-                    y_axis_attr[f'yaxis{i}'] = layouts[f'yaxis{i}']['title'][
-                        'text']
-            for unit in dupes_unit:
-                same_unit = []
-                for k, v in units.items():
-                    if unit == str(v):
-                        same_unit.append(k)
-                partial_text = []
-                temp1 = ''
-                j = 0
-                for each in same_unit:
-                    for k1, v1 in y_axis_attr.items():
-                        if f'${each}' in v1:
-                            v1_temp = v1.replace("$", '')
-                            partial_text.append(v1_temp)
-                            if j > 0:
-                                layouts.pop(k1)
-                                j = j + 1
-                                for k2, v2 in traces_attr.items():
-                                    if each in k2:
-                                        temp = k2.split('-')
-                                        idx = temp[-1]
-                                        traces[int(idx)]['yaxis'] = trace_val
-
-                            else:
-                                temp1 = k1
-                                j = j + 1
-                                for k2, v2 in traces_attr.items():
-                                    if each in k2:
-                                        trace_val = v2
-
-                partial_text_str = ', '.join(partial_text)
-                partial_text_str = f"${partial_text_str}$"
-                layouts[temp1]['title']['text'] = partial_text_str
-            return layouts, traces
-        else:
-            return layouts, traces
-
-    def multi_variable_plotting(self, figures):
-        traces = []
-        layouts = []
-        layout_details = []
-        plot_title = []
-        ctr = 0
-        for variable, kwargs in figures:
-            fig = self.figure(variable, **kwargs)
-            traces.extend(fig['data'])
-            layouts.append(fig['layout'])
-            if ctr > 0:
-                ctr = ctr + 1
-                fig['data'][0].yaxis = f'y{str(ctr)}'
-                fig['layout'][f'yaxis{ctr}'] = {"title": {"text": str(
-                    fig['layout']['yaxis']['title']['text'])}}
-                layout_details.append(fig['layout'][f'yaxis{ctr}'][
-                                          'title']['text'])
-            else:
-                yaxis_text = str(
-                    fig['layout']['yaxis']['title']['text'])
-                ctr = ctr + 1
-            i = 1
-            layouts[-1]['yaxis']['title']['text'] = yaxis_text
-            for layout in layout_details:
-                i = i + 1
-                if not layouts[-1].__contains__(f'yaxis{i}'):
-                    layouts[-1][f'yaxis{i}'] = {'title': {
-                        'text': layout_details[i - 2]}}
-                    layouts[-1][f'yaxis{i}']['overlaying'] = 'y'
-                    layouts[-1][f'yaxis{i}']['side'] = 'right'
-                    layouts[-1][f'yaxis{i}']['anchor'] = 'x'
-                    layouts[-1][f'yaxis{i}']['position'] = .10
-                    layouts[-1][f'yaxis{i}']['position'] = .10
-                else:
-                    layouts[-1][f'yaxis{i}']['side'] = 'right'
-                    layouts[-1][f'yaxis{i}']['anchor'] = 'free'
-                    layouts[-1][f'yaxis{i}']['position'] = .80
-                    layouts[-1][f'yaxis{i}']['overlaying'] = 'y'
-            plot_title.append(fig['layout']['title']['text'])
-
-        layouts[-1]['width'] = 900
-        layouts[-1]['xaxis']['domain'] = [0.3, .7]
-        plot_title = ', '.join(plot_title)
-        plot_title = plot_title.replace('$', '')
-        plot_title = f"'${plot_title}$'"
-        layouts[-1]['title'] = plot_title
-        layout, traces = self.same_unit_check(layouts[-1], traces)
-        return traces, layout
-
     def plot(self, *variables, plot_partial={}, **figures):
         """Generates a plotly figure from multiple variables and keyword arguments
 
@@ -1386,9 +1271,13 @@ class Kamodo(UserDict):
                 data=fig['data'],
                 layout=fig['layout'])
         else:
-            traces, layout = self.multi_variable_plotting(list(
-                figures.items()))
-            return go.Figure(data=traces, layout=layout)
+            traces = []
+            layouts = []
+            for variable, kwargs in list(figures.items()):
+                fig = self.figure(variable, **kwargs)
+                traces.extend(fig['data'])
+                layouts.append(fig['layout'])
+            return go.Figure(data=traces, layout=layouts[-1])
 
 
 class KamodoAPI(Kamodo):
@@ -1514,7 +1403,7 @@ def copy_func(f):
 def from_kamodo(kobj, **funcs):
     """copies a kamodo object, inserting additional functions"""
     knew = Kamodo()
-    for name, signature in kobj.signatures.items():
+    for name, signature in kobj.signatTest files for server and client.ures.items():
         symbol = signature['symbol']
         knew[symbol] = copy_func(kobj[symbol])
     for symbol, func in funcs.items():

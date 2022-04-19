@@ -1404,6 +1404,7 @@ def copy_func(f):
 def from_kamodo(kobj, **funcs):
     """copies a kamodo object, inserting additional functions"""
     knew = Kamodo()
+
     for name, signature in kobj.signatures.items():
         symbol = signature['symbol']
         knew[symbol] = copy_func(kobj[symbol])

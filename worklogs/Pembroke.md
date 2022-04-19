@@ -1,3 +1,4 @@
+* got rpc kamodo client test to work
 * added async event loop wrapper
 
 ### 2022-04-19 17:53:55.220838: clock-in: T-1h10m 

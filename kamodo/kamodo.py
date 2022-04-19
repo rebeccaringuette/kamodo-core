@@ -39,6 +39,7 @@ from plotting import plot_dict, get_arg_shapes, symbolic_shape
 from rpc.proto import Server, ssl
 from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
 from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
+from rpc.proto import wrap_async
 # from util import to_arrays, cast_0_dim
 from util import beautify_latex
 from util import concat_solution
@@ -1120,7 +1121,8 @@ class KamodoClient(Kamodo):
                 family=socket.AF_INET6
             )
 
-        print('connection open, starting TwoPartyClient')
+        if self.verbose:
+            print('connection open, starting TwoPartyClient')
 
         # Start TwoPartyClient using TwoWayPipe (takes no arguments in this mode)
         client = capnp.TwoPartyClient()
@@ -1133,7 +1135,8 @@ class KamodoClient(Kamodo):
         self._remote_math = (await self._client.getMath().a_wait()).math
 
         for entry in self._remote_fields.entries:
-            print('registering {}'.format(entry.key))
+            if self.verbose:
+                print('registering {}'.format(entry.key))
             await self.register_remote_field(entry)
 
     def connect(self, host):
@@ -1168,6 +1171,7 @@ class KamodoClient(Kamodo):
                   equation=equation,
                   hidden_args=hidden_args)
         @forge.sign(*construct_signature(*func_args, **func_defaults))
+        @wrap_async
         async def remote_func(*args, **kwargs):
             args_ = [to_rpc_literal(arg) for arg in args]
             kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]

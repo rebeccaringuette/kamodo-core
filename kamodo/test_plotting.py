@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from kamodo import Kamodo
+from kamodo import Kamodo, kamodofy
 from .plotting import scatter_plot, line_plot, vector_plot, contour_plot, surface, plane, tri_surface_plot, \
     get_arg_shapes, plot_types, plot_dict, image, symbolic_shape
 
@@ -549,3 +549,28 @@ def test_symbolic_shape():
     assert symbolic_shape((4, 5, 6)) == (('N', 'M', 'L'),)
     assert symbolic_shape((4, 5, 1)) == (('N', 'M', 1),)
     assert symbolic_shape((5, 6), (6, 5), (5, 4)) == (('N', 'M'), ('M', 'N'), ('N', 'L'))
+
+
+def test_multi_1d_plot():
+    k = Kamodo()
+    x_ = np.linspace(-5,5,303)
+    k['f[kg/m^3]'] = lambda x=x_: x**2-x-1
+    k['g[g/cm^3]'] = lambda x=x_: np.sin(x)**2
+    k['h[kg/m^3]'] = lambda x=x_: np.sin(x)
+    k.plot('f', 'g') # raises PlotlyKeyError
+
+
+def test_multi_variable_3d_plotting():
+    @kamodofy(units = 'g/cm**3')
+    def f_LMN(
+          x_L = np.linspace(-5, 5, 50), 
+          y_M = np.linspace(0, 10, 75), 
+          z_N = np.linspace(-20, 20, 100)):
+        xx, yy, zz = np.meshgrid(x_L,y_M,z_N, indexing = 'xy')
+        return xx + yy + zz
+
+    kamodo = Kamodo(f_LMN = f_LMN, g_LMN = f_LMN)
+    kamodo.plot(f_LMN = dict(z_N = 0), 
+                g_LMN = dict(y_M = 5),
+                )
+

@@ -4,75 +4,59 @@ Copyright © 2017 United States Government as represented by the Administrator, 
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 
+# +
+import functools
+import inspect
+import itertools
+import json
+import re
+import types
+from collections import OrderedDict
+from collections import UserDict
+from inspect import getfullargspec
+from types import GeneratorType
+
+import forge
+import pandas as pd
+import plotly.graph_objs as go
+import requests
+import sympy
+from plotly.subplots import make_subplots
+from sympy import Eq
+from sympy import Expr
+from sympy import Symbol, symbols, Function
+from sympy import lambdify
+from sympy import latex
+from sympy.abc import _clash
+from sympy.core.function import UndefinedFunction
+from sympy.parsing.latex import parse_latex
+from sympy.physics import units as sympy_units
+from sympy.physics.units import Dimension
+
+from plotting import get_ranges
+from plotting import plot_dict, get_arg_shapes, symbolic_shape
+# from util import to_arrays, cast_0_dim
+from util import beautify_latex
+from util import concat_solution
+from util import get_arg_units
+from util import get_defaults, valid_args, eval_func
+from util import get_dimensions
+from util import kamodofy
 from util import np
-from sympy import Integral, Symbol, symbols, Function
+from util import partial
+from util import reserved_names
+from util import serialize, deserialize
+from util import sign_defaults
+from util import simulate
+from util import unify, get_abbrev, get_expr_unit
+from util import unit_subs
 
 # try:
 #     from sympy.parsing.sympy_parser import parse_expr
 # except ImportError:  # may occur for certain versions of sympy
 #     from sympy import sympify as parse_expr
-
-from collections import OrderedDict
-from collections import UserDict
-import collections
-
-from sympy import lambdify
-from sympy.parsing.latex import parse_latex
-from sympy import latex
-from sympy.core.function import UndefinedFunction
-from inspect import getfullargspec
-from sympy import Eq
-import pandas as pd
 # from IPython.display import Latex
-
-
-from sympy.physics import units as sympy_units
-from sympy.physics.units import Quantity
-from sympy.physics.units import Dimension
-from sympy import Expr
-
-# +
-import functools
-import types
-
-from util import kamodofy
-from util import sort_symbols
-from util import simulate
-from util import unit_subs
-from util import get_defaults, valid_args, eval_func
-# from util import to_arrays, cast_0_dim
-from util import beautify_latex, arg_to_latex
-from util import concat_solution
-from util import convert_unit_to
-from util import unify, get_abbrev, get_expr_unit
-from util import is_function, get_arg_units
-from util import partial
 # -
-
-
-import plotly.graph_objs as go
-from plotly import figure_factory as ff
-
-from plotting import plot_dict, get_arg_shapes, symbolic_shape
-from plotting import get_ranges
-from util import existing_plot_types
-from util import get_dimensions
-from util import reserved_names
-
-from sympy import Wild
-from types import GeneratorType
-import inspect
-
-import re
-
-import urllib.request
-import json
-import requests
-from util import serialize, deserialize
-from util import sign_defaults
-import forge
-from sympy.abc import _clash
-import sympy
 
 _clash['rad'] = Symbol('rad')
 _clash['deg'] = Symbol('deg')
@@ -111,7 +95,6 @@ def get_unit(unit_str, unit_subs=unit_subs):
 
     if len(unit_str) == 0:
         return Dimension(1)
-
     unit_expr = parse_expr(unit_str.replace('^', '**'), locals=_clash)
     try:
         unit = unit_expr.subs(units)
@@ -150,7 +133,8 @@ def args_from_dict(expr, local_dict, verbose):
 def alphabetize(symbols):
     """alphabetical ordering for the input symbols"""
     # can't use > on symbols, so need to convert to str first
-    return tuple(Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
+    return tuple(
+        Symbol(symbol_) for symbol_ in sorted([str(_) for _ in symbols]))
 
 
 def reorder_symbol(defaults, default_non_default_parameter, symbol):
@@ -301,7 +285,7 @@ def extract_units(func_str):
         args = lhs_args.split(',')
 
         try:
-            if len(args) != len(arg_units) and len(arg_units)>0:
+            if len(args) != len(arg_units) and len(arg_units) > 0:
                 for i in range(len(args)):
                     if '[' not in args[i]:
                         arg_units.insert(i, "")
@@ -583,6 +567,7 @@ class Kamodo(UserDict):
                 for k, v in composition.items():
                     print('\t', k, v)
         signature, defaults = sign_defaults(symbol, rhs_expr, composition)
+
         return signature(func)
 
     def update_unit_registry(self, func, arg_units):
@@ -668,8 +653,17 @@ class Kamodo(UserDict):
             self.unit_registry[lhs_symbol] = get_unit(units)
         self.register_signature(lhs_symbol, units, lhs_expr, rhs, arg_units)
         try:
-            func._repr_latex_ = lambda: self.func_latex(str(type(lhs_symbol)),
-                                                        mode='inline')
+            if hasattr(func, '_repr_latex_'):
+                symbol = list(self.signatures.items())[0][1]['symbol']
+                func._repr_latex_ = lambda: self.func_latex(
+                    str(type(lhs_symbol)),
+                    mode='inline')
+                key = list(self.signatures.keys())[0]
+                self.signatures[key]['rhs'] = func._rhs_
+            else:
+                func._repr_latex_ = lambda: self.func_latex(str(type(
+                    lhs_symbol)), mode='inline')
+
         except AttributeError:
             # happens with bound methods
             pass
@@ -737,20 +731,6 @@ class Kamodo(UserDict):
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         if hasattr(input_expr, '__call__'):
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
-            try:
-                func_doc = input_expr.__doc__
-                expression = func_doc.split('evaluate')[1]
-                expression = expression.split(',')[0]
-                expression = expression.replace('(', '')
-                expression = expression.replace(',', '')
-                expression = expression.replace("'", '')
-                expression = self.parse_value(expression, self.symbol_registry)
-                self.signatures[str(lhs_expr)]['rhs'] = expression
-
-            except AttributeError:
-                pass
-            except IndexError:
-                pass
 
         else:
             if self.verbose:
@@ -771,7 +751,7 @@ class Kamodo(UserDict):
             if not isinstance(symbol, Symbol):
                 if isinstance(lhs_expr, Symbol):
                     symbol = Function(lhs_expr)(*tuple(alphabetize(
-                                    rhs_expr.free_symbols)))
+                        rhs_expr.free_symbols)))
                 else:  # lhs is already a function
                     symbol = lhs_expr
                 lhs_str = str(symbol)
@@ -875,9 +855,11 @@ class Kamodo(UserDict):
                         for arg, unit in zip(symbol.args, unit_args.args):
                             arg_units[str(arg)] = str(get_abbrev(unit))
             func = self.vectorize_function(symbol, rhs_expr, composition)
+
             for k, v in arg_units.items():
                 if str(v) == 'Dimension(1)':
                     arg_units[k] = ''
+
             signature, defaults = sign_defaults(symbol, rhs_expr, composition)
             default_non_default_parameter = []
             try:
@@ -885,9 +867,13 @@ class Kamodo(UserDict):
                     default_non_default_parameter.append(parm.name)
             except KeyError:
                 pass
+
+            # symbol = reorder_symbol(defaults, default_non_default_parameter,
+            #                         symbol)
+
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
-                                                  symbol)
+                                        symbol)
             try:
                 arg_units = dimensionless_unit_check(sym_name_bkup,
                                                      arg_units)
@@ -896,7 +882,7 @@ class Kamodo(UserDict):
                     try:
                         split_rhs_args = str(rhs.args).split(',')[0]
                         if ('(' in split_rhs_args) and (')' not in
-                                split_rhs_args):
+                                                        split_rhs_args):
                             arg_units = {}
                             units = ""
                     except IndexError:
@@ -905,9 +891,16 @@ class Kamodo(UserDict):
             meta = dict(units=units, arg_units=arg_units)
             func.meta = meta
             func.data = None
-            self.register_signature(symbol, units, lhs_expr, rhs_expr, arg_units)
+            self.register_signature(symbol, units, lhs_expr, rhs_expr,
+                                    arg_units)
             func._repr_latex_ = lambda: self.func_latex(str(type(symbol)),
                                                         mode='inline')
+
+            self.register_symbol(symbol)
+            func._preserved_ = lambda: self.func_latex(str(type(symbol)),
+                                                       mode='inline')
+            func._rhs_ = list(self.signatures.items())[0][1]['rhs']
+
             super(Kamodo, self).__setitem__(symbol, func)
             super(Kamodo, self).__setitem__(type(symbol), self[symbol])
             self.register_symbol(symbol)
@@ -1125,9 +1118,9 @@ class Kamodo(UserDict):
             * 'inline': wraps formulas in dollar signs
 
         ** returns **: LaTeX-formated string
-
         
-        Note: This function does not need to be for rendering in jupyter. See _repr_latex_ method.
+        Note: This function does not need to be called directly for rendering in jupyter
+        because the _repr_latex_ method is automatically attached.
 
         """
         if keys is None:
@@ -1382,14 +1375,16 @@ class Kamodo(UserDict):
             if len(signature['arg_units']) == 1:
                 try:
                     args_unit = signature['arg_units']
-                    x_axis_unit = [args_unit[i][0] for i in sorted(args_unit.keys())][0]
+                    x_axis_unit = \
+                        [args_unit[i][0] for i in sorted(args_unit.keys())][0]
                     y_axis_unit = signature['units']
                     x_last_index = layout.xaxis.title.text.rindex('$')
                     y_last_index = layout.yaxis.title.text.rindex('$')
                     new_xaxis_label = layout.xaxis.title.text[
                                       :x_last_index] + ' ' + f'[{x_axis_unit}]' + \
                                       layout.xaxis.title.text[x_last_index:]
-                    new_yaxis_label = layout.yaxis.title.text[y_last_index] + str(
+                    new_yaxis_label = layout.yaxis.title.text[
+                                          y_last_index] + str(
                         signature['symbol'].name) + ' ' + f'[{y_axis_unit}]' + \
                                       layout.yaxis.title.text[y_last_index]
 
@@ -1488,7 +1483,7 @@ class Kamodo(UserDict):
                 fig = self.figure(variable, **kwargs)
                 traces.extend(fig['data'])
                 layouts.append(fig['layout'])
-            # Todo: merge the layouts instead of selecting the last one
+
             return go.Figure(data=traces, layout=layouts[-1])
 
 
@@ -1615,6 +1610,7 @@ def copy_func(f):
 def from_kamodo(kobj, **funcs):
     """copies a kamodo object, inserting additional functions"""
     knew = Kamodo()
+
     for name, signature in kobj.signatures.items():
         symbol = signature['symbol']
         knew[symbol] = copy_func(kobj[symbol])

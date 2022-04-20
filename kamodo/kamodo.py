@@ -3,6 +3,7 @@
 Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
+import copy
 import time
 
 from util import np
@@ -1329,11 +1330,15 @@ def copy_func(f):
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)
                 https://stackoverflow.com/a/13503277 (unutbu)
     """
-    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
-                           argdefs=f.__defaults__,
-                           closure=f.__closure__)
+    if isinstance(f, np.vectorize):
+        g = copy.deepcopy(f)
+    else:
+        g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                               argdefs=f.__defaults__,
+                               closure=f.__closure__)
+        g.__kwdefaults__ = f.__kwdefaults__
+
     g = functools.update_wrapper(g, f)
-    g.__kwdefaults__ = f.__kwdefaults__
     if hasattr(f, 'meta'):
         g.meta = f.meta
     if hasattr(f, '_repr_latex_'):

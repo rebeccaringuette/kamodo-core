@@ -151,6 +151,7 @@ kamodo_object
 
 kamodo_object.plot(v_ijkl = {'time':10.,'lat':90.})  #output: not supported: out_dim ('N', 'M'), arg_dims [(1,), ('N',), (1,), ('M',)]
 ```
+
 We can use plot partial as below : 
 
 ```python

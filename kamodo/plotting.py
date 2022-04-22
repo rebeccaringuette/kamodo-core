@@ -3,23 +3,34 @@
 Copyright © 2017 United States Government as represented by the Administrator, National Aeronautics and Space Administration.  
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
-import plotly.graph_objs as go
-import numpy as np
-from util import arg_to_latex, beautify_latex, cast_0_dim, get_defaults
-from plotly import figure_factory as ff
-import pandas as pd
 from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objs as go
+from plotly import figure_factory as ff
+
+from util import arg_to_latex, beautify_latex, cast_0_dim, get_defaults
 from util import get_bbox
 
-def scatter_plot(result, titles, verbose = False, **kwargs):
-    """Generates a 3d scatter plot
 
+def scatter_plot(result, titles, verbose=False, **kwargs):
+    """
+    - Generates a 3D scatter plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    ** inputs **:
 
-    returns:
-        [trace], chart_type, layout
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     if verbose:
         print('3-d scatter plot')
@@ -28,7 +39,7 @@ def scatter_plot(result, titles, verbose = False, **kwargs):
     variable = titles['variable']
 
     # get the first parameter from results
-    val0 = list(result.values())[0] 
+    val0 = list(result.values())[0]
 
     # variable should be in result dictionary
     if result[variable].shape[0] == val0.shape[0]:
@@ -59,7 +70,7 @@ def scatter_plot(result, titles, verbose = False, **kwargs):
                 xaxis=dict(title='x'),
                 yaxis=dict(title='y'),
                 zaxis=dict(title='z'),
-                ))
+            ))
         chart_type = '3d-scatter'
     else:
         print(result[variable].shape, val0.shape)
@@ -68,9 +79,24 @@ def scatter_plot(result, titles, verbose = False, **kwargs):
     return [trace], chart_type, layout
 
 
-
 def line_plot(result, titles, verbose=False, **kwargs):
-    '''N-d line plot f(t)'''
+    """
+    - Generates a 1D, 2D or 3D line plot.
+
+    ** inputs **:
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+    """
     if verbose:
         print('N-d line plot f(t)')
     f = result[titles['variable']]
@@ -90,7 +116,7 @@ def line_plot(result, titles, verbose=False, **kwargs):
                 for seed, locs in f.groupby(level=0):
                     locs = locs.append(pd.Series(), ignore_index=True)
                     l.append(locs)
-                    t_.extend(t[t_start:t_start+len(locs)].tolist() + [np.nan])
+                    t_.extend(t[t_start:t_start + len(locs)].tolist() + [np.nan])
                 f = pd.concat(l)
                 t = t_
 
@@ -128,7 +154,6 @@ def line_plot(result, titles, verbose=False, **kwargs):
                                    xaxis=dict(title='x' + titles['units']),
                                    yaxis=dict(title='y' + titles['units']))
 
-
             chart_type = '2d-line'
 
         # if the output shape is 3-dimensional, make a 3-d parametric line plot
@@ -140,13 +165,14 @@ def line_plot(result, titles, verbose=False, **kwargs):
                 x = f.values[:, 0]
                 y = f.values[:, 1]
                 z = f.values[:, 2]
+
                 layout = go.Layout(
                     title=titles['title'],
                     scene=dict(
-                        xaxis=dict(title=f.columns[0] + titles['units']),
-                        yaxis=dict(title=f.columns[1] + titles['units']),
-                        zaxis=dict(title=f.columns[2] + titles['units']),
-                        ))
+                        xaxis=dict(title=str(f.columns[0]) + titles['units']),
+                        yaxis=dict(title=str(f.columns[1]) + titles['units']),
+                        zaxis=dict(title=str(f.columns[2]) + titles['units']),
+                    ))
             else:
                 x = f[:, 0]
                 y = f[:, 1]
@@ -157,7 +183,7 @@ def line_plot(result, titles, verbose=False, **kwargs):
                         xaxis=dict(title='x' + titles['units']),
                         yaxis=dict(title='y' + titles['units']),
                         zaxis=dict(title='z' + titles['units']),
-                        ))
+                    ))
             # t_name, t = result.items()[0]
             text = ["{}:{}".format(t_name, v) for v in t]
 
@@ -186,9 +212,9 @@ def line_plot(result, titles, verbose=False, **kwargs):
             #  since plotly doesn't support autocolor for 2d lines yet
             line=dict(
                 # color=result[titles['variable']],
-                color='black', # need to map this to a colorscale
+                color='black',  # need to map this to a colorscale
                 # colorscale='Viridis',
-                ),
+            ),
             mode='lines')
 
         layout = dict(
@@ -198,7 +224,7 @@ def line_plot(result, titles, verbose=False, **kwargs):
             scene=dict(
                 xaxis=dict(title=arg0),
                 yaxis=dict(title=arg1),
-                ))
+            ))
         chart_type = '2d-line'
 
     # 3 inputs, one output
@@ -208,7 +234,7 @@ def line_plot(result, titles, verbose=False, **kwargs):
         arg1, val1 = list(result.items())[1]
         arg2, val2 = list(result.items())[2]
 
-        assert(f.shape == t.shape)
+        assert (f.shape == t.shape)
 
         text = ["{}:{}".format(titles['variable'], v) for v in f]
 
@@ -230,7 +256,7 @@ def line_plot(result, titles, verbose=False, **kwargs):
             scene=dict(
                 xaxis=dict(title=arg0),
                 yaxis=dict(title=arg1),
-                zaxis=dict(title=arg2),))
+                zaxis=dict(title=arg2), ))
         chart_type = '4d-line'
     else:
         raise NotImplementedError('shape not supported: {}'.format(f.shape))
@@ -238,7 +264,24 @@ def line_plot(result, titles, verbose=False, **kwargs):
     return [trace], chart_type, layout
 
 
-def vector_plot(result, titles, verbose = False, **kwargs):
+def vector_plot(result, titles, verbose=False, **kwargs):
+    """
+    - Generates a 2D or 3D vector plot.
+
+    ** inputs **:
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+    """
     variable = titles['variable']
     val0 = list(result.values())[0]
 
@@ -263,7 +306,7 @@ def vector_plot(result, titles, verbose = False, **kwargs):
                 x, y, u, v,
                 name='quiver',
                 line=dict(width=1),
-                **quiver_defaults)['data'][0] # extracts quiver trace
+                **quiver_defaults)['data'][0]  # extracts quiver trace
         except:
             print('problem with quiver, u,v,x,y shapes:')
             for v_ in [u, v, x, y]:
@@ -304,7 +347,7 @@ def vector_plot(result, titles, verbose = False, **kwargs):
             hoverinfo='x+y+z+u+v+w+norm',
             colorscale='Reds',
             cmin=0, cmax=norms.max(),
-            )
+        )
 
         layout = go.Layout(
             title=titles['title'],
@@ -312,7 +355,7 @@ def vector_plot(result, titles, verbose = False, **kwargs):
                 xaxis=dict(title='x'),
                 yaxis=dict(title='y'),
                 zaxis=dict(title='z'),
-                ))
+            ))
         chart_type = '3d-vector'
     else:
         raise NotImplementedError('plot type not supported yet')
@@ -320,7 +363,25 @@ def vector_plot(result, titles, verbose = False, **kwargs):
     return [trace], chart_type, layout
 
 
-def contour_plot(result, titles, indexing, verbose = False, **kwargs):
+def contour_plot(result, titles, indexing, verbose=False, **kwargs):
+    """
+    - Generates a 2D contour plot.
+    
+    ** inputs **:
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+
+    """
     try:
         colorbar_title = dict(title=titles['title_short'], titleside='bottom')
     except KeyError:
@@ -344,9 +405,9 @@ def contour_plot(result, titles, indexing, verbose = False, **kwargs):
                 if verbose:
                     print('{} indexing'.format(indexing))
                 try:
-                    trace = go.Contour(x = val0,
-                                       y = val1,
-                                       z = z.T,
+                    trace = go.Contour(x=val0,
+                                       y=val1,
+                                       z=z.T,
                                        colorbar=colorbar_title)
                 except UnboundLocalError:
                     trace = go.Contour(x=val0,
@@ -356,9 +417,9 @@ def contour_plot(result, titles, indexing, verbose = False, **kwargs):
                 if verbose:
                     print('{} indexing'.format(indexing))
                 try:
-                    trace = go.Contour(x = val0,
-                                       y = val1,
-                                       z = z, colorbar=colorbar_title)
+                    trace = go.Contour(x=val0,
+                                       y=val1,
+                                       z=z, colorbar=colorbar_title)
                 except UnboundLocalError:
                     trace = go.Contour(x=val0,
                                        y=val1,
@@ -367,17 +428,17 @@ def contour_plot(result, titles, indexing, verbose = False, **kwargs):
             if verbose:
                 print('xy indexing')
             try:
-                trace = go.Contour(x = val0,
-                                   y = val1,
-                                   z = z, colorbar=colorbar_title)
+                trace = go.Contour(x=val0,
+                                   y=val1,
+                                   z=z, colorbar=colorbar_title)
             except UnboundLocalError:
                 trace = go.Contour(x=val0,
                                    y=val1)
 
         layout = go.Layout(
-            title = title,
-            xaxis = dict(title = '${}$'.format(arg0)),
-            yaxis = dict(title = '${}$'.format(arg1)))
+            title=title,
+            xaxis=dict(title='${}$'.format(arg0)),
+            yaxis=dict(title='${}$'.format(arg1)))
         traces.append(trace)
         chart_type = '2d-grid'
     else:
@@ -385,55 +446,72 @@ def contour_plot(result, titles, indexing, verbose = False, **kwargs):
             print('\t\t2-d args', val0.shape, val1.shape)
         assert val0.shape == val1.shape
         assert val0.shape == z.shape
-        xaxis = dict(title = beautify_latex('${}$'.format(arg_to_latex(arg0))))
-        yaxis = dict(title = beautify_latex('${}$'.format(arg_to_latex(arg1))))
+        xaxis = dict(title=beautify_latex('${}$'.format(arg_to_latex(arg0))))
+        yaxis = dict(title=beautify_latex('${}$'.format(arg_to_latex(arg1))))
         carpet_traces, layout = carpet_plot(result, title, xaxis, yaxis)
         traces.extend(carpet_traces)
         chart_type = '2d-skew'
 
     return traces, chart_type, layout
 
-def carpet_plot(results, title, xaxis, yaxis, indexing = 'xy', **kwargs):
-    '''Assumes ordered dict where values have the same shape'''
-    # print title, xaxis, yaxis
+
+def carpet_plot(results, title, xaxis, yaxis, indexing='xy', **kwargs):
+    """
+    - Generates a 2D skew (carpet) plot.
+
+    ** inputs **:
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * xaxis: dictionary  of {title: latex str}
+    * yaxis: dictionary  of {title: latex str}
+    * indexing: str 'ij' or 'xy' determining array order
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    """
+
     arg0, val0 = list(results.items())[0]
     arg1, val1 = list(results.items())[1]
     arg2, val2 = list(results.items())[2]
-    
+
     a = list(range(val0.shape[0]))
     b = list(range(val0.shape[1]))
 
-    aa, bb = np.meshgrid(b,a, indexing = indexing)
+    aa, bb = np.meshgrid(b, a, indexing=indexing)
 
     trace1 = go.Contourcarpet(
-        a = aa.ravel(),
-        b = bb.ravel(),
-        z = val2.ravel(),
+        a=aa.ravel(),
+        b=bb.ravel(),
+        z=val2.ravel(),
     )
 
     trace2 = go.Carpet(
-        a = aa.ravel(),
-        b = bb.ravel(),
-        x = val0.ravel(),
-        y = val1.ravel(),
-        aaxis = dict(
-            tickprefix = ''.format(arg0),
-            smoothing = 0,
-            minorgridcount = 0,
-            type = 'linear',
-            showgrid = False,
-            nticks = 5,
+        a=aa.ravel(),
+        b=bb.ravel(),
+        x=val0.ravel(),
+        y=val1.ravel(),
+        aaxis=dict(
+            tickprefix=''.format(arg0),
+            smoothing=0,
+            minorgridcount=0,
+            type='linear',
+            showgrid=False,
+            nticks=5,
             dtick=0,
             tickmode='linear',
             showticklabels='none',
         ),
-        baxis = dict(
-            tickprefix = ''.format(arg1),
-            smoothing = 0,
-            minorgridcount = 0,
-            type = 'linear',
-            showgrid = False,
-            nticks = 5,
+        baxis=dict(
+            tickprefix=''.format(arg1),
+            smoothing=0,
+            minorgridcount=0,
+            type='linear',
+            showgrid=False,
+            nticks=5,
             dtick=0,
             tickmode='linear',
             showticklabels='none',
@@ -441,12 +519,28 @@ def carpet_plot(results, title, xaxis, yaxis, indexing = 'xy', **kwargs):
     )
     traces = [trace1, trace2]
     layout = go.Layout(
-        title = title, 
-        xaxis = xaxis,
-        yaxis =  yaxis)
+        title=title,
+        xaxis=xaxis,
+        yaxis=yaxis)
     return traces, layout
 
-def plane(result, titles, indexing = 'xy', verbose = False, **kwargs):
+
+def plane(result, titles, indexing='xy', verbose=False, **kwargs):
+    """
+    - Generates a 3D plane plot.
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+    """
     variable = titles['variable']
     arg0, val0 = list(result.items())[0]
     arg1, val1 = list(result.items())[1]
@@ -463,25 +557,41 @@ def plane(result, titles, indexing = 'xy', verbose = False, **kwargs):
     if create_meshgrid:
         xx, yy, zz = np.meshgrid(val0, val1, val2)
     else:
-        xx, yy, zz = [v*ones for v in [val0, val1, val2]]
+        xx, yy, zz = [v * ones for v in [val0, val1, val2]]
     traces.append(go.Surface(
-        x = xx.squeeze(),
-        y = yy.squeeze(),
-        z = zz.squeeze(),
-        surfacecolor = surfacecolor))
+        x=xx.squeeze(),
+        y=yy.squeeze(),
+        z=zz.squeeze(),
+        surfacecolor=surfacecolor))
     layout = go.Layout(
-        title = titles['title'],
-        scene = dict(
-            xaxis = dict(title = arg0),
-            yaxis = dict(title = arg1),
-            zaxis = dict(title = arg2),
+        title=titles['title'],
+        scene=dict(
+            xaxis=dict(title=arg0),
+            yaxis=dict(title=arg1),
+            zaxis=dict(title=arg2),
         )
     )
     chart_type = '3d-plane'
 
     return traces, chart_type, layout
 
-def surface(result, titles, verbose = False, **kwargs):
+
+def surface(result, titles, verbose=False, **kwargs):
+    """
+    - Generates a 3d surface-scalar or surface plot.
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+    """
     variable = titles['variable']
     title = titles['title']
     arg0, val0 = list(result.items())[0]
@@ -499,16 +609,16 @@ def surface(result, titles, verbose = False, **kwargs):
         yy = cast_0_dim(val1, result[variable])
         zz = cast_0_dim(val2, result[variable])
         traces.append(go.Surface(
-            x = xx,
-            y = yy,
-            z = zz,
-            surfacecolor = surfacecolor))
+            x=xx,
+            y=yy,
+            z=zz,
+            surfacecolor=surfacecolor))
         layout = go.Layout(
-            title = title,
-            scene = dict(
-                xaxis = dict(title = arg0),
-                yaxis = dict(title = arg1),
-                zaxis = dict(title = arg2),))
+            title=title,
+            scene=dict(
+                xaxis=dict(title=arg0),
+                yaxis=dict(title=arg1),
+                zaxis=dict(title=arg2), ))
         chart_type = '3d-surface-scalar'
 
     elif len(result[variable].shape) == 1:
@@ -517,20 +627,20 @@ def surface(result, titles, verbose = False, **kwargs):
 
         elif result[variable].shape[0] == 1:
             traces.append(go.Surface(
-                x = val0, 
-                y = val1, 
-                z = val2, 
-                ))
+                x=val0,
+                y=val1,
+                z=val2,
+            ))
             layout = go.Layout(
-                title = title,
-                scene = dict(
-                    xaxis = dict(title = arg0),
-                    yaxis = dict(title = arg1),
-                    zaxis = dict(title = arg2),
-                    ))
+                title=title,
+                scene=dict(
+                    xaxis=dict(title=arg0),
+                    yaxis=dict(title=arg1),
+                    zaxis=dict(title=arg2),
+                ))
             chart_type = '3d-surface'
 
-    elif len(result[variable]) == 1: #scalar or color value?
+    elif len(result[variable]) == 1:  # scalar or color value?
         if verbose:
             print('\tsingle valued output', result[variable].shape)
         surfacecolor = result[variable]
@@ -541,56 +651,88 @@ def surface(result, titles, verbose = False, **kwargs):
         yy = val1
         zz = val2
         traces.append(go.Surface(
-            x = xx,
-            y = yy,
-            z = zz,
-            ))
+            x=xx,
+            y=yy,
+            z=zz,
+        ))
         layout = go.Layout(
-            title = title,
-            scene = dict(
-                xaxis = dict(title = arg0),
-                yaxis = dict(title = arg1),
-                zaxis = dict(title = arg2),
+            title=title,
+            scene=dict(
+                xaxis=dict(title=arg0),
+                yaxis=dict(title=arg1),
+                zaxis=dict(title=arg2),
             )
         )
 
     return traces, chart_type, layout
 
-def tri_surface_plot(result, titles, verbose = False, **kwargs):
-    # triangulated surface 
+
+def tri_surface_plot(result, titles, verbose=False, **kwargs):
+    """
+    - Generates a 3D mesh (tri-surface) plot.
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+    """
+    # triangulated surface
     variable = titles['variable']
     results = list(result.items())
     arg0, val0 = results[0]
     arg1, val1 = results[1]
     arg2, val2 = results[2]
-    
+
     trace = go.Mesh3d(
         x=val0,
         y=val1,
         z=val2,
-        colorbar_title = variable,
+        colorbar_title=variable,
         colorscale=[[0, 'gold'],
                     [0.5, 'mediumturquoise'],
                     [1, 'magenta']],
         # Intensity of each vertex, which will be interpolated and color-coded
-        intensity = val2,
+        intensity=val2,
         # i, j and k give the vertices of triangles
-        i=result[variable][:,0],
-        j=result[variable][:,1],
-        k=result[variable][:,2],
+        i=result[variable][:, 0],
+        j=result[variable][:, 1],
+        k=result[variable][:, 2],
         name=variable,
         showscale=True)
-    
+
     layout = go.Layout(
-        title = titles['title'],
-        scene = dict(
-            xaxis = dict(title = arg0),
-            yaxis = dict(title = arg1),
-            zaxis = dict(title = arg2),))
+        title=titles['title'],
+        scene=dict(
+            xaxis=dict(title=arg0),
+            yaxis=dict(title=arg1),
+            zaxis=dict(title=arg2), ))
+
     return [trace], '3d-surface', layout
 
-def image(result, titles, verbose=False, **kwargs):
 
+def image(result, titles, verbose=False, **kwargs):
+    """
+    - Generates a 2D image plot
+
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+    """
     variable = titles['variable']
     if verbose:
         print('\t2-d image', result[variable].shape)
@@ -604,9 +746,9 @@ def image(result, titles, verbose=False, **kwargs):
 
     trace = go.Image(z=z)
     layout = go.Layout(
-        title = title,
-        xaxis = dict(title = '${}$'.format(arg0)),
-        yaxis = dict(title = '${}$'.format(arg1)))
+        title=title,
+        xaxis=dict(title='${}$'.format(arg0)),
+        yaxis=dict(title='${}$'.format(arg1)))
 
     return [trace], '2d-image', layout
 
@@ -614,48 +756,48 @@ def image(result, titles, verbose=False, **kwargs):
 # {output.shape : {(input1.shape, input2.shape) : {'name':plot_name, 'func': plot_func}}}
 
 plot_dict = {
-    (1,)    :   {(('N','M'), ('N','M'), ('N','M')): {'name': '3d-parametric', 'func': surface}},
-    ('N',)  :   {
-        (('N',),) : {'name': '1d-line', 'func': line_plot},
+    (1,): {(('N', 'M'), ('N', 'M'), ('N', 'M')): {'name': '3d-parametric', 'func': surface}},
+    ('N',): {
+        (('N',),): {'name': '1d-line', 'func': line_plot},
         (('N',), ('N',)): {'name': '2d-line-scalar', 'func': line_plot},
-        (('N',), ('N',),('N',)): {'name': '3d-line-scalar', 'func': line_plot},
-        (('N', 3),): {'name': '3d scatter', 'func': scatter_plot},},
-    ('N', 2) :   {
-        (('N',),) :{'name': '2d-line', 'func': line_plot},
-        (('N', 2),):{'name': '2d-vector', 'func': vector_plot},
+        (('N',), ('N',), ('N',)): {'name': '3d-line-scalar', 'func': line_plot},
+        (('N', 3),): {'name': '3d scatter', 'func': scatter_plot}, },
+    ('N', 2): {
+        (('N',),): {'name': '2d-line', 'func': line_plot},
+        (('N', 2),): {'name': '2d-vector', 'func': vector_plot},
     },
-    ('N', 3) :   {
-        (('N',),) :{'name': '3d-line', 'func': line_plot},
-        (('N', 3),):{'name': '3d-vector', 'func': vector_plot},
-        (('M',), ('M',), ('M',)):{'name': '3d-tri-surface', 'func': tri_surface_plot},
+    ('N', 3): {
+        (('N',),): {'name': '3d-line', 'func': line_plot},
+        (('N', 3),): {'name': '3d-vector', 'func': vector_plot},
+        (('M',), ('M',), ('M',)): {'name': '3d-tri-surface', 'func': tri_surface_plot},
     },
     ('N', 'N'): {
-        (('N',), ('N',)) :{'name': '2d-contour', 'func': contour_plot},
+        (('N',), ('N',)): {'name': '2d-contour', 'func': contour_plot},
     },
-    ('N', 'M'):  {
-        (('N',), ('M',)) :{'name': '2d-contour', 'func': contour_plot},
-        (('M',), ('N',)) :{'name': '2d-contour', 'func': contour_plot},
-        (('N', 'M'), ('N','M')):{'name': '2d-contour-skew', 'func': contour_plot},
-        (('N', 'M'), ('N','M'), ('N','M')): {'name': '3d-parametric-scalar', 'func': surface},
-        ((1,), ('N', 'M'),('N','M')):{'name': '3d-plane', 'func': plane},
-        (('N', 'M'), (1,),('N','M')):{'name': '3d-plane', 'func': plane},
-        (('N', 'M'), ('N','M'),(1,)):{'name': '3d-plane', 'func': plane},
+    ('N', 'M'): {
+        (('N',), ('M',)): {'name': '2d-contour', 'func': contour_plot},
+        (('M',), ('N',)): {'name': '2d-contour', 'func': contour_plot},
+        (('N', 'M'), ('N', 'M')): {'name': '2d-contour-skew', 'func': contour_plot},
+        (('N', 'M'), ('N', 'M'), ('N', 'M')): {'name': '3d-parametric-scalar', 'func': surface},
+        ((1,), ('N', 'M'), ('N', 'M')): {'name': '3d-plane', 'func': plane},
+        (('N', 'M'), (1,), ('N', 'M')): {'name': '3d-plane', 'func': plane},
+        (('N', 'M'), ('N', 'M'), (1,)): {'name': '3d-plane', 'func': plane},
     },
     ('N', 1, 'M'): {
-        (('N',), (1,), ('M',)):{'name': '3d-plane', 'func': plane},
-        ((1,), ('N',), ('M',)):{'name': '3d-plane', 'func': plane},
+        (('N',), (1,), ('M',)): {'name': '3d-plane', 'func': plane},
+        ((1,), ('N',), ('M',)): {'name': '3d-plane', 'func': plane},
     },
     (1, 'N', 'M'): {
-        (('N',), (1,), ('M',)):{'name': '3d-plane', 'func': plane},
+        (('N',), (1,), ('M',)): {'name': '3d-plane', 'func': plane},
     },
     ('N', 'M', 1): {
-        ((1,), ('N',), ('M',)):{'name': '3d-plane', 'func': plane},
-        (('N',), (1,), ('M',)):{'name': '3d-plane', 'func': plane},
-        (('N',), ('M',), (1,)):{'name': '3d-plane', 'func': plane},
-        (('M',), ('N',), (1,)):{'name': '3d-plane', 'func': plane},
+        ((1,), ('N',), ('M',)): {'name': '3d-plane', 'func': plane},
+        (('N',), (1,), ('M',)): {'name': '3d-plane', 'func': plane},
+        (('N',), ('M',), (1,)): {'name': '3d-plane', 'func': plane},
+        (('M',), ('N',), (1,)): {'name': '3d-plane', 'func': plane},
     },
     ('N', 'M', 3): {
-        (('N',), ('M',)):{'name': 'image', 'func': image}
+        (('N',), ('M',)): {'name': 'image', 'func': image}
     },
 }
 
@@ -664,8 +806,10 @@ size_threshold = 3
 # +
 sizes_available = np.array(['N', 'M', 'L', 'O', 'P', 'Q', 'R', 'S', 'T'], dtype=object)
 
+
 def flatten_shapes(shapes):
     return [item for sublist in shapes for item in sublist]
+
 
 def unordered_unique(a):
     """return the indices and values of the array in their original order"""
@@ -678,9 +822,9 @@ def unordered_unique(a):
         indices.append(result.index(_))
     return result, indices
 
+
 def symbolic_shape(*shapes, sizes_available=sizes_available):
     """Convert input shapes to symbolic shapes
-
     Allow values of 1 to pass through
     Results should match input structure
     """
@@ -708,6 +852,8 @@ def symbolic_shape(*shapes, sizes_available=sizes_available):
             shape_index += 1
         results.append(tuple(result_shape))
     return tuple(results)
+
+
 # -
 
 def get_arg_shapes(*args):
@@ -730,6 +876,7 @@ def get_arg_shapes(*args):
 def func_mod_name(f):
     return '{}.{}'.format(f.__module__, f.__name__)
 
+
 def get_plot_types_df():
     """pack the plot types into a dataframe"""
     plot_types = dict()
@@ -739,14 +886,15 @@ def get_plot_types_df():
             if plot_key in plot_types:
                 raise KeyError('plot_key already present {}'.format(plot_key))
             plot_types[plot_key] = [v_['name'], func_mod_name(v_['func'])]
-    
+
     plot_types = pd.DataFrame(plot_types).T
-    
-    plot_types.index.set_names(['out_shape', 'arg_shapes'], inplace = True)
-    
+
+    plot_types.index.set_names(['out_shape', 'arg_shapes'], inplace=True)
+
     plot_types.columns = ['plot_type', 'function']
     return plot_types
-    
+
+
 plot_types = get_plot_types_df()
 
 
@@ -756,12 +904,11 @@ def get_ranges(figures):
 
     axis_names = 'xaxis', 'yaxis', 'zaxis'
 
-
     for fig in figures:
         ranges = get_bbox(fig)
         for i, val in enumerate(ranges):
-            axname = axis_names[i//2]
-            if i%2 == 0:
+            axname = axis_names[i // 2]
+            if i % 2 == 0:
                 axes_min[axname].append(val)
             else:
                 axes_max[axname].append(val)
@@ -769,25 +916,22 @@ def get_ranges(figures):
         axes_min[axis] = min(axes_min[axis])
         axes_max[axis] = max(axes_max[axis])
 
-
     axes = dict()
-    if len(axes_min) == 2: # 2d
+    if len(axes_min) == 2:  # 2d
         for axis in 'xaxis', 'yaxis':
             axes[axis] = dict(autorange=False,
-                range=(axes_min[axis], axes_max[axis]))
-    else: # 3d
+                              range=(axes_min[axis], axes_max[axis]))
+    else:  # 3d
         axes = dict(scene=dict(aspectmode='manual'))
 
         for axis in 'xaxis', 'yaxis', 'zaxis':
             axes['scene'][axis] = dict(autorange=False,
-                range=(axes_min[axis], axes_max[axis]))
+                                       range=(axes_min[axis], axes_max[axis]))
         aspectratio = dict()
         for _ in 'xyz':
-            min_, max_ = axes['scene'][_+'axis']['range']
+            min_, max_ = axes['scene'][_ + 'axis']['range']
             aspectratio[_] = max_ - min_
         axes['scene']['aspectratio'] = aspectratio
-        axes['scene']['camera'] = dict(eye={_:axes['scene'][_ + 'axis']['range'][1] for _ in 'xyz'})
+        axes['scene']['camera'] = dict(eye={_: axes['scene'][_ + 'axis']['range'][1] for _ in 'xyz'})
 
     return axes
-
-

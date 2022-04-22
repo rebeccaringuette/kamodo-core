@@ -18,11 +18,19 @@ def scatter_plot(result, titles, verbose=False, **kwargs):
     """
     - Generates a 3D scatter plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    ** inputs **:
 
-    Returns:
-        [trace], chart_type, layout
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     if verbose:
         print('3-d scatter plot')
@@ -75,11 +83,19 @@ def line_plot(result, titles, verbose=False, **kwargs):
     """
     - Generates a 1D, 2D or 3D line plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    ** inputs **:
 
-    Returns:
-        [trace], chart_type, layout
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     if verbose:
         print('N-d line plot f(t)')
@@ -252,11 +268,19 @@ def vector_plot(result, titles, verbose=False, **kwargs):
     """
     - Generates a 2D or 3D vector plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    ** inputs **:
 
-    Returns:
-        [trace], chart_type, layout
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     variable = titles['variable']
     val0 = list(result.values())[0]
@@ -342,12 +366,21 @@ def vector_plot(result, titles, verbose=False, **kwargs):
 def contour_plot(result, titles, indexing, verbose=False, **kwargs):
     """
     - Generates a 2D contour plot.
+    
+    ** inputs **:
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
 
-    returns:
-        [trace], chart_type, layout
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
+
     """
     try:
         colorbar_title = dict(title=titles['title_short'], titleside='bottom')
@@ -426,11 +459,19 @@ def carpet_plot(results, title, xaxis, yaxis, indexing='xy', **kwargs):
     """
     - Generates a 2D skew (carpet) plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    ** inputs **:
 
-    returns:
-        [trace], layout
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * xaxis: dictionary  of {title: latex str}
+    * yaxis: dictionary  of {title: latex str}
+    * indexing: str 'ij' or 'xy' determining array order
+    * kwargs: additional arguments specific to plot types
+
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
     """
 
     arg0, val0 = list(results.items())[0]
@@ -488,11 +529,17 @@ def plane(result, titles, indexing='xy', verbose=False, **kwargs):
     """
     - Generates a 3D plane plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
 
-    Returns:
-        [trace], chart_type, layout
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     variable = titles['variable']
     arg0, val0 = list(result.items())[0]
@@ -533,11 +580,17 @@ def surface(result, titles, verbose=False, **kwargs):
     """
     - Generates a 3d surface-scalar or surface plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
 
-    Returns:
-        [trace], chart_type, layout
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     variable = titles['variable']
     title = titles['title']
@@ -618,11 +671,17 @@ def tri_surface_plot(result, titles, verbose=False, **kwargs):
     """
     - Generates a 3D mesh (tri-surface) plot.
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
 
-    Returns:
-        [trace], chart_type, layout
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     # triangulated surface
     variable = titles['variable']
@@ -662,11 +721,17 @@ def image(result, titles, verbose=False, **kwargs):
     """
     - Generates a 2D image plot
 
-    result: a dictionary of parameters
-    titles: a dictionary of titles
+    * result: dictionary returned by Kamodo().evaluate
+    * titles: dictionary holding plot titles
+    * indexing: str 'ij' or 'xy' determining array order
+    * verbose: boolean (default False) for debugging
+    * kwargs: additional arguments specific to plot types
 
-    Returns:
-        [trace], chart_type, layout
+    ** returns ** - tuple:
+
+    * traces - list of [plotly trace objects](https://plotly.com/python/figure-structure/)
+    * chart_type - str name of this type of plot
+    * layout - dict-like [plotly layout](https://plotly.com/python/reference/layout/)
     """
     variable = titles['variable']
     if verbose:

@@ -2,20 +2,17 @@
 
 [![codecov](https://codecov.io/gh/asherp/Kamodo/branch/master/graph/badge.svg?token=W1B3L19REF)](https://codecov.io/gh/asherp/Kamodo)
 
-Kamodo is a CCMC tool for access, interpolation, and visualization of space weather models and data in python. Kamodo allows model developers to represent simulation results as mathematical functions which may be manipulated directly by end users. Kamodo handles unit conversion transparently and supports interactive science discovery through jupyter notebooks with minimal coding and is accessible through python.
+Kamodo originated as a CCMC tool for access, interpolation, and visualization of space weather models and data in python.
+Kamodo allows model developers to represent simulation results as mathematical functions which may be manipulated directly by end users.
+This general approach allows observational data to be represented functionally, through the use of interpolators.
+Kamodo handles unit conversion transparently and supports interactive science discovery in a low coding environment through jupyter notebooks.
+These features allow Kamodo to be used in other fields of study and as a teaching tool for working with real world physical data.
 
 
-The project page is located at the Community Coordinated Modeling Center, located at NASA Goddard Space Flight Center.
+This repository hosts the core Kamodo libraries under a permissive [NASA open source license](https://github.com/EnsembleGovServices/kamodo-core/blob/master/LICENSE).
+The core library supports function registration, composition, unit conversion, automated plotting, LaTeX I/O, and remote procedure call (RPC) interfaces.
 
-* Official site page [https://ccmc.gsfc.nasa.gov/Kamodo/](https://ccmc.gsfc.nasa.gov/Kamodo/)
-
-Kamodo's official source code is hosted on github under a permissive NASA open source license:
-
-* [https://github.com/nasa/Kamodo](https://github.com/nasa/Kamodo)
-
-Periodic contributions to Kamodo are made from the unofficial repo located here
-
-* [https://github.com/asherp/Kamodo](https://github.com/asherp/Kamodo)
+Space weather simulation readers are implemented as subclasses of the Kamodo base class and are developed and maintained by the Community Coordinated Modeling Center, located at NASA Goddard Space Flight Center. CCMC's Kamodo readers may be found here [https://ccmc.gsfc.nasa.gov/Kamodo/](https://ccmc.gsfc.nasa.gov/Kamodo/)
 
 
 ## Usage

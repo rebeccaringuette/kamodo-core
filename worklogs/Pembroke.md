@@ -1,3 +1,20 @@
+* integrated comments from Lutz, Rebecca
+* updated code locations
+* kameleon
+* unable to find a doi for pint
+* kameleon citations
+* fixing api doc spacing, added point testing in FieldIntegration notebook
+* improved documentation for gridify, partial
+* cleaned up expression for normalization operator
+* clearing cell output
+* full docstrings for kamodo api, plotting, kamodofy
+* docstrings
+* docstring improvements
+* install kaleido
+* addressing issue
+* fixed broken link, expanded syntax docs
+* clarifying use of lambda functions
+* fixed units in example
 * adding test for multi-variable 3d plotting
 * fixed reordering
 * adding test for multi 1d plotting

@@ -4,7 +4,72 @@
 
 ::: kamodo.Kamodo
     :docstring:
-    :members: __init__ __setitem__ __getitem__ __getattr__ plot figure to_latex _repr_latex_ detail evaluate
+
+### Initialization
+
+::: kamodo.Kamodo
+    :members: __init__
+
+
+### Registering functions
+
+::: kamodo.Kamodo
+    :members: __setitem__
+
+
+### Retrieving functions
+
+Registered functions may be accessed via dictionary or attribute syntax.
+
+::: kamodo.Kamodo
+    :members: __getitem__ __getattr__
+
+
+### Evaluation
+
+Function evaluation may be performed either by keyword or attribute syntax:
+
+```py
+k = Kamodo(f='x^2-x-1')
+assert k.f(3) == k['f'](3)
+```
+
+For closed-form expressions, kamodo uses the highly optimized [numexpr](https://numexpr.readthedocs.io/projects/NumExpr3/en/latest/intro.html) library if available and will fall back to numpy otherwise:
+
+```py
+x = np.linspace(-5,5,33000111)
+k.f(x)
+```
+
+Programmatic evaluation is also possible:
+
+::: kamodo.Kamodo
+    :members: evaluate
+
+
+### Plotting
+
+#### single function plots
+
+For plotting single variables, the `figure` method is most appropriate
+
+::: kamodo.Kamodo
+    :members: figure
+
+#### multi-function plots
+
+For multiple functions, the `plot` method is more convenient
+
+::: kamodo.Kamodo
+    :members: plot
+
+
+### LaTeX rendering
+
+The following methods allow Kamodo to integrate seemlessly with modern publication workflows. This includes support for LaTeX rendering within jupyter notebooks, LaTeX printing for manuscript preparation, and a high-level `detail` summary of registered functions.
+
+::: kamodo.Kamodo
+    :members: _repr_latex_ to_latex  detail
 
 ## Plotting
 
@@ -80,31 +145,8 @@ from kamodo import kamodofy
 ::: kamodo.util.kamodofy
     :docstring:
 
-Usage:
-
-```python
-@kamodofy(units='kg/cm^2', arg_units=dict(x='cm'), citation='Pembroke et. al 2022', hidden_args=['verbose'])
-def myfunc(x=30, verbose=True):
-    return x**2
-myfunc.meta
-```
-```console
-{'units': 'kg/cm^2',
- 'arg_units': {'x': 'cm'},
- 'citation': 'Pembroke et. al 2022',
- 'equation': None,
- 'hidden_args': ['verbose']}
-```
-The above metadata is used by Kamodo objects for function registration. Similarly, a `data` attribute is attached which represents the output of the function when called with no arguments:
-
-```python
-myfunc.data
-```
-```console
-900
-```
-
 ### gridify
+
 ::: kamodo.util.gridify
     :docstring:
 

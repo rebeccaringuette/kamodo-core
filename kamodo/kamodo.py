@@ -358,21 +358,49 @@ def get_function_args(func, hidden_args=[]):
         [a for a in getfullargspec(func).args if a not in hidden_args])
 
 
-# class Kamodo(collections.OrderedDict):
 class Kamodo(UserDict):
-    """Kamodo base class demonstrating common API for space weather models
-    This API provides access to space weather fields and their properties through:
-        interpolation of variables at user-defined points
-        unit conversions
-        coordinate transformations specific to space weather domains
-    Required methods that have not been implemented in child classes
-    will raise a NotImplementedError
+    """Kamodo base class demonstrating common API for scientific resources.
+
+    This API provides access to scientific fields and their properties through:
+    
+    * Interpolation of variables at user-defined points
+    * Automatic unit conversions
+    * Function composition convenient for coordinate transformations and data pipelining
+
+    Note: While intended for with space weather applications, the kamodo base class
+    was designed to be as generic as possible, and should be applicable to a wide range
+    of scientific domains and disciplines.
     """
 
     def __init__(self, *funcs, **kwargs):
-        """Base initialization method
-        Args:
-            param1 (str, optional): Filename of datafile to interpolate from
+        """Initialize Kamodo object with functions or by keyword
+        
+        ** Inputs **
+
+        * ** funcs ** - *(optional)* list of (str) expressions to register in f(x)=x format
+
+        * ** kwargs ** - *(optional)* key,value pairs of functions to register
+            * key - left-hand-side symbol (str)
+            * value - can be one of:
+                * latex or python (str) expression e.g. "x^2-x-1"
+                * kamodofied function with appropriate .meta and .data attributers (see [@kamodofy](#kamodofy) decorator)
+                * lambda function (having no meta or data attributes)
+
+        * ** verbose ** - *(optional)* (`default=False`) flag to turn on all debugging print statements
+
+
+
+        ** returns ** - dictionary-like kamodo object of (symbol, function) pairs
+
+        usage:
+
+        ```python
+            kobj = Kamodo(
+                'f(x[cm])[kg/m^3]=x^2-x-1', # full expressions with units
+                area = kamodofy(lambda x: x*x, units='cm^2'), # kamodofied functions
+                h = 'sin(x)', # key-value expressions
+                )
+        ```
         """
 
         super(Kamodo, self).__init__()
@@ -645,8 +673,58 @@ class Kamodo(UserDict):
         self.register_symbol(lhs_symbol)
 
     def __setitem__(self, sym_name, input_expr):
-        """Assigns a function or expression to a new symbol,
-        performs unit conversion where appropriate
+        """Assigns a function or expression to a new symbol, performing
+        automatic function composition and inserting unit conversions where appropriate.
+
+        * ** sym_name ** - function symbol to associate with right-hand-side in one of the following formats:
+            - f - a lone fuction symbol (alphabetic argument ordering)
+            - f(z,x,y) - explicit argument ordering
+            - f[kg] - output unit assignment
+            - f(x[cm])[kg] - output and input unit assignment
+
+        * ** input_expr ** - rhs string or kamodofied function, one of:
+            * right-hand-side expression: python or latex str (e.g.`x^2-x-1`)
+            * kamodofied function with appropriate .meta and .data attributers (see [@kamodofy](#kamodofy))
+            * lambda function (having no meta or data attributes)
+
+        Raises:
+            - NameError when left-hand-side units incompatible with right-hand-side expression
+        
+        returns: None
+
+        usage:
+
+        Setting left-hand-side units will automatically trigger unit conversion
+        
+        ```py
+        kobj = Kamodo()
+        kobj['radius[m]'] = 'r'
+        kobj['area[cm^2]'] = 'pi * radius^2'
+        kobj
+        ```
+
+        The above `kobj` will render in a Jupyter notebook like this:
+
+        $$\\operatorname{radius}{\\left(r \\right)}[m] = r$$
+        
+        $$\\operatorname{area}{\\left(r \\right)}[cm^{2}] = 10000 \\pi \\operatorname{radius}^{2}{\\left(r \\right)}$$
+
+        Kamodo will raise an error if left-hand-side units are incompatible with the right-hand-side expression
+        
+        ```py
+        kobj = Kamodo()
+        kobj['area[cm^2]'] = 'x^2' # area has units of cm^2
+        try:
+            kobj['g(x)[kg]'] = 'area' # mass not compatible with square length
+        except NameError as m:
+            print(m)
+        ```
+        
+        output:
+        
+        $$\\text{cannot convert area(x) [centimeter**2] length**2 to g(x)[kilogram] mass}$$
+        
+
         """
         if not isinstance(sym_name, str):
             sym_name = str(sym_name)
@@ -829,6 +907,33 @@ class Kamodo(UserDict):
 
     def __getitem__(self, key):
         """Given a symbol string, retrieves the corresponding function.
+
+        input: **key** - string or function symbol
+
+    
+        ** returns**: the associated function
+
+        ** usage **:
+
+        Rretrieval by function name:
+
+        ```python
+            kobj['f'] = 'x^2-x-1'
+            f = kobj['f']
+            f(3) # returns 5
+        ```
+
+        It is also possible to retreive by function symbol:
+
+        ```python
+            from kamodo import sympify
+            fsymbol = sympify('f') # converts str to symbol
+
+            kobj['f'] = 'x^2-x-1'
+            f = kobj[fsymbol]
+            f(3) # returns 5
+        ```
+
         """
         try:
             return super(Kamodo, self).__getitem__(key)
@@ -848,12 +953,24 @@ class Kamodo(UserDict):
         return False
 
     def __getattr__(self, name):
-        """Retrieves a given function as an attribute.
+        """
+
+        Retrieves a given function as an attribute.
+        
+        **input** - **name** of function to retrieve
+
+        **returns** the associated function
 
         Usage:
-        To evaluate function $f(x)$ at [1,2,3]:
 
-            k.f([1,2,3])
+        ```py
+        k = Kamodo(f='x^2-x-1')
+        k.f
+        ```
+        The above renders as follows in a jupyter notebook
+
+        $f{\\left(x \\right)} = x^{2} - x - 1$
+
         """
         try:
             return self[name]
@@ -991,15 +1108,20 @@ class Kamodo(UserDict):
     def to_latex(self, keys=None, mode='equation'):
         """Generate list of LaTeX-formated formulas
 
+        ** inputs **:
 
-        mode(optional): equation(default) how to wrap formulas:
-            mode = 'equation': wraps formulas in
-                begin{equation} ... end{equation}.
+        * keys - (optional) list(str) of registered functions to generate LaTeX from
 
-            mode='inline': wraps formulas in
-                $$ ... $$
+        * mode - (optional) string determines to wrap formulas
+            * 'equation' (default) wraps formulas in `begin{equation} ... end{equation}`
 
-        Note: Upon registeration, each function should have a _repr_latex_ method.
+            * 'inline': wraps formulas in dollar signs
+
+        ** returns **: LaTeX-formated string
+        
+        Note: This function does not need to be called directly for rendering in jupyter
+        because the _repr_latex_ method is automatically attached.
+
         """
         if keys is None:
             keys = list(self.signatures.keys())
@@ -1018,11 +1140,50 @@ class Kamodo(UserDict):
         return beautify_latex(repr_latex).encode('utf-8').decode()
 
     def _repr_latex_(self):
-        """Provide notebook rendering of formulas (called automatically by jupyter notebooks"""
+        """Provides notebook rendering of kamodo object's registered functions.
+
+        ** inputs ** - N/A
+
+        ** returns ** latex string - obtained  from `to_latex` method
+
+        Usage:
+
+        ```python
+        k = Kamodo(f='x^2-x-1')
+        k
+        ```
+
+        When placed on a line by itself, the above object will be rendered by jupyter notebooks like this:
+
+        \\begin{equation}f{\\left(x \\right)} = x^{2} - x - 1\\end{equation}
+
+        More on the _repr_latex_ method can be found [here](https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html) 
+        
+        Note: Registered functions are also equiped with their own `_repr_latex_` method.
+
+        """
         return self.to_latex()
 
     def detail(self):
-        """Constructs a pandas dataframe from signatures"""
+        """Constructs a pandas dataframe from signatures
+
+        ** inputs ** - N/A
+
+        ** returns ** - pandas dataframe
+
+        usage:
+
+        ```python
+        k = Kamodo('rho(x[cm])[g/cm^3]=x^2', g = 'x+y')
+        k.detail()
+        ```
+        outputs:
+
+
+        <table border="1" class="dataframe">  <thead>    <tr style="text-align: right;">      <th></th>      <th>symbol</th>      <th>units</th>      <th>lhs</th>      <th>rhs</th>      <th>arg_units</th>    </tr>  </thead>  <tbody>    <tr>      <th>rho</th>      <td>rho(x)</td>      <td>g/cm**3</td>      <td>rho(x)</td>      <td>x**2</td>      <td>{\'x\': \'cm\'}</td>    </tr>    <tr>      <th>g</th>      <td>g(x, y)</td>      <td></td>      <td>g</td>      <td>x + y</td>      <td>{}</td>    </tr>  </tbody></table>
+        """
+
+
         return pd.DataFrame(self.signatures).T
 
     def simulate(self, **kwargs):
@@ -1036,9 +1197,31 @@ class Kamodo(UserDict):
         return simulate(OrderedDict(state_funcs), **kwargs)
 
     def evaluate(self, variable, *args, **kwargs):
-        """evaluates the variable.
+        """Evaluate a given function variable using kwargs.
 
-        If the variable is not present, try to parse it as a semicolon-delimited list
+        If the variable is not present, try to parse it as an equation and evaluate the expression.
+
+        ** inputs **:
+
+        * variable - str:
+            * function string name to evaluate
+            * semicolon delmitted list of equations, the last of which will be evaluated
+        * args - not presently used
+        * kwargs - key-word arguments passed to function (required)
+
+        ** returns **: dictionary of input kwargs and output {variable: self.variable(**kwargs)}
+
+        ** usage **:
+        
+        ```py
+        k = Kamodo(f='x+y')
+
+        result = k.evaluate('f', x=3, y=4)['f']
+        assert k.f(3,4) == result
+        assert k.evaluate('g=f+3', x=3, y=4)['g'] == result+3
+        assert k.evaluate('g=f+3;h=g+2', x=3, y=4)['h'] == result+3+2
+        ```
+
         """
         if not hasattr(self, variable):
             var_dict = {}
@@ -1116,11 +1299,16 @@ class Kamodo(UserDict):
 
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a single variable and keyword arguments
+        
+        ** inputs **:
 
-        variable: the name of a previously registered function
-        kwargs: {arg: values} to pass to registered function
-        indexing: determines order by which 2d matrices are given
+        * variable: the name of a previously registered function
+        * kwargs: {arg: values} to pass to registered function
+        * indexing: determines order by which 2d matrices are given (affects contour_plot, carpet_plot, and plane)
 
+        ** returns **: plotly [figure](https://plotly.com/python/figure-structure/) (dict-like)
+
+        raises: SyntaxError if variable not found
         """
         result = self.evaluate(variable, **kwargs)
         signature = self.signatures[variable]
@@ -1240,14 +1428,32 @@ class Kamodo(UserDict):
     def plot(self, *variables, plot_partial={}, **figures):
         """Generates a plotly figure from multiple variables and keyword arguments
 
-        variable: the name of a previously registered function
-        figures: {variable: {arg: values}} to pass to registered function
+        ** inputs **:
 
-        Usage:
+        * variable: the name of a previously registered function
+        * figures: dict {variable: {arg: values}} to pass to registered function
+        
+        ** returns **: plotly [figure](https://plotly.com/python/figure-structure/) (dict-like).
+        When run in a jupyter notebook, an inline plotly figure will be displayed.
 
-            k.plot('f') # plots f using default arguments for f
+        ** raises **:
 
-            k.plot(f={x:[3,4,5]}, g={x{-2, 3, 4}}) # plots f at x=[3,4,5] and g at [-2,3,4]
+        * TypeError when required function arguments are not specified
+        * KeyError when no plotting function can be associated with input/output shapes
+        
+        ** usage **:
+        
+        ```python
+        k = Kamodo(
+            f=lambda x=np.array([2,3,4]): x**2-x-1,
+            g='sin(x)')
+
+        k.plot('f') # plots f using default arguments for f
+
+        k.plot(f={x:[3,4,5]}, g={x{-2, 3, 4}}) # plots f at x=[3,4,5] and g at [-2,3,4]
+        ```
+
+        
 
         """
         if len(plot_partial) > 0:

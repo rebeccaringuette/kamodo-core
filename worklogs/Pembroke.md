@@ -13,6 +13,7 @@
 * added kamodo function async test
 * fixed bug in compose with lambdas
 * rpc tests
+
 ### 2022-01-18 19:28:25.752122: clock-out
 
 * added kamodo-rpc cli to serve
@@ -586,6 +587,93 @@ pip install pycapnp
 * consider capn proto https://capnproto.org/
 
 ### 2021-10-21 10:17:26.721944: clock-in
+
+* fixing test
+* corrected test_preserve_repr_latex
+* modified test slightly to validate preservation of latex repr
+* moved plot_partial docs into function docstring
+* integrated comments from Lutz, Rebecca
+* updated code locations
+* kameleon
+* unable to find a doi for pint
+* kameleon citations
+* fixing api doc spacing, added point testing in FieldIntegration notebook
+* improved documentation for gridify, partial
+* cleaned up expression for normalization operator
+* clearing cell output
+* full docstrings for kamodo api, plotting, kamodofy
+* docstrings
+* docstring improvements
+* install kaleido
+* addressing issue
+* fixed broken link, expanded syntax docs
+* clarifying use of lambda functions
+* fixed units in example
+* adding test for multi-variable 3d plotting
+* fixed reordering
+* adding test for multi 1d plotting
+* adding test for unmodified partial metadata
+* bugfix addressing
+* merging latest master
+* merge fixes
+* merged from master
+* added latex check for dimensionless args
+* fixing unit test for mixture of dimensionless args
+* added test for lhs unit parsing
+* refining test to validate lambdified function
+
+### 2022-03-01 15:24:17.816542: clock-out
+
+* added contributing to documentation
+* added contributing
+
+### 2022-03-01 14:38:42.849325: clock-in
+
+* matching requirements for setup.cfg
+* how to run unit tests
+* cleaning up missing docstrings for plot and figure, removed extraneous images
+* removing commandline interface from docs for now
+* cleaning up install instructions
+* removing extraneous notebooks
+
+### 2022-02-15 15:27:12.479478: clock-out
+
+* bug reports
+
+### 2022-02-15 15:17:52.867347: clock-in
+
+* removing print statements
+
+
+### 2022-02-10 19:03:05.835344: clock-out
+
+* removed partial keys from arg_units
+* cleaning up partial latex_repr
+
+### 2022-02-10 18:21:18.161891: clock-in: T-10m 
+
+
+### 2022-02-04 19:25:01.075400: clock-out
+
+* added api documentation
+* executing notebooks on deploy
+* fixed field line plotting, added mkdocs preamble so notebooks run from correct directory
+
+### 2022-02-04 17:29:50.152266: clock-in
+
+* test for two defaults, one arg
+* test default inheritance for more than two arguments
+* str format
+* integrating comments from rringuette
+
+### 2021-10-29 12:29:28.465940: clock-out
+
+* linking to correct weirstrass image
+* adding Weierstrass notebook and example image
+* added weierstrass example
+
+### 2021-10-29 11:01:19.323873: clock-in
+
 
 ### 2021-10-18 12:25:10.516747: clock-out
 

@@ -1,3 +1,6 @@
+* fixing test
+* corrected test_preserve_repr_latex
+* modified test slightly to validate preservation of latex repr
 * integrated comments from Lutz, Rebecca
 * updated code locations
 * kameleon

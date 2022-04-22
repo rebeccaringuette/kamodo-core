@@ -4,7 +4,8 @@ Copyright © 2017 United States Government as represented by the Administrator, 
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 
-# +
+import copy
+import time
 import functools
 import inspect
 import itertools
@@ -18,6 +19,7 @@ from types import GeneratorType
 
 import forge
 import pandas as pd
+import numpy as np
 import plotly.graph_objs as go
 import requests
 import sympy
@@ -617,7 +619,6 @@ class Kamodo(UserDict):
         if str(rhs_args[0]) == 'self':  # in case function is a class method
             rhs_args.pop(0)
 
-        lhs_symbol_old = lhs_symbol
         lhs_symbol = self.check_or_replace_symbol(lhs_symbol, rhs_args)
         units = lhs_units
         if hasattr(func, 'meta'):
@@ -730,6 +731,7 @@ class Kamodo(UserDict):
             sym_name = str(sym_name)
         symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
         if hasattr(input_expr, '__call__'):
+            input_expr = copy_func(input_expr)
             self.register_function(input_expr, symbol, lhs_expr, lhs_units)
 
         else:
@@ -874,6 +876,7 @@ class Kamodo(UserDict):
             if len(defaults) > 0:
                 symbol = reorder_symbol(defaults, default_non_default_parameter,
                                         symbol)
+
             try:
                 arg_units = dimensionless_unit_check(sym_name_bkup,
                                                      arg_units)
@@ -903,7 +906,6 @@ class Kamodo(UserDict):
 
             super(Kamodo, self).__setitem__(symbol, func)
             super(Kamodo, self).__setitem__(type(symbol), self[symbol])
-            self.register_symbol(symbol)
 
     def __getitem__(self, key):
         """Given a symbol string, retrieves the corresponding function.
@@ -1595,11 +1597,15 @@ def copy_func(f):
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)
                 https://stackoverflow.com/a/13503277 (unutbu)
     """
-    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
-                           argdefs=f.__defaults__,
-                           closure=f.__closure__)
+    if isinstance(f, np.vectorize):
+        g = copy.deepcopy(f)
+    else:
+        g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                               argdefs=f.__defaults__,
+                               closure=f.__closure__)
+        g.__kwdefaults__ = f.__kwdefaults__
+
     g = functools.update_wrapper(g, f)
-    g.__kwdefaults__ = f.__kwdefaults__
     if hasattr(f, 'meta'):
         g.meta = f.meta
     if hasattr(f, '_repr_latex_'):

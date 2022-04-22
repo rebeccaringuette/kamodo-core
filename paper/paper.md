@@ -1,5 +1,5 @@
 ---
-title: 'Kamodo: A functional api for space weather models and data'
+title: 'Kamodo: A functional API for space weather models and data'
 tags:
   - Python
   - plasma physics
@@ -25,7 +25,7 @@ affiliations:
    index: 1
  - name: Community Coordinated Modeling Center, NASA GSFC
    index: 2
- - name: University of Michigan
+ - name: Catholic University of America
    index: 3
  - name: ADNET Systems Inc.
    index: 4
@@ -37,7 +37,7 @@ bibliography: paper.bib
 
 # Summary
 
-Kamodo is a functional programing interface for scientific models and data.
+Kamodo is a functional application programming interface (API) for scientific models and data.
 In Kamodo, all scientific resources are registered as symbolic fields which are mapped to model and data interpolators or algebraic expressions.
 Kamodo performs function composition and employs a unit conversion system that mimics hand-written notation: units are declared in bracket notation and conversion factors are automatically inserted into user expressions.
 Kamodo includes a LaTeX interface, automated plots, and a browser-based dashboard interface suitable for interactive data exploration.
@@ -54,18 +54,25 @@ For example, data-model comparisons often require knowledge of multiple data str
 Even when mature APIs are available, proficiency in programing languages such as python is necessary before progress may be made.
 This further complicates the transition from research to operations in space weather forecasting and mitigation, where many disparate data sources and models must be presented together in a clear and actionable manner.
 Such complexity represents a high barrier to entry when introducing the field of space weather to newcomers at space weather workshops, where much of the student's time is spent installing and learning how to use prerequisite software.
-Several attempts have been made to unify all existing space weather resources around common standards, but have met with limited success. 
+Several attempts have been made to unify all existing space weather resources around common data standards, but have met with limited success.
+In particular, introducing and leveraging a common data standard for space weather models was the primary goal of the Kameleon software suite, a predecessor to Kamodo developed between 1999-2011 at the Community Coordinated Modeling Center, NASA GSFC [@kameleon].
+Kameleon consisted of a set of tools for converting raw simulation output into standardized HDF or CDF format with additional metadata specific to space weather modeling (scientific units, array structure, coordinate systems, and citation information) as well as interpolation APIs targeting several languages (C, C++, Fortran, Java, and Python).
+Due to the complexity of space weather modeling techniques, these interpolators were tailored for specific models and had to be written by the Kameleon developers themselves.
+This created a bottleneck in the time to onboard new simulations, and only a handful of models could be supported.
+In addition, interpolation of observational data fell outside the scope of Kameleon's design requirements, and additional tooling was required for metrics and validation. Furthermore, the difficulty in installing the prerequisite libraries meant that only a few users could take advantage of Kameleon's powerful interpolation techniques. Often, scientific users either developed their own pipelines for analysis or simply relied on CCMC's static plots available over the web.
+Our experience with Kameleon and its limitations were a strong motivating factor for Kamodo's functional design.
 
-Kamodo all but eliminates the barrier to entry for space weather resources by exposing all scientifically relevant parameters in a functional manner.
+
+Kamodo all but eliminates the barrier to entry for accessing space weather resources by exposing all scientifically relevant parameters in a functional manner.
 Kamodo is an ideal tool in the scientist's workflow, because many problems in space weather analysis, such as field line tracing, coordinate transformation, and interpolation, may be posed in terms of function compositions.
-Kamodo builds on existing standards and APIs and does not require programing expertise on the part of end user.
+The underlying implementation of these functions are left to the model and data access libraries. This allows Kamodo to build on existing standards and APIs without requiring programing expertise on the part of the end user.
 Kamodo is expressive enough to meet the needs of most scientists, educators, and space weather forecasters, and Kamodo containers enable a rapidly growing ecosystem of interoperable space weather resources. 
 
 # Usage
 
 ## Kamodo Base Class
 
-Kamodo's base class manages the registration of functionalized resources. As an example, here is how one might register the non-differentiable Weierstrass function [@weierstrass1872uber].
+Kamodo's base class manages the registration of functionalized resources. As an example, here is how one might register the 500th-order approximation of the non-differentiable Weierstrass function [@weierstrass1872uber].
 
 ```python
 from kamodo import Kamodo, kamodofy
@@ -110,20 +117,20 @@ k.plot('W')
 
 The result of the above command is shown in \autoref{fig:weierstrass}. This exemplifies Kamodo's ability to work with highly resolved datasets through function inspection.
 
-![Auto-generated plot of the Weirstrass function.\label{fig:weierstrass}](https://raw.githubusercontent.com/EnsembleGovServices/kamodo-core/master/docs/notebooks/weirstrass.png)
+![Auto-generated plot of the Weierstrass function.\label{fig:weierstrass}](https://raw.githubusercontent.com/EnsembleGovServices/kamodo-core/master/docs/notebooks/weirstrass.png)
 
  
 ## Kamodo Subclasses
 
-The Kamodo base class may be subclassed when third-packages are required. For example, the `pysatKamodo` subclass preregisters interpolating functions for Pysat [@pysat200] Instruments: 
+The Kamodo base class may be subclassed when third-packages are required. For example, the `pysatKamodo` subclass preregisters interpolating functions for Pysat [@pysat200] Instruments:
 
 ```python
 from pysat_kamodo.nasa import Pysat_Kamodo
 
 kcnofs = Pysat_Kamodo('2009, 1, 1', # Pysat_Kamodo allows string dates
-         platform = 'cnofs', # pysat keyword
-         name='vefi', # pysat keyword
-         tag='dc_b',# pysat keyword
+         platform = 'cnofs', # pysat mission name (C/NOFS)
+         name='vefi', # pysat instrument suite (Vector Electric Field Investigation)
+         tag='dc_b',# pysat type of observation (here: DC magnetic fields)
          )
 kcnofs['B'] = '(B_north**2+B_up**2+B_west**2)**.5' # a derived variable
 ```
@@ -158,7 +165,7 @@ dtype: float32
 ```
 <!-- #endregion -->
 
-Here, the function `B(t)` returns the result of a variable derived from preregisterd variables as a pandas series object. However, kamodo itself does not require functions to utilize a specific data type, provided that the datatype supports algebraic operations.
+Here, the function `B(t)` returns the result of a variable derived from preregistered variables as a pandas series object. However, kamodo itself does not require functions to utilize a specific data type, provided that the datatype supports algebraic operations.
 
 Kamodo can auto-generate plots using function inspection:
 

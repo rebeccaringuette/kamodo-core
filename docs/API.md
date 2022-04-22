@@ -160,46 +160,6 @@ from kamodo import kamodofy
     :docstring:
 
 
-## Partial Plot
-
-What's happening here is that kamodo doesn't know how to plot higher dimensional objects (humans live in 3D and technically only see in 2D). To work around this, we can use the plot_partial keyword to lower the dimensionality of a function by fixing some of its variables.
-
-Usage : 
-```python
-from kamodo import kamodofy, gridify, Kamodo
-from scipy.interpolate import RegularGridInterpolator
-import numpy as np
-
-#define sample coordinate and data arrays
-t, lon, lat, ht = np.linspace(0.,24.,10), np.linspace(0.,360.,20), np.linspace(-90.,90.,50), np.linspace(100.,10000.,250)
-variable = np.reshape(np.linspace(0.,2 * np.pi,10 * 20 * 50 * 250), (10,20,50,250))
-
-#define and kamodofy interpolating function
-rgi = RegularGridInterpolator((t, lon, lat, ht), variable, bounds_error = False, fill_value=np.NaN)
-
-@kamodofy(units='m/s', data=variable)
-def interpolator(xvec):
-    """Interpolates 4d variable without a grid"""
-    return rgi(xvec)
-
-#gridify same function
-interpolator_grid = kamodofy(gridify(interpolator, time = t, lon=lon, lat = lat,  height = ht), units='m/s', data=variable, arg_units={'time':'hr','lon':'deg','lat':'deg','height':'km'})
-
-#register in a new kamodo object
-kamodo_object = Kamodo()
-kamodo_object['v'] = interpolator
-kamodo_object['v_ijkl'] = interpolator_grid # 4 dimensional
-kamodo_object
-
-kamodo_object.plot(v_ijkl = {'time':10.,'lat':90.})  #output: not supported: out_dim ('N', 'M'), arg_dims [(1,), ('N',), (1,), ('M',)]
-```
-
-We can use plot partial as below : 
-
-```python
-kamodo_object.plot('v_ijkl', plot_partial={'v_ijkl': {'lon':10.,'lat':90.}})
-```
-
 ## Test Suite
 
 Kamodo features a full suite of tests run via pytest. We highlight a few of these tests below as further examples of Kamodo's expected use cases.

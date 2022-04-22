@@ -1,3 +1,4 @@
+* moved plot_partial docs into function docstring
 * integrated comments from Lutz, Rebecca
 * updated code locations
 * kameleon

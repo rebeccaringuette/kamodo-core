@@ -1431,6 +1431,7 @@ class Kamodo(UserDict):
         ** inputs **:
 
         * variable: the name of a previously registered function
+        * plot_partial: dict(dict) of {varname: {arg: values}} partial arguments to fix
         * figures: dict {variable: {arg: values}} to pass to registered function
         
         ** returns **: plotly [figure](https://plotly.com/python/figure-structure/) (dict-like).
@@ -1453,7 +1454,52 @@ class Kamodo(UserDict):
         k.plot(f={x:[3,4,5]}, g={x{-2, 3, 4}}) # plots f at x=[3,4,5] and g at [-2,3,4]
         ```
 
-        
+        Use the `plot_partial` keyword to lower the dimensionality of a function by fixing some of its variables:
+
+        ```python
+        from kamodo import kamodofy, gridify, Kamodo
+        from scipy.interpolate import RegularGridInterpolator
+        import numpy as np
+
+        # define sample coordinate and data arrays
+        t, lon, lat, ht = np.linspace(0.,24.,10),
+            np.linspace(0.,360.,20),
+            np.linspace(-90.,90.,50),
+            np.linspace(100.,10000.,250)
+
+        variable = np.reshape(
+            np.linspace(0., np.pi, 2500000), # data
+            (10, 20, 50, 250)) # match coordinate arrays
+
+        # define and kamodofy interpolating function
+        rgi = RegularGridInterpolator((t, lon, lat, ht), variable, bounds_error = False, fill_value=np.NaN)
+
+        @kamodofy(units='m/s', data=variable)
+        def interpolator(xvec):
+            return rgi(xvec)
+
+        #gridify same function
+        interpolator_grid = kamodofy(gridify(interpolator, time = t, lon=lon, lat = lat,  height = ht), units='m/s', data=variable, arg_units={'time':'hr','lon':'deg','lat':'deg','height':'km'})
+
+        #register in a new kamodo object
+        kamodo_object = Kamodo()
+        kamodo_object['v'] = interpolator
+        kamodo_object['v_ijkl'] = interpolator_grid # 4 dimensional
+        kamodo_object
+
+        kamodo_object.plot(v_ijkl = {'time':10.,'lat':90.})
+        ```
+
+        The above line raises an Error: not supported: out_dim ('N', 'M'), arg_dims [(1,), ('N',), (1,), ('M',)]
+
+        Since there is no straight-foward way to plot a high-dimensional function, we can use `plot_partial` instead
+        to get a lower-dimensional slice instead: 
+
+        ```python
+        kamodo_object.plot('v_ijkl', plot_partial={'v_ijkl': {'lon':10.,'lat':90.}})
+        ```
+
+        See also [@partial](#partial) decorator to fix a function's arguments at registration time.
 
         """
         if len(plot_partial) > 0:

@@ -1,6 +1,7 @@
 * fixing test
 * corrected test_preserve_repr_latex
 * modified test slightly to validate preservation of latex repr
+* moved plot_partial docs into function docstring
 * integrated comments from Lutz, Rebecca
 * updated code locations
 * kameleon

@@ -131,7 +131,6 @@ from kamodo.plotting import plot_types
 ::: kamodo.plotting.image
     :docstring:
 
-
 ## Decorators
 
 These decorators may also be imported like this
@@ -159,6 +158,7 @@ from kamodo import kamodofy
 
 ::: kamodo.util.partial
     :docstring:
+
 
 ## Test Suite
 

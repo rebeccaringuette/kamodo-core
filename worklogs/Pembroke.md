@@ -1,3 +1,10 @@
+### 2022-04-25 10:44:40.624757: clock-out: T-44m 
+
+* need to move `test_kamodo_rpc_kamodo_client/server.py` into `kamodo/test_rpc` `pytest-asyncio`
+* can we allow non-async version of the client/server?
+* `pip install pytest-asyncio`: example uses https://tonybaloney.github.io/posts/async-test-patterns-for-pytest-and-unittest.html
+* using auto mode (the default) means we don't have to decorate the async test functions https://github.com/pytest-dev/pytest-asyncio#auto-mode
+
 
 ### 2022-04-25 09:14:09.036805: clock-in
 

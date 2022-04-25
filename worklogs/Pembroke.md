@@ -1,3 +1,4 @@
+* fixed bug in compose
 
 ### 2022-04-25 13:15:47.871645: clock-in
 

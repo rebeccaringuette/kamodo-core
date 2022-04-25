@@ -1806,13 +1806,11 @@ def compose(**kamodos):
             signature = k.signatures[name]
             meta = k[symbol].meta
             data = getattr(k[symbol], 'data', None)
+            func = k[symbol]
 
-            rhs = signature['rhs']
+            # rhs = signature['rhs']
             registry_name = '{}_{}'.format(name, kname)
-            if (rhs is None) | hasattr(rhs, '__call__'):
-                kamodo[registry_name] = kamodofy(k[symbol], data=data, **meta)
-            else:
-                kamodo[registry_name] = str(rhs)
+            kamodo[registry_name] = func # already kamodofied
 
     return kamodo
 

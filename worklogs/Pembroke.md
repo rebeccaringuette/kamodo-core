@@ -1,3 +1,6 @@
+
+### 2022-04-25 13:15:47.871645: clock-in
+
 ### 2022-04-25 10:44:40.624757: clock-out: T-44m 
 
 * need to move `test_kamodo_rpc_kamodo_client/server.py` into `kamodo/test_rpc` `pytest-asyncio`

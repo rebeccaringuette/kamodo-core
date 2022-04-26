@@ -6,9 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 This project uses [calendar versioning](https://calver.org/)
 
-## [Unreleased]
-
-## [Version Number] - 2022-04-20
+## Unreleased
 
 ### Added
 - Partial keyword to the plotting call to make 2D or 3D plotting of higher dimension datasets simpler. 

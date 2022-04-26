@@ -1,3 +1,4 @@
+* moved CONTRIBUTING
 ### 2022-04-25 13:35:39.845399: clock-out
 
 * fixed bug in compose

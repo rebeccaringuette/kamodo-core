@@ -1,3 +1,5 @@
+### 2022-04-26 12:00:51.826867: clock-out
+
 * building capnproto container on Apple M1
 
 ### 2022-04-26 12:00:09.214243: clock-in: T-10m 

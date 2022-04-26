@@ -1,7 +1,10 @@
-# Changelog
+# CHANGELOG.md
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+
+This project uses [calendar versioning](https://calver.org/)
 
 ## [Unreleased]
 
@@ -15,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - API documentation.
 - Persistent links to JOSS paper references.
 - Documentation of plot_partials plotting keyword.
-- 
+
 
 ### Changed
 - Dependency list in the documentation.

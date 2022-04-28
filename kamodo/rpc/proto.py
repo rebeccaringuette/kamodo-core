@@ -477,13 +477,11 @@ class Server():
     async def new_connection(self, reader, writer):
         await self.kamodo_server(reader, writer)
 
-    async def serve(self):
+    async def serve(self, address='localhost', port='60000'):
 
         """
         Method to start communication as asynchronous server.
         """
-        addr = 'localhost'
-        port = '60000'
 
         ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -498,14 +496,14 @@ class Server():
             logger.debug("Try IPv4")
             server = await asyncio.start_server(
                 self.new_connection,
-                addr, port, ssl=ctx,
+                address, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
             logger.debug("Try IPv6")
             server = await asyncio.start_server(
                 self.new_connection,
-                addr, port, ssl=ctx,
+                address, port, ssl=ctx,
                 family=socket.AF_INET6
             )
 

@@ -1318,7 +1318,7 @@ class Kamodo(UserDict):
         )
         self._kamodo_rpc[key] = field
 
-    def serve(self, address='localhost', port='60000'):
+    def serve(self, host='localhost', port='60000'):
         # Register rpc fields
         self._kamodo_rpc = KamodoRPC()
         for key in self.signatures:
@@ -1327,7 +1327,7 @@ class Kamodo(UserDict):
             self.register_rpc_field(key)
 
         self.async_server = Server(self._kamodo_rpc)
-        asyncio.run(self.async_server.serve(address, port))
+        asyncio.run(self.async_server.serve(host, port))
 
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a single variable and keyword arguments
@@ -1566,17 +1566,17 @@ class Kamodo(UserDict):
 
 
 class KamodoClient(Kamodo):
-    def __init__(self, address='localhost', port='60000', **kwargs):
+    def __init__(self, host='localhost', port='60000', **kwargs):
         """CapnProto Kamodo client
         Abstracts a remote kamodo server using capn proto binary message types
         """
         super(KamodoClient, self).__init__(**kwargs)
         self._expressions = {}  # expressions for server-side pipelining
         self._rpc_funcs = {}
-        self.address = address  # rpc functions (may be served to downstream applications)
+        self.host = host  # rpc functions (may be served to downstream applications)
         self.port = port
-        if address and port is not None:
-            self.connect(address, port)
+        if host and port is not None:
+            self.connect(host, port)
 
     def __setitem__(self, sym_name, input_expr):
         """register function symbol with implementation"""
@@ -1601,7 +1601,7 @@ class KamodoClient(Kamodo):
             writer.write(data.tobytes())
             await writer.drain()
 
-    async def client(self, address, port):
+    async def client(self, host, port):
         """
         Method to start communication as asynchronous client.
         """
@@ -1619,13 +1619,13 @@ class KamodoClient(Kamodo):
         try:
             print("Try IPv4")
             reader, writer = await asyncio.open_connection(
-                address, port, ssl=ctx,
+                host, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
             print("Try IPv6")
             reader, writer = await asyncio.open_connection(
-                address, port, ssl=ctx,
+                host, port, ssl=ctx,
                 family=socket.AF_INET6
             )
 
@@ -1647,9 +1647,9 @@ class KamodoClient(Kamodo):
                 print('registering {}'.format(entry.key))
             await self.register_remote_field(entry)
 
-    def connect(self, address, port):
+    def connect(self, host, port):
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.client(address, port))
+        loop.run_until_complete(self.client(host, port))
 
     async def register_remote_field(self, entry):
         """resolve the remote signature

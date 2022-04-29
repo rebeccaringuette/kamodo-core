@@ -477,7 +477,7 @@ class Server():
     async def new_connection(self, reader, writer):
         await self.kamodo_server(reader, writer)
 
-    async def serve(self, address='localhost', port='60000'):
+    async def serve(self, host='localhost', port='60000'):
 
         """
         Method to start communication as asynchronous server.
@@ -496,14 +496,14 @@ class Server():
             logger.debug("Try IPv4")
             server = await asyncio.start_server(
                 self.new_connection,
-                address, port, ssl=ctx,
+                host, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
             logger.debug("Try IPv6")
             server = await asyncio.start_server(
                 self.new_connection,
-                address, port, ssl=ctx,
+                host, port, ssl=ctx,
                 family=socket.AF_INET6
             )
 

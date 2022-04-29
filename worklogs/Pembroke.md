@@ -1,3 +1,5 @@
+### 2022-04-29 10:29:07.657177: clock-out
+
 * renamed address to host
 * threaded rpc test
 

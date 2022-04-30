@@ -1,3 +1,5 @@
+### 2022-04-29 20:02:40.764882: clock-out: T-5m 
+
 * added selfsigned cert generator
 
 ### 2022-04-29 18:21:54.367688: clock-in

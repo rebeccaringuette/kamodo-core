@@ -9,5 +9,5 @@ def remote_f(x=np.linspace(-5,5,33)):
     return x_**2 - x_ - 1
 
 kserver = Kamodo(f=remote_f, verbose=True)
-server = kserver.serve()
 
+server = kserver.serve(certfile='hey.cert', keyfile='hey.key')

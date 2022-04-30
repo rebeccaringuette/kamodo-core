@@ -1318,16 +1318,17 @@ class Kamodo(UserDict):
         )
         self._kamodo_rpc[key] = field
 
-    def serve(self, host='localhost', port='60000'):
+    def serve(self, host='localhost', port='60000', certfile=None, keyfile=None):
         # Register rpc fields
         self._kamodo_rpc = KamodoRPC()
         for key in self.signatures:
             if self.verbose:
                 print('serving {}'.format(key))
             self.register_rpc_field(key)
-
+        if self.verbose:
+            print(f'serving with \n {certfile}\n {keyfile}')
         self.async_server = Server(self._kamodo_rpc)
-        asyncio.run(self.async_server.serve(host, port))
+        asyncio.run(self.async_server.serve(host, port, certfile, keyfile))
 
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a single variable and keyword arguments
@@ -1566,7 +1567,7 @@ class Kamodo(UserDict):
 
 
 class KamodoClient(Kamodo):
-    def __init__(self, host='localhost', port='60000', **kwargs):
+    def __init__(self, host='localhost', port='60000', certfile=None, **kwargs):
         """CapnProto Kamodo client
         Abstracts a remote kamodo server using capn proto binary message types
         """
@@ -1575,8 +1576,9 @@ class KamodoClient(Kamodo):
         self._rpc_funcs = {}
         self.host = host  # rpc functions (may be served to downstream applications)
         self.port = port
+        self.certfile = certfile
         if host and port is not None:
-            self.connect(host, port)
+            self.connect(host, port, certfile)
 
     def __setitem__(self, sym_name, input_expr):
         """register function symbol with implementation"""
@@ -1601,16 +1603,18 @@ class KamodoClient(Kamodo):
             writer.write(data.tobytes())
             await writer.drain()
 
-    async def client(self, host, port):
+    async def client(self, host, port, certfile):
         """
         Method to start communication as asynchronous client.
         """
-
-        this_dir = os.path.dirname(os.path.abspath(__file__))
+        if certfile is None:
+            this_dir = os.path.dirname(os.path.abspath(__file__))
+            certfile = os.path.join(this_dir, "selfsigned.cert")
+        if self.verbose:
+            print(f'connecting to server with {certfile}')
         try:
-            cert = os.path.join(this_dir, "selfsigned.cert")
             ctx = ssl.create_default_context(
-                ssl.Purpose.SERVER_AUTH, cafile=cert
+                ssl.Purpose.SERVER_AUTH, cafile=certfile
             )
         except FileNotFoundError:
             raise FileNotFoundError(cert)
@@ -1647,9 +1651,9 @@ class KamodoClient(Kamodo):
                 print('registering {}'.format(entry.key))
             await self.register_remote_field(entry)
 
-    def connect(self, host, port):
+    def connect(self, host, port, certfile):
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.client(host, port))
+        loop.run_until_complete(self.client(host, port, certfile))
 
     async def register_remote_field(self, entry):
         """resolve the remote signature

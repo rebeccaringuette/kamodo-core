@@ -1,3 +1,4 @@
+* added selfsigned cert generator
 
 ### 2022-04-29 18:21:54.367688: clock-in
 

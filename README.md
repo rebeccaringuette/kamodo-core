@@ -145,9 +145,10 @@ The following (minimum) requirements are obtained by running `pip install kamodo
 * python-forge
 * requests
 * incremental
+* pycapnp
 
 
-The antlr package may be necessary for rendering latex rendering in a notebook
+The antlr package may be necessary for rendering latex in a notebook
 
 ```sh
 conda install antlr-python-runtime
@@ -179,6 +180,15 @@ pytest --cov kamodo.kamodo --cov kamodo.util --cov plotting kamodo/test_plotting
 ```
 
 This will generate a test report and coverage of the `kamodo` module.
+
+To run RPC tests, you must first generate a self-signed certificate.
+
+```sh
+python kamodo/rpc/gen_self_signed_cert.py certfile
+# certfile.key and certfile.cert will be placed in your local directory
+pytest kamodo/rpc/test_rpc_threaded.py
+```
+
 
 ## Generating Docs
 

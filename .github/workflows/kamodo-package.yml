@@ -18,10 +18,7 @@ jobs:
 
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        ci_node_total: [2]
-        ci_node_index: [0, 1]
         python-version: ['3.7', '3.8']
 
     steps:
@@ -45,9 +42,6 @@ jobs:
       run: |
         python kamodo/rpc/gen_self_signed_cert.py selfsigned
     - name: Test with pytest and generate coverage
-      env:
-        CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-        CI_NODE_INDEX: ${{ matrix.ci_node_index }}
       run: |
         pytest --cov kamodo.kamodo --cov kamodo.util --cov plotting kamodo/test_plotting.py kamodo/test_kamodo.py kamodo/test_utils.py kamodo/rpc/test_rpc_threaded.py
         jupyter nbconvert --to=html --ExecutePreprocessor.enabled=True --config docs/notebooks/run_notebooks.py

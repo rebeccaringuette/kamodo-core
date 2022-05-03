@@ -91,7 +91,7 @@ def gen_self_signed_cert(fname, valid_for):
     return (None, None)
 
 
-if __name__ == '__main__':
+def main():
     if len(sys.argv) > 1:
         fname = sys.argv[1]
         if len(sys.argv) > 2:
@@ -104,6 +104,14 @@ if __name__ == '__main__':
             f.write(cert)
         with open(fname+'.key', 'wb') as f:
             f.write(key)
+        print(f'wrote {fname}.key and {fname}.cert')
     else:
         raise IOError('Please supply a name for cert file and valid for days (default 365*5 days)')
 
+
+# entrypoint for package installer
+def entry():
+    main()
+
+if __name__ == "__main__":
+    main()

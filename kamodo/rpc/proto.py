@@ -422,10 +422,10 @@ class Server():
                 # Must be a wait_for so we don't block on read()
                 data = await asyncio.wait_for(
                     self.reader.read(4096),
-                    timeout=0.1
+                    timeout=1
                 )
             except asyncio.TimeoutError:
-                logger.info("reader timeout.")
+                # logger.info("reader timeout.")
                 continue
             except Exception as err:
                 logger.info("Unknown reader err: %s", err)
@@ -443,11 +443,11 @@ class Server():
                 # Must be a wait_for so we don't block on read()
                 data = await asyncio.wait_for(
                     self.server.read(4096),
-                    timeout=0.1
+                    timeout=1
                 )
                 self.writer.write(data.tobytes())
             except asyncio.TimeoutError:
-                logger.debug("writer timeout.")
+                # logger.debug("writer timeout.")
                 continue
             except Exception as err:
                 logger.debug("Unknown writer err: %s", err)
@@ -516,6 +516,8 @@ class Server():
                 host, port, ssl=ctx,
                 family=socket.AF_INET
             )
+        except OverflowError:
+            raise
         except Exception:
             logger.debug("Try IPv6")
             server = await asyncio.start_server(

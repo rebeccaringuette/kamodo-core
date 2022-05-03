@@ -41,6 +41,13 @@ services:
       - type: bind
         source: ${PWD}
         target: /kamodo-core
+    ports:
+      - "60000:60000"
+    command:
+      - kamodo-rpc
+      - rpc_conf=kamodo/rpc/kamodo_rpc_test.yaml
+      - host=0.0.0.0
+      - port='60000'
 
   kamodo-dev-py37:
     image: ensemble/kamodo-py37

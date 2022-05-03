@@ -10,3 +10,7 @@ RUN apt-get install -y git
 RUN git clone --single-branch --branch rpc https://github.com/EnsembleGovServices/kamodo-core.git
 
 RUN pip install -e kamodo-core
+
+WORKDIR /kamodo-core
+
+CMD kamodo-rpc rpc_conf=kamodo/rpc/kamodo_rpc_test.yaml host='0.0.0.0' port=600000

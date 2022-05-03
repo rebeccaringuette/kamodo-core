@@ -39,7 +39,7 @@ def main(cfg):
 
     try:
         print('serving {}'.format(k.detail()))
-        k.serve()
+        k.serve(host=cfg.host, port=cfg.port)
     except AttributeError as m:
         print(k)
         raise

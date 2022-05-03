@@ -5,7 +5,7 @@ import numpy as np
 from kamodo import KamodoClient, kamodo, get_defaults
 
 
-kclient = KamodoClient(certfile='hey.cert', verbose=True)
+kclient = KamodoClient(verbose=True)
 
 print('f defaults: (should match server defaults)')
 print(get_defaults(kclient.f), '\n')

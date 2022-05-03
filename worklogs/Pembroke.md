@@ -1,3 +1,6 @@
+
+### 2022-05-03 17:00:00.361001: clock-in
+
 ### 2022-05-03 12:56:38.042461: clock-out
 
 * autogenerate cert when not found

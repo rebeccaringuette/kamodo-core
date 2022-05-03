@@ -12,11 +12,11 @@ import time
 
 
 @kamodofy(units='kg')
-def remote_f(x=np.linspace(-5,5,33)):
+def remote_f(x=np.linspace(-5, 5, 33)):
     print('remote f called')
-    print('remote f defaults: {}'.format(get_defaults(remote_f)))
+    print(f'remote f defaults: {get_defaults(remote_f)}')
     x_ = np.array(x)
-    return x_**2 - x_ - 1
+    return x_ ** 2 - x_ - 1
 
 
 def test_using_threads():
@@ -26,11 +26,9 @@ def test_using_threads():
     capnp.remove_event_loop(True)
     capnp.create_event_loop(True)
 
-
     def run_server():
         kserver = Kamodo(f=remote_f, verbose=True)
-        server = kserver.serve()
-
+        server = kserver.serve(certfile='selfsigned.cert', keyfile='selfsigned.key')
 
     server_thread = threading.Thread(target=run_server)
     server_thread.daemon = True
@@ -39,7 +37,7 @@ def test_using_threads():
     wait = 1
     print(f'waiting {wait} second')
     time.sleep(wait)
-    kclient = KamodoClient(verbose=True)
+    kclient = KamodoClient(verbose=True, certfile='selfsigned.cert')
 
     print('client started')
 
@@ -50,4 +48,5 @@ def test_using_threads():
 
     # server_thread.stop()
 
-# test_using_threads()
+
+test_using_threads()

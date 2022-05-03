@@ -13,7 +13,25 @@
 
 ### 2022-04-26 12:00:09.214243: clock-in: T-10m 
 
+* allow calling from main
+* pytest rpc instructions
+* avoid infinite test loop
+
+### 2022-04-29 20:02:40.764882: clock-out: T-5m 
+
+* added selfsigned cert generator
+
+### 2022-04-29 18:21:54.367688: clock-in
+
+### 2022-04-29 10:29:07.657177: clock-out
+
+* renamed address to host
+* threaded rpc test
+
+### 2022-04-29 10:20:53.553604: clock-in: T-40m 
+
 * moved CONTRIBUTING
+
 ### 2022-04-25 13:35:39.845399: clock-out
 
 * fixed bug in compose

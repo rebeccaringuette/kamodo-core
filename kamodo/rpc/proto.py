@@ -477,35 +477,40 @@ class Server():
     async def new_connection(self, reader, writer):
         await self.kamodo_server(reader, writer)
 
-    async def serve(self):
+    async def serve(self, host='localhost', port='60000', certfile=None, keyfile=None):
 
         """
         Method to start communication as asynchronous server.
         """
-        addr = 'localhost'
-        port = '60000'
+
+        if certfile is None or keyfile is None:
+            if certfile is None:
+                print('certfile not supplied')
+            if keyfile is None:
+                print('keyfile not supplied')
+            print('using default certificate')
+            this_dir = os.path.dirname(os.path.abspath(__file__))
+            certfile = os.path.join(this_dir, "selfsigned.cert")
+            keyfile = os.path.join(this_dir, "selfsigned.key")
+
+        print(f"Using selfsigned cert from: {certfile}")
 
         ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        logger.debug(f"THIS DIR : {this_dir}")
-        ctx.load_cert_chain(
-            os.path.join(this_dir, "selfsigned.cert"),
-            os.path.join(this_dir, "selfsigned.key"),
-        )
+        ctx.load_cert_chain(certfile, keyfile)
 
         # Handle both IPv4 and IPv6 cases
         try:
             logger.debug("Try IPv4")
             server = await asyncio.start_server(
                 self.new_connection,
-                addr, port, ssl=ctx,
+                host, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
             logger.debug("Try IPv6")
             server = await asyncio.start_server(
                 self.new_connection,
-                addr, port, ssl=ctx,
+                host, port, ssl=ctx,
                 family=socket.AF_INET6
             )
 

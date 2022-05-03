@@ -28,7 +28,7 @@ def test_using_threads():
 
     def run_server():
         kserver = Kamodo(f=remote_f, verbose=True)
-        server = kserver.serve(certfile='selfsigned.cert', keyfile='selfsigned.key')
+        server = kserver.serve()
 
     server_thread = threading.Thread(target=run_server)
     server_thread.daemon = True
@@ -37,7 +37,7 @@ def test_using_threads():
     wait = 1
     print(f'waiting {wait} second')
     time.sleep(wait)
-    kclient = KamodoClient(verbose=True, certfile='selfsigned.cert')
+    kclient = KamodoClient(verbose=True)
 
     print('client started')
 

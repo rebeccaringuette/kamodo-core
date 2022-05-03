@@ -76,37 +76,43 @@ def _gen_cryptography(valid_for):
             serialization.PrivateFormat.PKCS8,
             serialization.NoEncryption()))
 
-def gen_self_signed_cert(fname, valid_for):
+def gen_self_signed_cert(valid_for):
     '''
     Returns (cert, key) as ASCII PEM strings
     '''
 
     try:
         return _gen_openssl(valid_for)
-    except:
+    except ImportError:
         try:
             return _gen_cryptography(valid_for)
-        except:
-            return (None, None)
-    return (None, None)
+        except ImportError:
+            raise
+
+def write_self_signed_cert(fname, cert, key):
+    with open(fname+'.cert', 'wb') as f:
+        f.write(cert)
+    with open(fname+'.key', 'wb') as f:
+        f.write(key)
+    print(f'wrote {fname}.key and {fname}.cert')
 
 
 def main():
     if len(sys.argv) > 1:
         fname = sys.argv[1]
-        if len(sys.argv) > 2:
-            valid_for = int(sys.argv[2])
-        else:
-            valid_for = 365*5 # 5 years
-        cert, key = gen_self_signed_cert(sys.argv[1], valid_for)
-        
-        with open(fname+'.cert', 'wb') as f:
-            f.write(cert)
-        with open(fname+'.key', 'wb') as f:
-            f.write(key)
-        print(f'wrote {fname}.key and {fname}.cert')
     else:
-        raise IOError('Please supply a name for cert file and valid for days (default 365*5 days)')
+        fname = 'selfsigned'
+        print(f'cert name not specified, using {fname}')
+
+    if len(sys.argv) > 2:
+        valid_for = int(sys.argv[2])
+    else:
+        valid_for = 365*5 # 5 years
+        print(f'valid_for not specified, using {valid_for} days')
+
+    cert, key = gen_self_signed_cert(valid_for)
+    
+    write_self_signed_cert(fname, cert, key)
 
 
 # entrypoint for package installer

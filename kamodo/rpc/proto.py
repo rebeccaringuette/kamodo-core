@@ -23,6 +23,9 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+from os.path import exists
+from .gen_self_signed_cert import gen_self_signed_cert, write_self_signed_cert
+
 
 def rpc_map_to_dict(rpc_map, callback = None):
     if callback is not None:
@@ -486,12 +489,19 @@ class Server():
         if certfile is None or keyfile is None:
             if certfile is None:
                 print('certfile not supplied')
+                certfile = "selfsigned.cert"
             if keyfile is None:
                 print('keyfile not supplied')
+                keyfile = "selfsigned.key"
             print('using default certificate')
-            this_dir = os.path.dirname(os.path.abspath(__file__))
-            certfile = os.path.join(this_dir, "selfsigned.cert")
-            keyfile = os.path.join(this_dir, "selfsigned.key")
+            if exists(certfile) & exists(keyfile):
+                pass
+            else:
+                print('generating default certificate valid for 5 years')
+                cert, key = gen_self_signed_cert(365*5) # 5 yrs
+                
+                write_self_signed_cert('selfsigned', cert, key)
+
 
         print(f"Using selfsigned cert from: {certfile}")
 

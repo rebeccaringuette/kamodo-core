@@ -1,3 +1,4 @@
+* autogenerate cert when not found
 * installed cert generator as command-line script
 
 ### 2022-05-03 11:30:08.537706: clock-in

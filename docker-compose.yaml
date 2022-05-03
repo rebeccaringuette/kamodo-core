@@ -33,6 +33,15 @@ services:
       - --no-browser
       - --ip=0.0.0.0
       - --allow-root
+  kamodo-rpc-test:
+    build:
+      context: .
+      dockerfile: dockerfiles/kamodo-rpc-test.Dockerfile
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /kamodo-core
+
   kamodo-dev-py37:
     image: ensemble/kamodo-py37
     ports:

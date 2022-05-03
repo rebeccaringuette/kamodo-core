@@ -36,6 +36,7 @@ jobs:
         pip install sympy==1.5.1
         pip install notebook
         pip install kaleido
+        pip install pyOpenSSL
         pip install .
     - name: Certificate Creation
       run: |

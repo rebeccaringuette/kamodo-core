@@ -1,3 +1,4 @@
+* avoid infinite test loop
 ### 2022-04-29 20:02:40.764882: clock-out: T-5m 
 
 * added selfsigned cert generator

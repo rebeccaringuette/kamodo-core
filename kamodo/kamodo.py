@@ -1617,7 +1617,7 @@ class KamodoClient(Kamodo):
                 ssl.Purpose.SERVER_AUTH, cafile=certfile
             )
         except FileNotFoundError:
-            raise FileNotFoundError(cert)
+            raise FileNotFoundError(certfile)
 
         # Handle both IPv4 and IPv6 cases
         try:

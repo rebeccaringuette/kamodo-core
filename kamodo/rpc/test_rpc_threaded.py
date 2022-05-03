@@ -47,6 +47,3 @@ def test_using_threads():
     print(kclient.f())
 
     # server_thread.stop()
-
-
-test_using_threads()

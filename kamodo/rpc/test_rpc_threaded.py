@@ -47,3 +47,8 @@ def test_using_threads():
     print(kclient.f())
 
     # server_thread.stop()
+
+if __name__ == "__main__":
+    test_using_threads()
+
+    

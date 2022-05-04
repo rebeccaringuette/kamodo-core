@@ -1,6 +1,38 @@
+### 2022-05-04 12:40:08.840483: clock-out
+
+* working py37 container, renaming services
+
+### 2022-05-04 12:14:32.964817: clock-in: T-5m 
+
+### 2022-05-03 18:22:21.172036: clock-out
+
+* rpc container working for py38
+
+### 2022-05-03 17:00:00.361001: clock-in
+
+### 2022-05-03 12:56:38.042461: clock-out
+
+* autogenerate cert when not found
+* installed cert generator as command-line script
+
+### 2022-05-03 11:30:08.537706: clock-in
+
+### 2022-04-26 17:24:44.327850: clock-out
+
+* rebuilding pycapnp
+
+### 2022-04-26 16:21:50.406514: clock-in
+
+### 2022-04-26 12:00:51.826867: clock-out
+
+* building capnproto container on Apple M1
+
+### 2022-04-26 12:00:09.214243: clock-in: T-10m 
+
 * allow calling from main
 * pytest rpc instructions
 * avoid infinite test loop
+
 ### 2022-04-29 20:02:40.764882: clock-out: T-5m 
 
 * added selfsigned cert generator
@@ -15,6 +47,7 @@
 ### 2022-04-29 10:20:53.553604: clock-in: T-40m 
 
 * moved CONTRIBUTING
+
 ### 2022-04-25 13:35:39.845399: clock-out
 
 * fixed bug in compose

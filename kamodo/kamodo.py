@@ -1608,8 +1608,7 @@ class KamodoClient(Kamodo):
         Method to start communication as asynchronous client.
         """
         if certfile is None:
-            this_dir = os.path.dirname(os.path.abspath(__file__))
-            certfile = os.path.join(this_dir, "selfsigned.cert")
+            certfile = "selfsigned.cert"
         if self.verbose:
             print(f'connecting to server with {certfile}')
         try:
@@ -1617,7 +1616,7 @@ class KamodoClient(Kamodo):
                 ssl.Purpose.SERVER_AUTH, cafile=certfile
             )
         except FileNotFoundError:
-            raise FileNotFoundError(certfile)
+            raise FileNotFoundError(f'{certfile} required in local directory.')
 
         # Handle both IPv4 and IPv6 cases
         try:

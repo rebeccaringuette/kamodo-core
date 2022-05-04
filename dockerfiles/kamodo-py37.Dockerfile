@@ -36,46 +36,16 @@ RUN  ./configure
 RUN  make -j6 check
 RUN  make install
 
-# RUN pip install pycapnp --install-option "--force-bundled-libcapnp"
 
-# # capnp install
-# RUN conda install -c conda-forge pycapnp
+WORKDIR /
 
-# RUN conda install -c conda-forge clang
-# # RUN conda install -c conda-forge gcc cmake make cxx-compiler
-# RUN pip install pkgconfig cython
-# RUN conda install -c conda-forge autoconf automake libtool
-# # libtool looks for sed in /usr/bin/sed, so we soft link it
-# RUN ln -sf /bin/sed /usr/bin/sed 
-# RUN ln -sf /bin/grep /usr/bin/grep
+RUN git clone https://github.com/capnproto/pycapnp.git
+WORKDIR /pycapnp
 
-# RUN pip install --no-binary :all: --install-option "--force-system-libcapnp" pycapnp
+RUN python setup.py install --force-bundled-libcapnp
 
-# # Install latest kamodo
-# ADD . /kamodo
+RUN git clone --single-branch --branch rpc https://github.com/EnsembleGovServices/kamodo-core.git
 
-# # RUN git clone https://github.com/asherp/kamodo.git
-# RUN pip install -e kamodo
-
-# RUN conda install jupyter
-# RUN pip install jupytext
-
-# WORKDIR kamodo
-
-# # CMD ["kamodo-serve"]
-
-# CMD ["jupyter", "notebook", "./docs/notebooks", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]
-
-# #####
-# # For Jupyter notebook interaction, use:
-# #	docker run -p 8888:8888 dezeeuw/kamodo
-# # For command line interaction, use:
-# #	docker run -it dezeeuw/kamodo /bin/bash
-# #   -above, with current working directory mounted in container, use
-# #	docker run -it --mount type=bind,source="$(pwd)",destination=/local,consistency=cached  dezeeuw/kamodo /bin/bash
-# #   -above, with persistent disk space, use
-# #	docker run -it --mount source=kamododisk,target=/kdisk dezeeuw/kamodo /bin/bash
-# #
-# # Persistent disk space command
-# #	docker volume create kamododisk
-# #
+RUN pip install -e kamodo-core
+WORKDIR /kamodo-core/kamodo/rpc
+CMD python test_rpc_kamodo_server.py 

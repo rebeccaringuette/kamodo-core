@@ -4,6 +4,9 @@ Copyright © 2017 United States Government as represented by the Administrator, 
 No Copyright is claimed in the United States under Title 17, U.S. Code.  All Other Rights Reserved.
 """
 
+import asyncio
+import os
+import socket
 import copy
 import time
 import functools
@@ -11,6 +14,7 @@ import inspect
 import itertools
 import json
 import re
+
 import types
 from collections import OrderedDict
 from collections import UserDict
@@ -19,11 +23,14 @@ from types import GeneratorType
 
 import forge
 import pandas as pd
+
+import yaml
 import numpy as np
 import plotly.graph_objs as go
 import requests
-import sympy
 from plotly.subplots import make_subplots
+
+import sympy
 from sympy import Eq
 from sympy import Expr
 from sympy import Symbol, symbols, Function
@@ -37,9 +44,15 @@ from sympy.physics.units import Dimension
 
 from plotting import get_ranges
 from plotting import plot_dict, get_arg_shapes, symbolic_shape
+from rpc.proto import Server, ssl
+from rpc.proto import capnp, KamodoRPC, FunctionRPC, kamodo_capnp, rpc_map_to_dict
+from rpc.proto import from_rpc_literal, to_rpc_literal, to_rpc_expr
+from rpc.proto import wrap_async
 # from util import to_arrays, cast_0_dim
 from util import beautify_latex
 from util import concat_solution
+from util import construct_signature
+
 from util import get_arg_units
 from util import get_defaults, valid_args, eval_func
 from util import get_dimensions
@@ -130,6 +143,7 @@ def args_from_dict(expr, local_dict, verbose):
     return tuple(args)
     # else:
     #     return expr.args
+
 
 
 def alphabetize(symbols):
@@ -391,7 +405,6 @@ class Kamodo(UserDict):
         * ** verbose ** - *(optional)* (`default=False`) flag to turn on all debugging print statements
 
 
-
         ** returns ** - dictionary-like kamodo object of (symbol, function) pairs
 
         usage:
@@ -403,6 +416,7 @@ class Kamodo(UserDict):
                 h = 'sin(x)', # key-value expressions
                 )
         ```
+
         """
 
         super(Kamodo, self).__init__()
@@ -435,45 +449,6 @@ class Kamodo(UserDict):
     def register_symbol(self, symbol):
         self.symbol_registry[str(type(symbol))] = symbol
 
-    # def remove_symbol(self, sym_name):
-    #     """remove the sym_name (str) from the object"""
-
-    #     if self.verbose:
-    #         print('remove_symbol: removing {} from symbol_registry'.format(sym_name))
-    #     try:
-    #         symbol = self.symbol_registry.pop(sym_name)
-    #     except KeyError:
-    #         raise KeyError('{} was not in symbol_registry {}'.format(
-    #             sym_name, self.symbol_registry.keys()))
-    #     if self.verbose:
-    #         print('remove_symbol: removing {} from signatures'.format(symbol))
-    #     self.signatures.pop(str(type(symbol)))
-    #     if self.verbose:
-    #         print('remove_symbol: removing {} from unit_registry'.format(symbol))
-    #     remove = []
-    #     for sym in self.unit_registry:
-    #         if is_function(sym): # {rho(x): rho(cm), rho(cm): kg}
-    #             if type(sym) == type(symbol):
-    #                 remove.append(sym)
-    #     for sym in remove:
-    #         self.unit_registry.pop(sym)
-
-    #     if self.verbose:
-    #         print('removing {} from {}'.format(symbol, self.keys()))
-
-    #     if symbol in self.keys():
-    #         try:
-    #             self.pop(symbol)
-    #         except KeyError:
-    #             if self.verbose:
-    #                 print('something wrong with {} in {}'.format(symbol, self.keys()))
-    #             raise KeyError('{} not in {}'.format(symbol, self.keys()))
-
-    #     if type(symbol) in self.keys():
-    #         try:
-    #             self.pop(type(symbol))
-    #         except KeyError:
-    #             raise KeyError('{} not in {}'.format(type(symbol), self.keys()))
 
     def parse_key(self, sym_name):
         """parses the symbol name
@@ -562,6 +537,7 @@ class Kamodo(UserDict):
         except:  # numexpr not installed
             func = lambdify(symbol.args, rhs_expr,
                             modules=['numpy', composition])
+
             if self.verbose:
                 print(
                     'lambda {} = {} lambdified with numpy and composition:'.format(
@@ -597,6 +573,10 @@ class Kamodo(UserDict):
         unit_str = units
         if self.verbose:
             print('unit str {}'.format(unit_str))
+
+        if rhs_expr is None:
+            lambda_ = symbols('lambda', cls=UndefinedFunction)
+            rhs_expr = lambda_(*symbol.args)
 
         self.signatures[str(type(symbol))] = dict(
             symbol=symbol,
@@ -788,6 +768,7 @@ class Kamodo(UserDict):
                 expr_unit = get_expr_unit(rhs_expr, self.unit_registry,
                                           self.verbose)
                 arg_units = get_arg_units(rhs_expr, self.unit_registry)
+
                 if self.verbose:
                     print('registering {} with {} {}'.format(symbol, expr_unit,
                                                              arg_units))
@@ -812,6 +793,7 @@ class Kamodo(UserDict):
 
                 rhs = rhs_expr
                 sym_name = str(sym_name)
+
             if len(lhs_units) > 0:
                 if self.verbose:
                     print('about to unify lhs_units {} {} with {}'.format(
@@ -1027,16 +1009,6 @@ class Kamodo(UserDict):
             self.signatures.pop(str(type(key_)), None)
             self.unit_registry.pop(key_, None)
 
-    # def get_units_map(self):
-    #     """Maps from string units to symbolic units"""
-    #     d = dict()
-    #     star = Wild('star')
-    #     for k, v in list(self.signatures.items()):
-    #         unit = get_unit(v['units'])
-    #         d[k] = unit
-    #         d[v['symbol']] = unit
-
-    #     return d
 
     def func_latex(self, key, mode='equation'):
         """get a latex string for a given function key"""
@@ -1072,6 +1044,7 @@ class Kamodo(UserDict):
             #     latex(type(lhs)),
             #     ','.join([latex(s) for s in lhs.args]))
         if len(units) > 0:
+
             lhs_str += "[{}]".format(
                 latex(parse_expr(units.replace('^', '**'), locals=_clash),
                       fold_frac_powers=True,
@@ -1298,6 +1271,64 @@ class Kamodo(UserDict):
         exec(soln_str.format(), scope)
 
         return scope['solution']
+
+    def to_rpc_meta(self, key):
+        """create rpc metadata"""
+        meta = self[key].meta
+
+        units = meta.get('units')
+        if units is None:
+            units = ''
+
+        arg_unit_entries = []
+        arg_units = meta.get('arg_units')  # may be None
+        if arg_units is not None:
+            for k, v in arg_units.items():
+                arg_unit_entries.append({'key': k, 'value': v})
+
+        citation = meta.get('citation')
+        if citation is None:
+            citation = ''
+
+        equation = meta.get('equation')
+        if equation is None:
+            equation = latex(self.signatures[key]['rhs'])
+
+        if self.verbose:
+            print('equation: {}'.format(equation))
+
+        hidden_args = meta.get('hidden_args')
+        if hidden_args is None:
+            hidden_args = []
+
+        return kamodo_capnp.Kamodo.Meta(
+            units=units,
+            argUnits=dict(entries=arg_unit_entries),
+            citation=citation,
+            equation=equation,
+            hiddenArgs=hidden_args,
+        )
+
+    def register_rpc_field(self, key):
+        func = self[key]
+        signature = self.signatures[key]
+        field = kamodo_capnp.Kamodo.Field.new_message(
+            func=FunctionRPC(func),
+            meta=self.to_rpc_meta(key),
+        )
+        self._kamodo_rpc[key] = field
+
+    def serve(self, host='localhost', port='60000', certfile=None, keyfile=None):
+        # Register rpc fields
+        self._kamodo_rpc = KamodoRPC()
+        for key in self.signatures:
+            if self.verbose:
+                print('serving {}'.format(key))
+            self.register_rpc_field(key)
+        if self.verbose:
+            print(f'serving with \n {certfile}\n {keyfile}')
+        self.async_server = Server(self._kamodo_rpc)
+        asyncio.run(self.async_server.serve(host, port, certfile, keyfile))
 
     def figure(self, variable, indexing='ij', **kwargs):
         """Generates a plotly figure for a single variable and keyword arguments
@@ -1535,6 +1566,156 @@ class Kamodo(UserDict):
             return go.Figure(data=traces, layout=layouts[-1])
 
 
+class KamodoClient(Kamodo):
+    def __init__(self, host='localhost', port='60000', certfile=None, **kwargs):
+        """CapnProto Kamodo client
+        Abstracts a remote kamodo server using capn proto binary message types
+        """
+        super(KamodoClient, self).__init__(**kwargs)
+        self._expressions = {}  # expressions for server-side pipelining
+        self._rpc_funcs = {}
+        self.host = host  # rpc functions (may be served to downstream applications)
+        self.port = port
+        self.certfile = certfile
+        if host and port is not None:
+            self.connect(host, port, certfile)
+
+    def __setitem__(self, sym_name, input_expr):
+        """register function symbol with implementation"""
+        super(KamodoClient, self).__setitem__(sym_name, input_expr)
+        symbol, args, lhs_units, lhs_expr = self.parse_key(sym_name)
+        self._rpc_funcs[str(type(symbol))] = FunctionRPC(self[symbol], self.verbose)
+
+    async def client_reader(self, client, reader):
+        """
+        Reader for the client side.
+        """
+        while True:
+            data = await reader.read(4096)
+            client.write(data)
+
+    async def client_writer(self, client, writer):
+        """
+        Writer for the client side.
+        """
+        while True:
+            data = await client.read(4096)
+            writer.write(data.tobytes())
+            await writer.drain()
+
+    async def client(self, host, port, certfile):
+        """
+        Method to start communication as asynchronous client.
+        """
+        if certfile is None:
+            certfile = "selfsigned.cert"
+        if self.verbose:
+            print(f'connecting to server with {certfile}')
+        try:
+            ctx = ssl.create_default_context(
+                ssl.Purpose.SERVER_AUTH, cafile=certfile
+            )
+        except FileNotFoundError:
+            raise FileNotFoundError(f'{certfile} required in local directory.')
+
+        # Handle both IPv4 and IPv6 cases
+        try:
+            print("Try IPv4")
+            reader, writer = await asyncio.open_connection(
+                host, port, ssl=ctx,
+                family=socket.AF_INET
+            )
+        except Exception:
+            print("Try IPv6")
+            reader, writer = await asyncio.open_connection(
+                host, port, ssl=ctx,
+                family=socket.AF_INET6
+            )
+
+        if self.verbose:
+            print('connection open, starting TwoPartyClient')
+
+        # Start TwoPartyClient using TwoWayPipe (takes no arguments in this mode)
+        client = capnp.TwoPartyClient()
+
+        # Assemble reader and writer tasks, run in the background
+        coroutines = [self.client_reader(client, reader), self.client_writer(client, writer)]
+        asyncio.gather(*coroutines, return_exceptions=True)
+        self._client = client.bootstrap().cast_as(kamodo_capnp.Kamodo)
+        self._remote_fields = (await self._client.getFields().a_wait()).fields
+        self._remote_math = (await self._client.getMath().a_wait()).math
+
+        for entry in self._remote_fields.entries:
+            if self.verbose:
+                print('registering {}'.format(entry.key))
+            await self.register_remote_field(entry)
+
+    def connect(self, host, port, certfile):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.client(host, port, certfile))
+
+    async def register_remote_field(self, entry):
+        """resolve the remote signature
+        f(*args, **kwargs) -> f(x,y,z=value)
+        """
+        symbol = entry.key
+        field = entry.value
+
+        meta = field.meta
+        arg_units = rpc_map_to_dict(meta.argUnits)
+
+        defaults_ = (await field.func.getKwargs().a_wait()).kwargs
+        func_defaults = {_.name: from_rpc_literal(_.value) for _ in defaults_}
+        func_args_ = [str(_) for _ in (await field.func.getArgs().a_wait()).args]
+        func_args = [_ for _ in func_args_ if _ not in func_defaults]
+
+        if len(meta.equation) > 0:
+            equation = meta.equation
+        else:
+            equation = None
+
+        hidden_args = list(meta.hiddenArgs)
+
+        @kamodofy(units=meta.units,
+                  arg_units=arg_units,
+                  citation=meta.citation,
+                  equation=equation,
+                  hidden_args=hidden_args)
+        @forge.sign(*construct_signature(*func_args, **func_defaults))
+        @wrap_async
+        async def remote_func(*args, **kwargs):
+            args_ = [to_rpc_literal(arg) for arg in args]
+            kwargs_ = [dict(name=k, value=to_rpc_literal(v)) for k, v in kwargs.items()]
+            result = (await field.func.call(args=args_, kwargs=kwargs_).a_wait()).result
+            return from_rpc_literal(result)
+
+        self[symbol] = remote_func
+        self._rpc_funcs[symbol] = field.func
+
+    async def get_remote_composition(self, expr, **kwargs):
+        """Generate a callable function composition that is executed remotely"""
+
+        async def remote_composition(**params):
+            remote_expr = to_rpc_expr(expr, expressions=self._expressions, **params, **kwargs)
+            evaluate_expr = self._client.evaluate(remote_expr)  # .wait()
+            result_message = await evaluate_expr.value.read().a_wait()
+            return from_rpc_literal(result_message.value)
+
+        remote_composition.__name__ = str(expr)
+        return remote_composition
+
+    def vectorize_function(self, symbol, rhs_expr, composition):
+        """lambdify the input expression using server-side promises"""
+        if self.verbose:
+            print('vectorizing {} = {}'.format(symbol, rhs_expr))
+            print('composition keys {}'.format(list(composition.keys())))
+        func = self.get_remote_composition(rhs_expr, **self._rpc_funcs)
+        self._expressions[str(type(symbol))] = rhs_expr
+
+        signature, defaults = sign_defaults(symbol, rhs_expr, composition)
+        return signature(func)
+
+
 class KamodoAPI(Kamodo):
     """JSON api wrapper for kamodo services"""
 
@@ -1628,13 +1809,11 @@ def compose(**kamodos):
             signature = k.signatures[name]
             meta = k[symbol].meta
             data = getattr(k[symbol], 'data', None)
+            func = k[symbol]
 
-            rhs = signature['rhs']
+            # rhs = signature['rhs']
             registry_name = '{}_{}'.format(name, kname)
-            if (rhs is None) | hasattr(rhs, '__call__'):
-                kamodo[registry_name] = kamodofy(k[symbol], data=data, **meta)
-            else:
-                kamodo[registry_name] = str(rhs)
+            kamodo[registry_name] = func # already kamodofied
 
     return kamodo
 
@@ -1788,3 +1967,21 @@ def animate(func_, iterator=None, verbose=False):
     fig_dict["layout"]["sliders"] = [sliders_dict]
     fig = go.Figure(fig_dict)
     return fig
+
+
+def kamodo_constructor(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode) -> Kamodo:
+    """Construct a kamodo object from yaml."""
+    return Kamodo(**loader.construct_mapping(node))
+
+
+def kamodo_client_constructor(loader: yaml.SafeLoader, node: yaml.nodes.MappingNode) -> KamodoClient:
+    """Construct an kamodo."""
+    return KamodoClient(**loader.construct_mapping(node))
+
+
+def yaml_loader():
+    """Add Kamodo constructors to PyYAML loader."""
+    loader = yaml.SafeLoader
+    loader.add_constructor("!Kamodo", kamodo_constructor)
+    loader.add_constructor("!KamodoClient", kamodo_client_constructor)
+    return loader

@@ -77,6 +77,8 @@ unit_list = ['m', 's', 'g', 'A', 'K', 'radian', 'sr', 'cd', 'mole', 'eV', 'Pa',
 
 # list of SI units included in sympy (likely not complete)
 
+lambda_ = symbols('lambda', cls=UndefinedFunction)
+
 for item in unit_list:
     unit_item = getattr(sympy_units, item)
     unit_subs[item] = unit_item
@@ -1375,8 +1377,8 @@ def curry(func):
 def construct_signature(*args, **kwargs):
     """construct a signature
     usage:
-
-        @forge.sign(*get_signature('x','y',z=3))
+        
+        @forge.sign(*construct_signature('x','y',z=3))
         def f(*args, **kargs):
             pass
     """

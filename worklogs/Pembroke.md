@@ -1,3 +1,661 @@
+### 2022-05-04 12:40:08.840483: clock-out
+
+* working py37 container, renaming services
+
+### 2022-05-04 12:14:32.964817: clock-in: T-5m 
+
+### 2022-05-03 18:22:21.172036: clock-out
+
+* rpc container working for py38
+
+### 2022-05-03 17:00:00.361001: clock-in
+
+### 2022-05-03 12:56:38.042461: clock-out
+
+* autogenerate cert when not found
+* installed cert generator as command-line script
+
+### 2022-05-03 11:30:08.537706: clock-in
+
+### 2022-04-26 17:24:44.327850: clock-out
+
+* rebuilding pycapnp
+
+### 2022-04-26 16:21:50.406514: clock-in
+
+### 2022-04-26 12:00:51.826867: clock-out
+
+* building capnproto container on Apple M1
+
+### 2022-04-26 12:00:09.214243: clock-in: T-10m 
+
+* allow calling from main
+* pytest rpc instructions
+* avoid infinite test loop
+
+### 2022-04-29 20:02:40.764882: clock-out: T-5m 
+
+* added selfsigned cert generator
+
+### 2022-04-29 18:21:54.367688: clock-in
+
+### 2022-04-29 10:29:07.657177: clock-out
+
+* renamed address to host
+* threaded rpc test
+
+### 2022-04-29 10:20:53.553604: clock-in: T-40m 
+
+* moved CONTRIBUTING
+
+### 2022-04-25 13:35:39.845399: clock-out
+
+* fixed bug in compose
+
+### 2022-04-25 13:15:47.871645: clock-in
+
+### 2022-04-25 10:44:40.624757: clock-out: T-44m 
+
+* need to move `test_kamodo_rpc_kamodo_client/server.py` into `kamodo/test_rpc` `pytest-asyncio`
+* can we allow non-async version of the client/server?
+* `pip install pytest-asyncio`: example uses https://tonybaloney.github.io/posts/async-test-patterns-for-pytest-and-unittest.html
+* using auto mode (the default) means we don't have to decorate the async test functions https://github.com/pytest-dev/pytest-asyncio#auto-mode
+
+
+### 2022-04-25 09:14:09.036805: clock-in
+
+### 2022-04-22 15:13:57.531010: clock-out
+
+* testing default preservation
+
+### 2022-04-22 13:46:07.006856: clock-in
+
+### 2022-04-19 18:12:41.693302: clock-out
+
+* created issue #79
+* got rpc kamodo client test to work
+* added async event loop wrapper
+
+### 2022-04-19 17:53:55.220838: clock-in: T-1h10m 
+
+* added kamodo function async test
+* fixed bug in compose with lambdas
+* rpc tests
+
+### 2022-01-18 19:28:25.752122: clock-out
+
+* added kamodo-rpc cli to serve
+* kamodoClient tests
+
+### 2022-01-18 16:29:39.054524: clock-in
+
+### 2022-01-18 15:56:47.770720: clock-out: T-10m 
+
+* moving KamodoClient into kamodo.py
+
+### 2022-01-18 15:16:20.921930: clock-in
+
+### 2022-01-17 13:49:24.747834: clock-out
+
+* subexpressions working
+
+### 2022-01-17 13:16:42.534673: clock-in
+
+### 2022-01-14 13:44:07.875797: clock-out
+
+* subexpressions
+
+### 2022-01-14 13:02:02.878085: clock-in
+
+### 2022-01-14 12:33:57.368942: clock-out
+
+* inserting subexpressions
+
+### 2022-01-14 11:38:25.353718: clock-in
+
+### 2022-01-13 18:22:04.387686: clock-out
+
+* troubleshooting rpc composition
+* could use try-catch: need expression to behave like FunctionRPC when wait() fails
+* could simpify new expressions so they can be pipelined with existing ones
+
+### 2022-01-13 17:18:56.716751: clock-in
+
+### 2022-01-13 13:51:13.603868: clock-out
+
+* registering local with remote rpc. callbacks cannot wait
+```console
+expected !loop.running; wait() is not allowed from within event callbacks
+```
+
+### 2022-01-13 12:17:13.246906: clock-in
+
+### 2022-01-12 18:08:52.532688: clock-out
+
+* rational to float, pipelining with local functions
+
+### 2022-01-12 16:33:32.277475: clock-in
+
+### 2022-01-11 15:04:36.224961: clock-out
+
+* added rational message type which fixes some compositions - still need to evaluate rational numerically?
+
+### 2022-01-11 12:52:08.283768: clock-in
+
+### 2022-01-10 16:07:23.487422: clock-out
+
+* client working with serverside unit conversion
+
+### 2022-01-10 15:33:44.616794: clock-in
+
+### 2022-01-07 13:16:19.998170: clock-out
+
+* developing KamodoClient
+
+### 2022-01-07 12:22:14.758098: clock-in
+
+### 2022-01-06 21:57:08.701380: clock-out
+
+* got pipelined expression working
+
+### 2022-01-06 20:49:26.231934: clock-in
+
+### 2022-01-06 19:27:17.497958: clock-out
+
+* need to support expressions with multiple arguments
+
+### 2022-01-06 18:10:29.406958: clock-in
+
+### 2022-01-06 14:34:06.432788: clock-out
+
+* pipelining, getting index error
+* tried storing data as AnyPointer with enum type
+* could not encode integer as AnyPointer, could not create List(AnyPointer)
+* reverting to type as union
+* need kamodo object to execute rpc expression on server
+
+### 2022-01-06 10:55:08.149836: clock-in
+
+### 2021-12-30 18:47:51.525476: clock-out
+
+* list types
+
+### 2021-12-30 17:19:20.782202: clock-in
+
+### 2021-12-29 16:47:21.312507: clock-out
+
+* sympy expression to rpc
+
+### 2021-12-29 15:12:52.407329: clock-in
+
+### 2021-12-28 12:15:34.847427: clock-out
+
+* expressions working with literals
+
+### 2021-12-28 11:10:14.014900: clock-in
+
+### 2021-12-27 18:23:30.484863: clock-out
+
+* literal packing working
+
+### 2021-12-27 17:11:42.348601: clock-in
+
+### 2021-12-27 15:18:02.514753: clock-out
+
+* integer types
+
+### 2021-12-27 14:59:02.727777: clock-in
+
+### 2021-12-23 13:48:44.293666: clock-out
+
+* switching to literals
+
+### 2021-12-23 10:59:13.692617: clock-in
+
+### 2021-12-22 17:30:54.585719: clock-out
+
+* kamodoclient
+
+### 2021-12-22 16:58:48.849563: clock-in
+
+### 2021-12-22 13:39:03.436634: clock-out
+
+* got serverside pipelining to work
+
+### 2021-12-22 11:11:18.737914: clock-in
+
+### 2021-12-21 12:36:43.080299: clock-out
+
+* researching expression pipelining
+
+### 2021-12-21 11:07:10.183487: clock-in
+
+### 2021-12-20 17:38:17.588502: clock-out
+
+* client side expressions
+
+### 2021-12-20 17:37:52.635361: clock-in: T-30m 
+
+### 2021-12-20 17:01:52.369040: clock-out
+
+* pipelining
+
+### 2021-12-20 16:04:51.106743: clock-in
+
+### 2021-12-20 13:04:45.901311: clock-out
+
+* looking at pipelining
+* Currently, our Variable is a struct, but Calculator uses a Value object to pipeline results.
+* Need to impelment evaluate, expression, and value
+* pipelining is enabled by the evaluate function, so Function will still return a Variable struct
+* evaluate handles all the pipelining via dictionary
+```capnp
+evaluate @0 (expression: Expression) -> (value: Value);
+```
+```python
+
+eval_promise = calculator.evaluate(
+    {'call': {'function': subtract, # getOperator('subtract').func
+              'params': [{'call': {'function': add, # getOperator('add').func
+                                   'params': [{'literal': 123},
+                                              {'literal': 45}]}},
+                         {'literal': 67.0}]}})
+```
+
+
+
+### 2021-12-20 11:52:34.714917: clock-in
+
+### 2021-12-15 17:10:25.541242: clock-out
+
+* fixed latex rendering, rpc demo in docs
+
+### 2021-12-15 16:10:37.414223: clock-in
+
+### 2021-12-15 13:17:38.125773: clock-out
+
+* fixed case of missing arg_units
+* documentation for rpc
+* to_latex for lambda functions is messed up. kamodofying assigns None to rhs rather than lambda(lhs.args)
+
+### 2021-12-15 12:07:30.907034: clock-in
+
+### 2021-12-14 13:15:05.143739: clock-out
+
+* KamodoClient prototyping - would explicitly define remote algebra
+
+Do we need to preregister server-side functions?
+At least we can register Mul, Add, Pow
+
+### 2021-12-14 10:49:07.811335: clock-in
+
+### 2021-12-13 15:41:38.144357: clock-out
+
+* moving client/server into Kamodo base class
+
+### 2021-12-13 13:34:56.634756: clock-in
+
+### 2021-12-10 16:59:20.084951: clock-out: T-1h 
+
+* registered pythonic function in KamodoClient
+* new download instructions
+
+### 2021-12-10 15:20:24.083585: clock-in
+
+### 2021-12-10 12:34:12.837677: clock-out
+
+* switching to pythonic signatures
+
+### 2021-12-10 11:24:02.340500: clock-in
+
+### 2021-12-09 12:39:16.767069: clock-out
+
+* FunctionRPC.call working
+
+### 2021-12-09 11:25:56.859159: clock-in
+
+### 2021-12-08 14:12:41.107355: clock-out
+
+
+### 2021-12-08 14:01:23.362171: clock-in
+
+### 2021-12-08 13:42:20.940678: clock-out
+
+* FunctionRPC and KamodoServer
+
+### 2021-12-08 13:28:22.308849: clock-in: T-1h37m 
+
+### 2021-12-07 12:34:29.017369: clock-out
+
+* KamodoRPC working
+
+### 2021-12-07 11:32:28.364453: clock-in
+
+### 2021-12-07 09:59:30.707946: clock-out
+
+* rpc decorator
+
+### 2021-12-07 08:32:09.450063: clock-in
+
+### 2021-12-06 14:25:52.313941: clock-out
+
+* registered client/server field
+
+### 2021-12-06 14:03:44.978922: clock-in
+
+### 2021-12-06 13:39:28.902314: clock-out
+
+* defining fields
+
+### 2021-12-06 11:15:34.821733: clock-in
+
+### 2021-12-03 14:06:24.019346: clock-out
+
+* not sure how to implement generic functions
+
+A generic function can be defined like this
+
+```capnp
+interface Function {
+call @0 (params :List(Value)) -> (result: Value);
+}
+```
+
+Then we just need a way of defining a generic Value.
+
+Option 1. We could use a union within a struct so the caller can determine which type the value has
+
+```capnp
+struct Value{
+  dtype :union {
+    float64 @0 :Float64;
+    float32 @1 :Float32;
+    int8 @2 :Int8; # integer
+    uint8 @3 :UInt8; # unsigned integer
+    array @4 :Array;
+  }
+}
+
+struct Array{
+    data @0 :Data;
+    shape @1 :List(UInt32);
+}
+```
+This allows the caller to get at the type:
+
+```python
+myvalue.dtype.which() # -> float64
+```
+
+Then we would support at least all the built-in types:
+
+```
+Void: Void
+Boolean: Bool
+Integers: Int8, Int16, Int32, Int64
+Unsigned integers: UInt8, UInt16, UInt32, UInt64
+Floating-point: Float32, Float64
+Blobs: Text, Data
+```
+
+option 2. Could this be done with `AnyPointer`?
+
+```capnp
+struct Value{
+    value @0 :AnyPointer;
+    dtype :Text; # Kamodo_capnp.Kamodo.Array or capnp.types.Bool
+}
+```
+Since the caller still needs to determine which type to cast, we can grab it from `Value.dtype`, but this assumes the caller is implemented in python. 
+
+option 3. The following defines GenericVariable which maps a key to any Value type, but this still needs to be defined in the spec. 
+
+```capnp
+struct GenericVariable(Key, Value){
+    symbol @0 :Key;
+    value @1 :Value;
+}
+
+struct MyArray {
+  array @0 :GenericVariable(Text, Array); # Array also in spec
+}
+```
+
+
+
+### 2021-12-03 11:02:08.087856: clock-in
+
+### 2021-12-02 14:31:41.769702: clock-out
+
+* KamodoClient and KamodoServer prototype
+
+### 2021-12-02 12:38:07.272655: clock-in
+
+### 2021-12-01 15:23:00.399916: clock-out
+
+* serverside algebra
+
+### 2021-12-01 14:03:27.575056: clock-in
+
+### 2021-12-01 10:01:22.631720: clock-out
+
+* implementing serverside algebra
+
+### 2021-12-01 09:10:10.572835: clock-in
+
+### 2021-11-30 17:12:00.600469: clock-out
+
+* test swap operator
+
+### 2021-11-30 16:02:01.580713: clock-in
+
+### 2021-11-29 18:17:38.486818: clock-out
+
+* swapping algebraic operators
+* expression manipulation https://docs.sympy.org/latest/tutorial/manipulation.html
+* asteval https://newville.github.io/asteval/basics.html
+* lambdify tutorial https://www.sympy.org/scipy-2017-codegen-tutorial/notebooks/22-lambdify.html
+
+### 2021-11-29 15:13:40.362713: clock-in
+
+### 2021-11-24 15:48:13.029461: clock-out
+
+* sympy lambdify rpc
+
+### 2021-11-24 13:28:26.876278: clock-in
+
+### 2021-11-24 10:32:36.099034: clock-out: T-30m 
+
+* got rpc working for server side function
+
+### 2021-11-24 09:05:44.835160: clock-in
+
+### 2021-11-23 18:16:15.164729: clock-out
+
+* prototyping kamodo RPC
+
+### 2021-11-23 15:31:35.528952: clock-in
+
+### 2021-11-23 12:02:33.567173: clock-out
+
+* schema language, calculator tests
+* to create a new file id: `capnp id`
+* can test rpc with socket pair:
+
+```python
+
+class ServerImpl():
+    ...
+
+read, write = socket.socketpair()
+
+_ = capnp.TwoPartyServer(write, bootstrap=ServerImpl())
+client = capnp.TwoPartyClient(read)
+```
+
+* capnproto schema language https://capnproto.org/language.html
+
+
+### 2021-11-23 10:13:22.550833: clock-in
+
+### 2021-11-17 13:02:59.056885: clock-out
+
+
+### 2021-11-17 12:44:05.561797: clock-in
+
+### 2021-11-17 12:30:31.586544: clock-out
+
+
+### 2021-11-17 12:01:52.276816: clock-in
+
+### 2021-11-17 11:56:12.616449: clock-out
+
+
+### 2021-11-17 11:41:00.936867: clock-in
+
+### 2021-11-16 20:18:31.975195: clock-out
+
+* pycapnp in docker https://github.com/capnproto/pycapnp/issues/273
+* pycapnp on alpine docker https://github.com/capnproto/pycapnp/issues/240
+
+### 2021-11-16 19:25:26.750776: clock-in
+
+### 2021-11-11 11:47:32.500609: clock-out
+
+* compilation failures
+* commelec symbolic microgrid framework using capnproto! https://github.com/niekbouman/commelec-api
+
+### 2021-11-11 11:27:36.382178: clock-in
+
+### 2021-11-11 11:02:14.860822: clock-out
+
+* benefits of capnproto relative to grpc
+    1. small size of generated bindings
+    1. fast startup
+* looking for alternative installation https://github.com/mirage/capnp-rpc
+
+<details> <summary> container capnproto build failures </summary>
+
+```sh
+#16 682.5 make[2]: Leaving directory '/capnproto-c++-0.9.1'
+#16 682.5 make[1]: *** [Makefile:3861: check-am] Error 2
+#16 682.6 make[1]: Leaving directory '/capnproto-c++-0.9.1'
+#16 682.6 make: *** [Makefile:3864: check] Error 2
+------
+kamodo-py37.Dockerfile:36
+--------------------
+  34 |     WORKDIR capnproto-c++-0.9.1
+  35 |     RUN  ./configure 
+  36 | >>> RUN  make -j6 check
+  37 |     RUN  make install
+  38 |     
+--------------------
+error: failed to solve: process "/bin/sh -c make -j6 check" did not complete successfully: exit code: 2
+ERROR: Service 'kamodo-py37' failed to build : Build failed
+```
+
+</details>
+
+### 2021-11-11 10:01:57.328257: clock-in: T-5m 
+
+### 2021-10-26 17:40:31.113434: clock-out
+
+* installed capnproto 0.9.1
+
+### 2021-10-26 16:13:56.698019: clock-in
+
+* on docker-compose `2.4`, can use `platform: linux/amd64` for emulation
+
+### 2021-10-23 17:51:45.917811: clock-out
+
+* trying clang instead `conda install -c conda-forge clang`
+reinstall cxx compiler `conda install -c conda-forge cxx-compiler`
+* Still getting compiler error:
+```sh
+/opt/conda/bin/../lib/gcc/aarch64-conda-linux-gnu/9.4.0/../../../../aarch64-conda-linux-gnu/bin/ld: /opt/conda/lib/libstdc++.so: undefined reference to `__cxa_thread_atexit_impl@GLIBC_2.18'
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:2117: capnpc-c++] Error 1
+make: *** Waiting for unfinished jobs....
+libtool: link: ( cd ".libs" && rm -f "libcapnp-json.la" && ln -s "../libcapnp-json.la" "libcapnp-json.la" )
+(base) root@eef962dcd3f5:/capnproto/c++# 
+```
+
+* installing pacman on ubuntu https://ostechnix.com/use-archlinuxs-pacman-package-manager-unix-like-oss/
+```sh
+wget -O /usr/local/bin/pacapt https://github.com/icy/pacapt/raw/ng/pacapt
+chmod 755 /usr/local/bin/pacapt
+ln -sv /usr/local/bin/pacapt /usr/local/bin/pacman || true
+```
+* Docker buildx for cross-platform?
+* Installing capnproto from git and cmake.. also uses autoconf, automake, libtool
+* Trying to install capnproto from tarball fails in conda (using autoconf instead of cmake), related to sed and conda's libtool `/usr/bin/sed: not found` https://github.com/idaholab/moose/issues/16232
+
+### 2021-10-23 16:19:01.537808: clock-in
+
+### 2021-10-23 15:57:47.780848: clock-out
+
+
+### 2021-10-23 15:47:12.356723: clock-in
+
+### 2021-10-22 16:38:11.668352: clock-out
+
+*  `pip install pycapnp --install-option '--force-bundled-libcapnp'` will rebuild `capnp` if the system `capnp < 0.8.0`
+
+```sh
+pip install pycapnp --install-option '--force-bundled-libcapnp'
+```
+
+* Installing capnp from git
+```sh
+conda install autoconf automake libtool sed
+cd /
+git clone https://github.com/sandstorm-io/capnproto.git
+cd capnproto
+```
+
+```sh
+pip install pkgconfig cython # for setup.py
+python setup.py
+```
+
+
+```sh
+pip install \
+    --install-option "--libcapnp-url" \
+    --install-option "https://github.com/capnproto/capnproto/archive/master.tar.gz" \
+    --install-option "--force-bundled-libcapnp" .`
+```
+* apt-get update
+* build like this: 
+
+```sh
+git archive --format=tar --prefix=kamodo-core/ HEAD | (cd /tmp && tar xf -)
+docker-compose build
+```
+
+* capnp dependencies
+* compiling capnp
+
+```sh
+conda install -c conda-forge gcc cmake make cxx-compiler
+apt-get install capnproto
+pip install pycapnp
+```
+
+### 2021-10-22 14:23:26.262875: clock-in
+
+### 2021-10-22 11:51:10.167043: clock-out
+
+* adding pycapnp
+
+### 2021-10-22 11:06:00.397465: clock-in
+
+### 2021-10-21 11:15:13.264137: clock-out
+
+* consider capn proto https://capnproto.org/
+
+### 2021-10-21 10:17:26.721944: clock-in
+
 * fixing test
 * corrected test_preserve_repr_latex
 * modified test slightly to validate preservation of latex repr
@@ -83,6 +741,7 @@
 * added weierstrass example
 
 ### 2021-10-29 11:01:19.323873: clock-in
+
 
 ### 2021-10-18 12:25:10.516747: clock-out
 
@@ -206,7 +865,6 @@ pio.write_image(fig, "cnofs_B_up.svg", engine="kaleido")
 ### 2021-10-08 12:36:27.275094: clock-in
 
 * check for div output_type
-
 * remoded ccmc dockerfiles
 
 ### 2021-09-24 14:12:46.469270: clock-out

@@ -1,6 +1,6 @@
 # docker build -t asherp/kamodo -f API.Dockerfile .
-
-FROM continuumio/miniconda3:latest
+FROM condaforge/miniforge3
+# FROM continuumio/miniconda3:latest
 LABEL maintainer "Asher Pembroke <apembroke@gmail.com>"
 
 RUN conda install python=3.7
@@ -24,31 +24,28 @@ RUN pip install plotly==4.7.1
 # kaleido for generating static plots
 RUN pip install kaleido
 
-# Install latest kamodo
-ADD . /kamodo
+# capnproto pip version
+RUN conda install gcc cmake make cxx-compiler
+RUN pip install pkgconfig cython
 
-# RUN git clone https://github.com/asherp/kamodo.git
-RUN pip install -e kamodo
+# # install release
+RUN  wget https://capnproto.org/capnproto-c++-0.9.1.tar.gz
+RUN  tar zxf capnproto-c++-0.9.1.tar.gz
+WORKDIR capnproto-c++-0.9.1
+RUN  ./configure 
+RUN  make -j6 check
+RUN  make install
 
-RUN conda install jupyter
-RUN pip install jupytext
 
-WORKDIR kamodo
+WORKDIR /
 
-# CMD ["kamodo-serve"]
+RUN git clone https://github.com/capnproto/pycapnp.git
+WORKDIR /pycapnp
 
-CMD ["jupyter", "notebook", "./docs/notebooks", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]
+RUN python setup.py install --force-bundled-libcapnp
 
-#####
-# For Jupyter notebook interaction, use:
-#	docker run -p 8888:8888 dezeeuw/kamodo
-# For command line interaction, use:
-#	docker run -it dezeeuw/kamodo /bin/bash
-#   -above, with current working directory mounted in container, use
-#	docker run -it --mount type=bind,source="$(pwd)",destination=/local,consistency=cached  dezeeuw/kamodo /bin/bash
-#   -above, with persistent disk space, use
-#	docker run -it --mount source=kamododisk,target=/kdisk dezeeuw/kamodo /bin/bash
-#
-# Persistent disk space command
-#	docker volume create kamododisk
-#
+RUN git clone --single-branch --branch rpc https://github.com/EnsembleGovServices/kamodo-core.git
+
+RUN pip install -e kamodo-core
+WORKDIR /kamodo-core/kamodo/rpc
+CMD python test_rpc_kamodo_server.py 

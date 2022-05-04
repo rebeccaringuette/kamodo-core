@@ -9,6 +9,7 @@ This project uses [calendar versioning](https://calver.org/)
 ## Unreleased
 
 ### Added
+- asyncio RPC interface
 - Partial keyword to the plotting call to make 2D or 3D plotting of higher dimension datasets simpler. 
 - Example for using the gridify decorator.
 - Contribution/Reporting/Support guidelines

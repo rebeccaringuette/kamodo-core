@@ -33,10 +33,10 @@ services:
       - --no-browser
       - --ip=0.0.0.0
       - --allow-root
-  kamodo-rpc-test:
+  kamodo-rpc-py38:
     build:
       context: .
-      dockerfile: dockerfiles/kamodo-rpc-test.Dockerfile
+      dockerfile: dockerfiles/kamodo-rpc-py38.Dockerfile
     volumes:
       - type: bind
         source: ${PWD}
@@ -48,7 +48,21 @@ services:
       - rpc_conf=kamodo/rpc/kamodo_rpc_test.yaml
       - host=0.0.0.0
       - port='60000'
-
+  kamodo-rpc-py37:
+    build:
+      context: .
+      dockerfile: dockerfiles/kamodo-rpc-py37.Dockerfile
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /kamodo-core
+    ports:
+      - "60001:60000"
+    command:
+      - kamodo-rpc
+      - rpc_conf=kamodo/rpc/kamodo_rpc_test.yaml
+      - host=0.0.0.0
+      - port='60000'
   kamodo-dev-py37:
     image: ensemble/kamodo-py37
     ports:

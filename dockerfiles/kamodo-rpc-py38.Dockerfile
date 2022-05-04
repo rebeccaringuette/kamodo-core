@@ -7,7 +7,7 @@ RUN pip install cryptography
 
 RUN apt-get install -y git
 
-RUN git clone --single-branch --branch rpc https://github.com/EnsembleGovServices/kamodo-core.git
+RUN git clone https://github.com/EnsembleGovServices/kamodo-core.git
 
 RUN pip install -e kamodo-core
 

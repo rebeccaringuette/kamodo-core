@@ -1319,7 +1319,29 @@ class Kamodo(UserDict):
         self._kamodo_rpc[key] = field
 
     def serve(self, host='localhost', port='60000', certfile=None, keyfile=None):
-        # Register rpc fields
+        """Serve registered functions using Kamodo-RPC spec
+
+        Uses asyncio and capnp proto 
+
+        ** inputs **:
+
+        * host - str: localhost, ipv4 or ipv6 address (localhost by default)
+        * port - str: port to serve from
+        * certfile - certficicate to authenticate clients
+        * keyfile - private key file to authenticate
+
+        ** returns **: None
+
+        ** usage **:
+        
+        ```py
+        k = Kamodo(f='x+y')
+
+        k.serve() # start rpc server
+        ```
+
+        see kamodo/rpc/kamodo.capnp
+        """
         self._kamodo_rpc = KamodoRPC()
         for key in self.signatures:
             if self.verbose:
@@ -1567,9 +1589,26 @@ class Kamodo(UserDict):
 
 
 class KamodoClient(Kamodo):
-    def __init__(self, host='localhost', port='60000', certfile=None, **kwargs):
+    def __init__(self, host='localhost', port='60000', certfile="selfsigned.cert", **kwargs):
         """CapnProto Kamodo client
+        
         Abstracts a remote kamodo server using capn proto binary message types
+
+        ** inputs **:
+
+        * host - str: localhost, ipv4 or ipv6 address (localhost by default)
+        * port - str: port to serve from
+        * certfile - certficicate to authenticate clients (selfsigned.cert)
+
+        ** returns **: Kamodo object with server-side functions
+
+        ** usage **:
+        
+        ```py
+        k = KamodoClient() # connect to localhost:60000 by default
+        k.f # assuming f is registered on remote
+        ```
+
         """
         super(KamodoClient, self).__init__(**kwargs)
         self._expressions = {}  # expressions for server-side pipelining
@@ -1607,8 +1646,6 @@ class KamodoClient(Kamodo):
         """
         Method to start communication as asynchronous client.
         """
-        if certfile is None:
-            certfile = "selfsigned.cert"
         if self.verbose:
             print(f'connecting to server with {certfile}')
         try:
@@ -1620,13 +1657,15 @@ class KamodoClient(Kamodo):
 
         # Handle both IPv4 and IPv6 cases
         try:
-            print("Try IPv4")
+            if self.verbose:
+                print("Trying IPv4")
             reader, writer = await asyncio.open_connection(
                 host, port, ssl=ctx,
                 family=socket.AF_INET
             )
         except Exception:
-            print("Try IPv6")
+            if self.verbose:
+                print("Trying IPv6")
             reader, writer = await asyncio.open_connection(
                 host, port, ssl=ctx,
                 family=socket.AF_INET6

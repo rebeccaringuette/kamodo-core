@@ -46,6 +46,19 @@ Programmatic evaluation is also possible:
 ::: kamodo.Kamodo
     :members: evaluate
 
+### RPC server
+
+Start a Kamodo asyncio server using `kamodo.serve`:
+
+::: kamodo.Kamodo
+    :members: serve
+
+### RPC client
+
+Start a Kamodo Client using the `KamodoClient` class:
+
+::: kamodo.KamodoClient
+    :members: __init__
 
 ### Plotting
 

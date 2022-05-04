@@ -1,3 +1,4 @@
+* documenting rpc features
 * pulling from master
 
 ### 2022-05-04 17:10:57.447453: clock-in

@@ -1,3 +1,4 @@
+* pyOpenSSL requirement
 * release version, rpc updates
 * full release
 * moving doc generation into CONTRIBUTING.md

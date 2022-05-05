@@ -98,7 +98,8 @@ To update the package
 
 ```sh
 cd kamodo # navigate from base of repo into package
-python -m incremental.update versioning --rc # assigns a new (calender) version number within module
+python -m incremental.update versioning # assigns a new (calender) version number within module 
+# python -m incremental.update versioning --rc # for release candidate
 git add versioning # stage version update
 hourly commit.message # commit version update (optional)
 cd .. # navigate back to base of repo

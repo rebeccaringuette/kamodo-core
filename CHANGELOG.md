@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 This project uses [calendar versioning](https://calver.org/)
 
-## Unreleased
+## kamodo-22.5.0
 
 ### Added
 - asyncio RPC interface
+- dockerfile builds for py37 and py38
+- docker compose for RPC test
 - Partial keyword to the plotting call to make 2D or 3D plotting of higher dimension datasets simpler. 
 - Example for using the gridify decorator.
 - Contribution/Reporting/Support guidelines

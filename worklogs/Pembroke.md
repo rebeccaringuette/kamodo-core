@@ -1,3 +1,4 @@
+* pyOpenSSL
 * pyOpenSSL requirement
 * release version, rpc updates
 * full release

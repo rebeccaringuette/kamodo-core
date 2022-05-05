@@ -146,6 +146,7 @@ The following (minimum) requirements are obtained by running `pip install kamodo
 * requests
 * incremental
 * pycapnp
+* pyOpenSSL
 
 
 The antlr package may be necessary for rendering latex in a notebook

@@ -1107,3 +1107,8 @@ def test_frequency_units():
     freq = get_unit('deg') / get_unit('s')
     kamodo_units = get_kamodo_unit_system()
     convert_unit_to(omega, freq, kamodo_units)
+
+
+def test_gravity_registration():
+    k = Kamodo(verbose=True)
+    k['g(G[N*m^2/kg^2],M[kg],r[m])[m/s^2]'] = 'G*M/r^2'

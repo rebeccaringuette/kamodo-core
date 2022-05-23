@@ -31,7 +31,7 @@ import requests
 from plotly.subplots import make_subplots
 
 import sympy
-from sympy import Eq
+from sympy import Eq, Pow
 from sympy import Expr
 from sympy import Symbol, symbols, Function
 from sympy import lambdify
@@ -201,7 +201,7 @@ def default_inheritance_check(rhs_expr, lhs_expr):
             elif len(rhs_expr.args) > 2 and rhs_expr.args != lhs_expr.args \
                     and not len(rhs_expr.args[1].args) > 0:
                 for each in rhs_expr.args:
-                    if isinstance(each, Symbol):
+                    if isinstance(each, Symbol) or isinstance(each, Pow):
                         pass
                     else:
                         if rhs_expr.args[0] != lhs_expr.args[-1]:

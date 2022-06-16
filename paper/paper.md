@@ -196,7 +196,7 @@ The PysatKamodo [@pysatKamodo] interface is made available in a separate git rep
 
 Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many of the unit conversion capabilities of `Astropy` [@astropy; @astropy2] with two key differences:
 Kamodo uses an explicit unit conversion system, where units are declared during function registration and appropriate conversion factors are automatically inserted on the right-hand-side of final expressions, which permits back-of-the-envelope validation.
-Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation [Numpy, @harris2020array; Pandas, @reback2020pandas; etc].
+Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation via libraries such as NumPy [@harris2020array] or Pandas [@reback2020pandas].
 Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy; @astropy2] and Pint [@pint].
 
 Kamodo can utilize some of the capabilities of raw data APIs such as HAPI, and a HAPI kamodo subclass is maintained in the ccmc readers repository [@nasaKamodo]. However, Kamodo also provides an API for purely functional data access, which allows users to specify positions or times for which interpolated values should be returned.

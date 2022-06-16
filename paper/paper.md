@@ -80,7 +80,10 @@ import numpy as np
 
 @kamodofy(
     equation=r"\sum_{n=0}^{500} (1/2)^n cos(3^n \pi x)",
-    citation='Weierstrass, K. (1872). Uber continuirliche functionen eines reellen arguments, die fur keinen worth des letzteren einen bestimmten differentailqutienten besitzen, Akademievortrag. Math. Werke, 71-74.'
+    citation='Weierstrass, K. (1872). Uber continuirliche functionen eines '
+             'reellen arguments, die fur keinen worth des letzteren einen '
+             'bestimmten differentailqutienten besitzen, Akademievortrag. '
+             'Math. Werke, 71-74.'
     )
 def weierstrass(x = np.linspace(-2, 2, 1000)):
     '''
@@ -127,10 +130,15 @@ The Kamodo base class may be subclassed when third-packages are required. For ex
 ```python
 from pysat_kamodo.nasa import Pysat_Kamodo
 
-kcnofs = Pysat_Kamodo('2009, 1, 1', # Pysat_Kamodo allows string dates
-         platform = 'cnofs', # pysat mission name (C/NOFS)
-         name='vefi', # pysat instrument suite (Vector Electric Field Investigation)
-         tag='dc_b',# pysat type of observation (here: DC magnetic fields)
+kcnofs = Pysat_Kamodo(
+         # Pysat_Kamodo allows string dates
+         '2009, 1, 1',
+         # pysat mission name (C/NOFS)
+         platform = 'cnofs',
+         # pysat instrument suite (Vector Electric Field Investigation)
+         name='vefi', 
+         # pysat type of observation (here: DC magnetic fields)
+         tag='dc_b',
          )
 kcnofs['B'] = '(B_north**2+B_up**2+B_west**2)**.5' # a derived variable
 ```

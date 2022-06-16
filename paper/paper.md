@@ -196,7 +196,7 @@ which returns references for the C/NOFS platform [@cnofs] and VEFI instrument [@
 
 # Related Projects
 
-Kamodo is designed for compatibility with python-in-heliophysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018], [@pysat200].
+Kamodo is designed for compatibility with python-in-heliophysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018; @pysat200].
 This is accomplished through Kamodo subclasses, which are responsible for registering each scientifically relevant variable with an interpolating function.
 Metadata describing the function's units and other supporting documentation (citation, latex formatting, etc) may be provisioned by way of the `@kamodofy` decorator.
 

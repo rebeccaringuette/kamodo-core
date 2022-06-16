@@ -51,7 +51,7 @@ While Kamodo was designed to solve the cross-disciplinary challenges of the spac
 Space weather models and data employ a wide variety of specialized formats, data structures, and interfaces tailored for the needs of domain experts.
 However, this specialization is also an impediment to cross-disciplinary research.
 For example, data-model comparisons often require knowledge of multiple data structures and observational data formats.
-Even when mature APIs are available, proficiency in programing languages such as python is necessary before progress may be made.
+Even when mature APIs are available, proficiency in programing languages such as Python is necessary before progress may be made.
 This further complicates the transition from research to operations in space weather forecasting and mitigation, where many disparate data sources and models must be presented together in a clear and actionable manner.
 Such complexity represents a high barrier to entry when introducing the field of space weather to newcomers at space weather workshops, where much of the student's time is spent installing and learning how to use prerequisite software.
 Several attempts have been made to unify all existing space weather resources around common data standards, but have met with limited success.
@@ -194,10 +194,10 @@ Metadata describing the function's units and other supporting documentation (cit
 
 The PysatKamodo [@pysatKamodo] interface is made available in a separate git repository. Readers for various space weather models and data sources are under development by the Community Coordinated Modling Center and are hosted in their official NASA repository [@nasaKamodo].
 
-Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many of the unit conversion capabilities of `Astropy` [@astropy] with two key differences:
+Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many of the unit conversion capabilities of `Astropy` [@astropy; @astropy2] with two key differences:
 Kamodo uses an explicit unit conversion system, where units are declared during function registration and appropriate conversion factors are automatically inserted on the right-hand-side of final expressions, which permits back-of-the-envelope validation.
-Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation (Numpy [@harris2020array], Pandas [@reback2020pandas], etc).
-Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy] and Pint [@pint].
+Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation [Numpy, @harris2020array; Pandas, @reback2020pandas; etc].
+Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy; @astropy2] and Pint [@pint].
 
 Kamodo can utilize some of the capabilities of raw data APIs such as HAPI, and a HAPI kamodo subclass is maintained in the ccmc readers repository [@nasaKamodo]. However, Kamodo also provides an API for purely functional data access, which allows users to specify positions or times for which interpolated values should be returned.
 To that end, a prototype for functional REST api [@fielding2000rest] is available [@ensembleKamodo] and an RPC api [@nelson2020remote] for direct access from other programming languages is under development.

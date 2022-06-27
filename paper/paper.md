@@ -51,7 +51,7 @@ While Kamodo was designed to solve the cross-disciplinary challenges of the spac
 Space weather models and data employ a wide variety of specialized formats, data structures, and interfaces tailored for the needs of domain experts.
 However, this specialization is also an impediment to cross-disciplinary research.
 For example, data-model comparisons often require knowledge of multiple data structures and observational data formats.
-Even when mature APIs are available, proficiency in programing languages such as python is necessary before progress may be made.
+Even when mature APIs are available, proficiency in programing languages such as Python is necessary before progress may be made.
 This further complicates the transition from research to operations in space weather forecasting and mitigation, where many disparate data sources and models must be presented together in a clear and actionable manner.
 Such complexity represents a high barrier to entry when introducing the field of space weather to newcomers at space weather workshops, where much of the student's time is spent installing and learning how to use prerequisite software.
 Several attempts have been made to unify all existing space weather resources around common data standards, but have met with limited success.
@@ -80,7 +80,10 @@ import numpy as np
 
 @kamodofy(
     equation=r"\sum_{n=0}^{500} (1/2)^n cos(3^n \pi x)",
-    citation='Weierstrass, K. (1872). Uber continuirliche functionen eines reellen arguments, die fur keinen worth des letzteren einen bestimmten differentailqutienten besitzen, Akademievortrag. Math. Werke, 71-74.'
+    citation='Weierstrass, K. (1872). Uber continuirliche functionen eines '
+             'reellen arguments, die fur keinen worth des letzteren einen '
+             'bestimmten differentailqutienten besitzen, Akademievortrag. '
+             'Math. Werke, 71-74.'
     )
 def weierstrass(x = np.linspace(-2, 2, 1000)):
     '''
@@ -127,10 +130,15 @@ The Kamodo base class may be subclassed when third-packages are required. For ex
 ```python
 from pysat_kamodo.nasa import Pysat_Kamodo
 
-kcnofs = Pysat_Kamodo('2009, 1, 1', # Pysat_Kamodo allows string dates
-         platform = 'cnofs', # pysat mission name (C/NOFS)
-         name='vefi', # pysat instrument suite (Vector Electric Field Investigation)
-         tag='dc_b',# pysat type of observation (here: DC magnetic fields)
+kcnofs = Pysat_Kamodo(
+         # Pysat_Kamodo allows string dates
+         '2009, 1, 1',
+         # pysat mission name (C/NOFS)
+         platform = 'cnofs',
+         # pysat instrument suite (Vector Electric Field Investigation)
+         name='vefi', 
+         # pysat type of observation (here: DC magnetic fields)
+         tag='dc_b',
          )
 kcnofs['B'] = '(B_north**2+B_up**2+B_west**2)**.5' # a derived variable
 ```
@@ -188,16 +196,16 @@ which returns references for the C/NOFS platform [@cnofs] and VEFI instrument [@
 
 # Related Projects
 
-Kamodo is designed for compatibility with python-in-heliophysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018], [@pysat200].
+Kamodo is designed for compatibility with python-in-heliophysics [@ware_alexandria_2019_2537188] packages, such as PlasmaPy [@plasmapy_community_2020_4313063] and PySat [@Stoneback2018; @pysat200].
 This is accomplished through Kamodo subclasses, which are responsible for registering each scientifically relevant variable with an interpolating function.
 Metadata describing the function's units and other supporting documentation (citation, latex formatting, etc) may be provisioned by way of the `@kamodofy` decorator.
 
 The PysatKamodo [@pysatKamodo] interface is made available in a separate git repository. Readers for various space weather models and data sources are under development by the Community Coordinated Modling Center and are hosted in their official NASA repository [@nasaKamodo].
 
-Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many of the unit conversion capabilities of `Astropy` [@astropy] with two key differences:
+Kamodo's unit system is built on SymPy [@10.7717/peerj-cs.103] and shares many of the unit conversion capabilities of `Astropy` [@astropy; @astropy2] with two key differences:
 Kamodo uses an explicit unit conversion system, where units are declared during function registration and appropriate conversion factors are automatically inserted on the right-hand-side of final expressions, which permits back-of-the-envelope validation.
-Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation (Numpy [@harris2020array], Pandas [@reback2020pandas], etc).
-Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy] and Pint [@pint].
+Second, units are treated as function metadata, so the types returned by functions need only support algebraic manipulation via libraries such as NumPy [@harris2020array] or Pandas [@reback2020pandas].
+Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy; @astropy2] and Pint [@pint].
 
 Kamodo can utilize some of the capabilities of raw data APIs such as HAPI, and a HAPI kamodo subclass is maintained in the ccmc readers repository [@nasaKamodo]. However, Kamodo also provides an API for purely functional data access, which allows users to specify positions or times for which interpolated values should be returned.
 To that end, a prototype for functional REST api [@fielding2000rest] is available [@ensembleKamodo] and an RPC api [@nelson2020remote] for direct access from other programming languages is under development.

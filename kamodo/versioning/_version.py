@@ -7,5 +7,5 @@ Provides versioning version information.
 
 from incremental import Version
 
-__version__ = Version("versioning", 22, 6, 0, release_candidate=1)
+__version__ = Version("versioning", 22, 6, 0)
 __all__ = ["__version__"]

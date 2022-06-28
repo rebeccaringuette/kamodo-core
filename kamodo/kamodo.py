@@ -205,7 +205,7 @@ def default_inheritance_check(rhs_expr, lhs_expr):
                         pass
                     else:
                         if rhs_expr.args[0] != lhs_expr.args[-1]:
-                            raise SyntaxError('Ordering error')
+                            raise SyntaxError(f'Ordering error {lhs_expr} = {rhs_expr}')
     except IndexError:
         pass
     except TypeError:
@@ -1558,10 +1558,12 @@ class Kamodo(UserDict):
 
         """
         if len(plot_partial) > 0:
-            kpartial = from_kamodo(self)  # copy kamodo object
+            # kpartial = from_kamodo(self)  # copy kamodo object
+            # kpartial = {}
+            kpartial = Kamodo()
             for k, v in plot_partial.items():
                 regname = k
-                kpartial[regname] = partial(kpartial[k], **v)
+                kpartial[regname] = partial(self[k], **v)
             return kpartial.plot(*variables, **figures)
 
         for k in variables:

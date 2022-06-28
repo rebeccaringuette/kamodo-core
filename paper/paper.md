@@ -37,7 +37,7 @@ bibliography: paper.bib
 
 # Summary
 
-Kamodo is a functional application programming interface (API) for scientific models and data.
+Kamodo is a functional application programing interface (API) for scientific models and data.
 In Kamodo, all scientific resources are registered as symbolic fields which are mapped to model and data interpolators or algebraic expressions.
 Kamodo performs function composition and employs a unit conversion system that mimics hand-written notation: units are declared in bracket notation and conversion factors are automatically inserted into user expressions.
 Kamodo includes a LaTeX interface, automated plots, and a browser-based dashboard interface suitable for interactive data exploration.
@@ -208,11 +208,11 @@ Second, units are treated as function metadata, so the types returned by functio
 Output from kamodo-registered functions may still be cast into other unit systems that require a type, such as Astropy [@astropy; @astropy2] and Pint [@pint].
 
 Kamodo can utilize some of the capabilities of raw data APIs such as HAPI, and a HAPI kamodo subclass is maintained in the ccmc readers repository [@nasaKamodo]. However, Kamodo also provides an API for purely functional data access, which allows users to specify positions or times for which interpolated values should be returned.
-To that end, a prototype for functional REST api [@fielding2000rest] is available [@ensembleKamodo] and an RPC api [@nelson2020remote] for direct access from other programming languages is under development.
+To that end, a prototype for functional REST api [@fielding2000rest] is available [@ensembleKamodo], as well as an RPC api [@nelson2020remote] for direct access from other programing languages.
 
 Kamodo container services may be built on other containerized offerings.
 Containerization allows dependency conflicts to be avoided through isolated install environments.
-Kamodo extends the capabilities of space weather resource containers by allowing them to be composed together via the KamodoClient, which acts as a proxy for the containerized resource running the KamodoAPI.
+Kamodo extends the capabilities of space weather resource containers by allowing them to be composed together via the KamodoClient, which acts as a proxy for the containerized resource running the Kamodo RPC API.
 
 # Acknowledgements
 
@@ -220,7 +220,7 @@ Development of Kamodo was initiated by the Community Coordinated Modeling Center
 Continued support for Kamodo is provided by Ensemble Government Services, LTD. via NASA Small Business Innovation Research (SBIR) Phase I/II, grant No 80NSSC20C0290, 80NSSC21C0585, resp.
 Additional support is provided by NASA’s Heliophysics Data and Model Consortium.
 
-The authors are thankful for the advice and support of Nicholas Gross, Katherine Garcia-Sage for, and Richard Mullinex. 
+The authors are thankful for the advice and support of Nicholas Gross, Katherine Garcia-Sage, and Richard Mullinex. 
 
 
 # References

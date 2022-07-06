@@ -80,7 +80,10 @@ import numpy as np
 
 @kamodofy(
     equation=r"\sum_{n=0}^{500} (1/2)^n cos(3^n \pi x)",
-    citation='Weierstrass, K. (1872). Uber continuirliche functionen eines reellen arguments, die fur keinen werth des letzteren einen bestimmten differentialquotienten besitzen, Akademievortrag. Math. Werke von Karl Weierstrass, Vol. 2, 71-74, Mayer & Mueller (1895).'
+    citation='Weierstrass, K. (1872). Uber continuirliche functionen eines '
+      'reellen arguments, die fur keinen werth des letzteren einen '
+      'bestimmten differentialquotienten besitzen, Akademievortrag. '
+      'Math. Werke von Karl Weierstrass, Vol. 2, 71-74, Mayer & Mueller (1895).' 
     )
 def weierstrass(x = np.linspace(-2, 2, 1000)):
     '''

@@ -1,3 +1,4 @@
+* justify
 * correcting citation
 * stable release
 * final paper changes, version push

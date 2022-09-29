@@ -1,3 +1,4 @@
+* removing paper draft generation
 * justify
 * correcting citation
 * stable release

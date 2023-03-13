@@ -1,3 +1,4 @@
+* upgrading to 3.10
 * removing paper draft generation
 * justify
 * correcting citation

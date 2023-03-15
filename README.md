@@ -1,5 +1,14 @@
 # Kamodo
 
+![Python 3.6](https://img.shields.io/badge/Python-3.6-blue.svg)
+![Python 3.7](https://img.shields.io/badge/Python-3.7-blue.svg)
+![Python 3.8](https://img.shields.io/badge/Python-3.8-blue.svg)
+![Python 3.9](https://img.shields.io/badge/Python-3.9-blue.svg)
+![Python 3.10](https://img.shields.io/badge/Python-3.10-blue.svg)
+![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)
+
+
+
 [![codecov](https://codecov.io/gh/asherp/Kamodo/branch/master/graph/badge.svg?token=W1B3L19REF)](https://codecov.io/gh/asherp/Kamodo)
 
 Kamodo originated as a CCMC tool for access, interpolation, and visualization of space weather models and data in python.

@@ -116,7 +116,6 @@ core package. The following steps should be followed to keep this package mainta
 1. Update github workflow
 1. Create dockerfile
 1. Update docker-compose.yml
-1. update setup files
 1. Update setup.cfg
 1. Update pypi package
 

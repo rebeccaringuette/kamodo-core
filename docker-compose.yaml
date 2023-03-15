@@ -6,7 +6,7 @@ services:
     image: ensemble/kamodo-py36
     ports:
       - "8888:8888"
-    build: 
+    build:
       context: /tmp/kamodo-core
       dockerfile: dockerfiles/kamodo-py36.Dockerfile
     command:
@@ -25,6 +25,26 @@ services:
     build: 
       context: .
       dockerfile: dockerfiles/kamodo-py37.Dockerfile
+    command:
+      - jupyter
+      - notebook
+      - /kamodo
+      - --port=8888
+      - --no-browser
+      - --ip=0.0.0.0
+      - --allow-root
+  kamodo-py311:
+    image: ensemble/kamodo-py311
+    platform: linux/arm64/v8 # aarch64-linux-gnu
+    ports:
+      - "8888:8888"
+    build:
+      context: .
+      dockerfile: dockerfiles/kamodo-py311.Dockerfile
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /kamodo
     command:
       - jupyter
       - notebook

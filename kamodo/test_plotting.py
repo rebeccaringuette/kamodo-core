@@ -360,7 +360,9 @@ def test_surface_len_of_result_variable_is_1():
     with pytest.raises(UnboundLocalError) as error:
         traces, chart_type, layout = surface(results, titles, True)
 
-    assert "local variable 'chart_type' referenced before assignment" in str(error)
+    # below py-3.11: local variable 'chart_type' referenced before assignment
+    # after py-3.11: cannot access local variable \'chart_type\' where it is not associated with a value
+    assert "chart_type" in str(error)
 
 
 def test_tri_surface_plot():

@@ -1,3 +1,19 @@
+### 2023-03-15 16:19:34.710401: clock-out
+
+* codecov has a problem with github rate limiting https://github.com/codecov/codecov-action/issues/557
+* contributing instructions
+* supporting py3.11
+* testing py3.11
+* test 3.11
+
+```sh
+FAILED kamodo/test_plotting.py::test_surface_len_of_result_variable_is_1 - assert "local variable 'chart_type' referenced before assignment" in '<ExceptionInfo UnboundLocalError("cannot access local variable \'chart_type\' where it is not associated with a value") tblen=2>'
+ +  where '<ExceptionInfo UnboundLocalError("cannot access local variable \'chart_type\' where it is not associated with a value") tblen=2>' = str(<ExceptionInfo UnboundLocalError("cannot access local variable 'chart_type' where it is not associated with a value") tblen=2>)
+```
+
+### 2023-03-15 14:27:41.066863: clock-in
+
+* upgrading to 3.10
 * removing paper draft generation
 * justify
 * correcting citation

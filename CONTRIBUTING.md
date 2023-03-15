@@ -108,6 +108,71 @@ git tag version_number_here # create new tag
 git push origin version_number_here # triggers pypi update (requires adequate github permissions)
 ```
 
+### Upgrading
+
+New versions of kamodo's dependencies will require periodic updates to the
+core package. The following steps should be followed to keep this package maintained.
+
+1. Update github workflow
+1. Create dockerfile
+1. Update docker-compose.yml
+1. update setup files
+1. Update setup.cfg
+1. Update pypi package
+
+#### Update github workflow
+
+In the base of this repo `.github/workflows/kamodo-package.yml`, edit the jobs section to
+reflect the inteded versions of python to support
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+```
+
+Whenever a commit is pushed to this repo, all of the listed python versions will be tested.
+If any errors show up, this will reveal any changes we need so that all tests pass.
+
+#### Create dockerfile
+
+Builds with different base dependencies (such as python versions) require their own docker files.
+This allows developers to develop and test changes locally. Add the build to `dockerfiles/<build-name>.Dockerfile`. For example, an appropriate image for python 3.11 is in `dockerfiles/kamodo-py311.Dockerfile`.
+
+#### Update docker-compose
+
+Include runtime parameters for your upgrade in `docker-compose.yml`. For example, the following docker compose service can be run like this
+
+```sh
+docker compose up kamodo-py311 # builds and hosts a python-3.11 kamodo notebook server at localhost:8888
+```
+
+```yaml
+  kamodo-py311:
+    image: ensemble/kamodo-py311
+    platform: linux/arm64/v8 # aarch64-linux-gnu
+    ports:
+      - "8888:8888"
+    build:
+      context: .
+      dockerfile: dockerfiles/kamodo-py311.Dockerfile
+    volumes:
+      - type: bind
+        source: ${PWD}
+        target: /kamodo
+    command:
+      - jupyter
+      - notebook
+      - /kamodo
+      - --port=8888
+      - --no-browser
+      - --ip=0.0.0.0
+      - --allow-root
+```
+
 
 ### Hourly (optional)
 

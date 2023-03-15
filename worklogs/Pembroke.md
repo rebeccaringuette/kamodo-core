@@ -1,4 +1,10 @@
+* testing py3.11
 * test 3.11
+
+```sh
+FAILED kamodo/test_plotting.py::test_surface_len_of_result_variable_is_1 - assert "local variable 'chart_type' referenced before assignment" in '<ExceptionInfo UnboundLocalError("cannot access local variable \'chart_type\' where it is not associated with a value") tblen=2>'
+ +  where '<ExceptionInfo UnboundLocalError("cannot access local variable \'chart_type\' where it is not associated with a value") tblen=2>' = str(<ExceptionInfo UnboundLocalError("cannot access local variable 'chart_type' where it is not associated with a value") tblen=2>)
+```
 
 ### 2023-03-15 14:27:41.066863: clock-in
 
